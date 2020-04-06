@@ -16,7 +16,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake ../ 
+        cmake ../ -DBUILD_TESTS=ON
         cmake --build . --config ${{matrix.configuration}} 
     - name: Run tests
       run: |
