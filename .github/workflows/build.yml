@@ -3,6 +3,26 @@ name: build
 on: [push, pull_request]
 
 jobs:
+  unix:
+  strategy:
+      matrix:
+        os: [ubuntu, macos]
+    name: ${{matrix.os}}
+    runs-on: ${{matrix.os}}-latest
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: recursive
+      run: |
+        mkdir build
+        cd build
+        cmake ../ 
+        cmake --build . --config ${{matrix.configuration}} 
+    - name: Run tests
+      run: |
+        cd bin/${{matrix.configuration}}
+        ./Tests
+
   windows:
     runs-on: windows-latest
     strategy:
@@ -20,5 +40,5 @@ jobs:
         cmake --build . --config ${{matrix.configuration}} 
     - name: Run tests
       run: |
-        cd build/bin/${{matrix.configuration}}
+        cd bin/${{matrix.configuration}}
         ./Tests.exe
