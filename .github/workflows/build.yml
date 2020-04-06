@@ -22,7 +22,7 @@ jobs:
     - name: Run tests
       run: |
         ls
-        cd bin
+        cd build/bin
         ./Tests
 
   windows:
@@ -44,5 +44,5 @@ jobs:
       run: |
         dir
         pwd
-        cd bin/${{matrix.configuration}}
+        cd build/bin/${{matrix.configuration}}
         
