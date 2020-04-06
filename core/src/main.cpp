@@ -1,3 +1,3 @@
-#include "scanner.h"
+#include "binder/scanner.h"
 #include "scanner.cpp"
 

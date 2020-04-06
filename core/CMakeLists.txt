@@ -12,13 +12,15 @@ project(TheBinderCore)
 	ENDMACRO(SET_AS_HEADERS)
 
 	SET(SUPPORTING_FILES 
-	"src/scanner.h"
+	"includes/binder/scanner.h"
+	"includes/binder/tokens.h"
+
 	"src/scanner.cpp"
 	)
 	SET_AS_HEADERS("${SUPPORTING_FILES}")
 
     include_directories(
-						${CMAKE_CURRENT_SOURCE_DIR}
+						${CMAKE_CURRENT_SOURCE_DIR}/includes
 	)
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file
