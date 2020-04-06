@@ -4,24 +4,23 @@ on: [push, pull_request]
 
 jobs:
   unix:
-  strategy:
-	  matrix:
-		os: [ubuntu, macos]
-	name: ${{matrix.os}}
-	runs-on: ${{matrix.os}}-latest
     strategy:
       matrix:
-        configuration: [Debug, Release]
-	steps:
-	- uses: actions/checkout@v1
-	  with:
-		submodules: recursive
-	  run: |
-		mkdir build
-		cd build
-		cmake ../ 
-		cmake --build . --config ${{matrix.configuration}} 
-	- name: Run tests
-	  run: |
-		cd bin/${{matrix.configuration}}
-		./Tests
+        os: [ubuntu, macos]
+    name: ${{matrix.os}}
+    runs-on: ${{matrix.os}}-latest
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: recursive
+    - name: Build    
+      run: |
+        mkdir build
+        cd build
+        cmake ../ -DBUILD_TESTS=ON
+        cmake --build . --config ${{matrix.configuration}} 
+    - name: Run tests
+      run: |
+        ls
+        cd build/bin
+        ./Tests
