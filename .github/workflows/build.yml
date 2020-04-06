@@ -1,0 +1,24 @@
+name: build
+#triggered on push
+on: [push, pull_request]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: recursive
+    - name: Build    
+      run: |
+        mkdir build
+        cd build
+        cmake ../ 
+        cmake --build . --config ${{matrix.configuration}} 
+    - name: Run tests
+      run: |
+        cd build/bin/${{matrix.configuration}}
+        ./Tests.exe
