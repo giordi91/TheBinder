@@ -21,6 +21,7 @@ jobs:
         cmake --build . --config ${{matrix.configuration}} 
     - name: Run tests
       run: |
+        ls
         cd bin
         ./Tests
 
@@ -41,5 +42,7 @@ jobs:
         cmake --build . --config ${{matrix.configuration}} 
     - name: Run tests
       run: |
+        dir
+        pwd
         cd bin/${{matrix.configuration}}
-        .\Tests.exe
+        
