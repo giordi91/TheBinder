@@ -12,10 +12,17 @@ project(TheBinderCore)
 	ENDMACRO(SET_AS_HEADERS)
 
 	SET(SUPPORTING_FILES 
+	"includes/binder/constants.h"
+	"includes/binder/interpreter.h"
 	"includes/binder/scanner.h"
 	"includes/binder/tokens.h"
+	"includes/binder/memory/stackAllocator.h"
+	"includes/binder/memory/threeSizesPool.h"
+	"includes/binder/memory/stringPool.h"
 
+	"src/interpreter.cpp"
 	"src/scanner.cpp"
+	"src/memory/stringPool.cpp"
 	)
 	SET_AS_HEADERS("${SUPPORTING_FILES}")
 
