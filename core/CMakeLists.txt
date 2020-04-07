@@ -19,9 +19,11 @@ project(TheBinderCore)
 	"includes/binder/memory/stackAllocator.h"
 	"includes/binder/memory/threeSizesPool.h"
 	"includes/binder/memory/stringPool.h"
+	"includes/binder/memory/resizableVector.h"
 
 	"src/interpreter.cpp"
 	"src/scanner.cpp"
+	"src/tokens.cpp"
 	"src/memory/stringPool.cpp"
 	)
 	SET_AS_HEADERS("${SUPPORTING_FILES}")

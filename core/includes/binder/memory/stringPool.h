@@ -2,7 +2,6 @@
 
 #include <type_traits>
 
-#include "binder/memory/stackAllocator.h"
 #include "binder/memory/threeSizesPool.h"
 
 namespace binder::memory {

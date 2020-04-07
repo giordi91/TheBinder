@@ -13,9 +13,19 @@ void BinderContext::runFile(const char* filePath) {
   const char* fileContent = m_stringPool.loadFile(filePath, fileSize);
   assert(fileSize != 0);
   run(fileContent);
+  //freeing the file memory
   m_stringPool.free(fileContent);
+
+  //check if everything went alright, or just abort
+  if (m_hadError) {
+    exit(65);
+  }
 }
 
 void BinderContext::run(const char* code) {}
 
+void BinderContext::report(const int line, const char* location,
+                           const char* message) {
+  printf("[ line %i ] Error %s: %s", line, location, message);
+}
 }  // namespace binder

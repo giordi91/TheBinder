@@ -1,10 +1,10 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 namespace binder {
-enum class TOKEN_TYPE : uint16_t {
+enum class TOKEN_TYPE {
   // Single-character tokens.
-  LEFT_PAREN=0,
+  LEFT_PAREN = 0,
   RIGHT_PAREN,
   LEFT_BRACE,
   RIGHT_BRACE,
@@ -35,7 +35,7 @@ enum class TOKEN_TYPE : uint16_t {
   AND,
   CLASS,
   ELSE,
-  FALSE,
+  BOOL_FALSE, //like this instead of FALSE thanks to the lovely windows define 
   FUN,
   FOR,
   IF,
@@ -45,21 +45,21 @@ enum class TOKEN_TYPE : uint16_t {
   RETURN,
   SUPER,
   THIS,
-  TRUE,
+  BOOL_TRUE, //same as bool false
   VAR,
   WHILE,
 
-  EOF,
+  END_OF_FILE,
   COUNT
 };
 
+const char* getLexemeFromToken(const TOKEN_TYPE token);
 
-struct Token
-{
-    const char* m_lexeme;
-    uint32_t m_line;
-    TOKEN_TYPE m_type;
-    uint16_t padding;
+struct Token {
+  const char* m_lexeme{};
+  uint32_t m_line{};
+  TOKEN_TYPE m_type = TOKEN_TYPE::END_OF_FILE;
+  uint16_t padding = 0;
 };
-	
-}
+
+}  // namespace binder

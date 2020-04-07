@@ -1,5 +1,5 @@
-#include "binder/memory/stringPool.h"
 #include "catch.h"
+#include "binder/memory/stringPool.h"
 
 TEST_CASE("String pool basic alloc 1 static", "[memory]") {
   binder::memory::StringPool alloc(2 << 16);
