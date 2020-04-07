@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cassert>
 
 namespace binder {
 enum class TOKEN_TYPE {
@@ -53,7 +54,17 @@ enum class TOKEN_TYPE {
   COUNT
 };
 
-const char* getLexemeFromToken(const TOKEN_TYPE token);
+static const char* TOKEN_TO_LEXEME[] = {
+    "(",      ")",     "{",    "}",    ",",      ".",      "-",   "+",
+    ";",      "/",     "*",    "!",    "!=",     "=",      "==",  ">",
+    ">=",     "<",     "<=",   "id",   "string", "number", "and", "class",
+    "else",   "false", "fun",  "for",  "if",     "nil",    "or",  "print",
+    "return", "super", "this", "true", "var",    "while",  "\0"};
+
+inline const char* getLexemeFromToken(const TOKEN_TYPE token) {
+  assert(token < TOKEN_TYPE::COUNT);
+  return TOKEN_TO_LEXEME[static_cast<uint32_t>(token)];
+}
 
 struct Token {
   const char* m_lexeme{};

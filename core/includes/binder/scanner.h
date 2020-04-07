@@ -4,27 +4,35 @@
 #include "tokens.h"
 
 namespace binder {
+class BinderContext;
 
 class Scanner {
  public:
-  Scanner() = default;
+  explicit Scanner(BinderContext* context)
+      : m_tokens(1024), m_context(context) {}
   ~Scanner() = default;
 
   void scan(const char* source);
+  [[nodiscard]] const memory::ResizableVector<Token>& getTokens() const {
+    return m_tokens;
+  }
 
  private:
-  [[nodiscard]] bool isAtEnd() const; 
-  [[nodiscard]] char advance() const {return m_source[current];}
+  [[nodiscard]] bool isAtEnd() const;
+  char advance();
 
   void scanToken();
   void addToken(TOKEN_TYPE token);
+  bool match(char expected);
+  [[nodiscard]] char peek() const;;
 
  private:
   memory::ResizableVector<Token> m_tokens;
+  BinderContext* m_context;
 
-  //input data
-  const char* m_source;
-  uint32_t m_sourceLength;
+  // input data
+  const char* m_source = nullptr;
+  uint32_t m_sourceLength = 0;
 
   // tracking data
   uint32_t start = 0;

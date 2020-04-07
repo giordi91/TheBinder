@@ -133,9 +133,9 @@ private:
     m_memory = tempMemory;
   }
 
+  T *m_memory = nullptr;
 private:
   ALLOCATOR *m_allocator;
-  T *m_memory = nullptr;
   uint32_t m_size;
   uint32_t m_reserved;
 }; // namespace binder

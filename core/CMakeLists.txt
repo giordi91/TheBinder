@@ -23,7 +23,6 @@ project(TheBinderCore)
 
 	"src/interpreter.cpp"
 	"src/scanner.cpp"
-	"src/tokens.cpp"
 	"src/memory/stringPool.cpp"
 	)
 	SET_AS_HEADERS("${SUPPORTING_FILES}")

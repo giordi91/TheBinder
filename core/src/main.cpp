@@ -1,6 +1,5 @@
-#include "scanner.cpp"
 #include "memory/stringPool.cpp"
 
-#include "tokens.cpp"
+#include "scanner.cpp"
 #include "interpreter.cpp"
 
