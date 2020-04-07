@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.11.0)
 project(Tests)   
 
    #grouping objects by name in the IDE
-    #function(sourceGroupByFolder targetDir sourceFiles)
-    #   get_filename_component(targetDirName ${targetDir} NAME)
-    #   source_group(TREE ${targetDir} PREFIX ${targetDirName} FILES ${sourceFiles})
-	#endfunction(sourceGroupByFolder)
+    function(sourceGroupByFolder targetDir sourceFiles)
+       get_filename_component(targetDirName ${targetDir} NAME)
+       source_group(TREE ${targetDir} PREFIX ${targetDirName} FILES ${sourceFiles})
+	endfunction(sourceGroupByFolder)
 	#NOTE: when passing arrays/lists to macro, to work 
 	#properly put the variable in quotes "${MY_VAR}"
 	MACRO(SET_AS_HEADERS HEADERS)
@@ -38,9 +38,10 @@ project(Tests)
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
     target_link_libraries(${PROJECT_NAME} TheBinderCore)
 
-	#set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER ${CMAKE_CURRENT_SOURCE_DIR}/src)
-	#sourceGroupByFolder(${CMAKE_CURRENT_SOURCE_DIR} ${SUPPORTING_FILES})
-	#sourceGroupByFolder(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+	set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER Tests)
+	sourceGroupByFolder(${CMAKE_CURRENT_SOURCE_DIR} ${SUPPORTING_FILES})
+	sourceGroupByFolder(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 
 	#setting working directory
 	set_target_properties(
