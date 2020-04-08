@@ -17,6 +17,7 @@ void Scanner::scan(const char* source) {
   // pedantic reset
   start = 0;
   current = 0;
+  line =0;
 
   while (!isAtEnd()) {
     start = current;
@@ -101,7 +102,11 @@ void Scanner::scanToken() {
       scanString();
       break;
     default:
-      m_context->reportError(line, "Unexpected character");
+      if (isDigit(c)) {
+        scanNumber();
+      } else {
+        m_context->reportError(line, "Unexpected character");
+      }
       break;
   }
 }
@@ -122,6 +127,10 @@ bool Scanner::match(const char expected) {
 char Scanner::peek() const {
   if (isAtEnd()) return '\0';
   return m_source[current];
+}
+char Scanner::peekNext() const {
+  if (isAtEnd()) return '\0';
+  return m_source[current + 1];
 }
 
 void Scanner::scanString() {
@@ -147,6 +156,23 @@ void Scanner::scanString() {
   addStringToken(start + 1, current - 2);
 }
 
+void Scanner::scanNumber() {
+  // keep chewing numbers until is done
+  while (isDigit(peek())) advance();
+
+  // lets check if we have a dot and after the dot we have another series
+  // of number to swallow
+  if (peek() == '.' && isDigit(peekNext())) {
+    advance();
+    while (isDigit(peek())) advance();
+  }
+
+  //since the current is at the token past the number we subtract 1
+  addNumberToken(start, current-1);
+}
+
+bool Scanner::isDigit(const char c) { return (c >= '0') & (c <= '9'); }
+
 void Scanner::addStringToken(const uint32_t startIdx, const uint32_t endIdx) {
   const char* newString = "";
   // avoiding empty string
@@ -155,6 +181,11 @@ void Scanner::addStringToken(const uint32_t startIdx, const uint32_t endIdx) {
         m_context->getStringPool().subString(m_source, startIdx, endIdx);
   }
   m_tokens.pushBack({newString, line, TOKEN_TYPE::STRING});
+}
+void Scanner::addNumberToken(const uint32_t startIdx, const uint32_t endIdx) {
+  const char* number =
+      m_context->getStringPool().subString(m_source, startIdx, endIdx);
+  m_tokens.pushBack({number, line, TOKEN_TYPE::NUMBER});
 }
 
 }  // namespace binder

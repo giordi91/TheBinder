@@ -25,8 +25,12 @@ class Scanner {
   void addToken(TOKEN_TYPE token);
   bool match(char expected);
   [[nodiscard]] char peek() const;
+  [[nodiscard]] char peekNext() const;
   void scanString();
+  void scanNumber();
+  static bool isDigit(const char c);
   void addStringToken(uint32_t startIdx, uint32_t endIdx);
+  void addNumberToken(uint32_t startIdx, uint32_t endIdx);
 
  private:
   memory::ResizableVector<Token> m_tokens;
