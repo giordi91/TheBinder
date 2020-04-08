@@ -5,6 +5,7 @@
 namespace binder {
 void Scanner::scan(const char* source) {
   m_source = source;
+  m_tokens.clear();
 
   if (m_source == nullptr) {
     // adding EOF token
@@ -96,7 +97,9 @@ void Scanner::scanToken() {
     case '\n':
       ++line;
       break;
-
+    case '"':
+      scanString();
+      break;
     default:
       m_context->reportError(line, "Unexpected character");
       break;
@@ -120,4 +123,38 @@ char Scanner::peek() const {
   if (isAtEnd()) return '\0';
   return m_source[current];
 }
+
+void Scanner::scanString() {
+  while (peek() != '"' && !isAtEnd()) {
+    if (peek() == '\n') {
+      ++line;
+    }
+    advance();
+  }
+
+  if (isAtEnd()) {
+    m_context->reportError(line, "Unterminated string");
+    return;
+  }
+
+  // eat the closing "
+  advance();
+
+  // so,the minus two is because by now, the current points to the value
+  // after the ", so and the substring method of the pool takes the
+  // value up and included to end index, so we need to subtract two
+  // since we are passing an end index, m_source[endIdx].
+  addStringToken(start + 1, current - 2);
+}
+
+void Scanner::addStringToken(const uint32_t startIdx, const uint32_t endIdx) {
+  const char* newString = "";
+  // avoiding empty string
+  if (endIdx > startIdx) {
+    newString =
+        m_context->getStringPool().subString(m_source, startIdx, endIdx);
+  }
+  m_tokens.pushBack({newString, line, TOKEN_TYPE::STRING});
+}
+
 }  // namespace binder

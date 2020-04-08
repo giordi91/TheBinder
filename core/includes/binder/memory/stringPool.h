@@ -128,6 +128,8 @@ class StringPool final {
   const char* convert(const wchar_t* string, const uint8_t flags = 0);
   const wchar_t* convertWide(const char* string, const uint8_t flags = 0);
 
+  const char* subString(const char* source, const uint32_t startIdx, const uint32_t endIdx, const uint8_t flags=0);
+
  private:
   enum class STRING_TYPE { CHAR = 1, WCHAR = 2 };
 

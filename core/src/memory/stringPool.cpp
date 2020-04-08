@@ -184,10 +184,10 @@ const wchar_t* StringPool::convertWide(const char* string,
   // this length are without the extra null terminator
   const auto len = static_cast<uint32_t>(strlen(string));
 
-  // plus one for null terminator
   const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::WCHAR);
 
   // make the allocation
+  // plus one for null terminator
   auto* newChar = reinterpret_cast<wchar_t*>(
       m_pool.allocate(sizeof(wchar_t) * (len + 1), allocFlags));
   // do the conversion
@@ -200,6 +200,29 @@ const wchar_t* StringPool::convertWide(const char* string,
   const int shouldFreeFirst = firstSet & inPool;
   if (shouldFreeFirst) {
     m_pool.free((void*)string);
+  }
+  return newChar;
+}
+
+const char* StringPool::subString(const char* source, const uint32_t startIdx,
+                                  const uint32_t endIdx, const uint8_t flags) {
+  assert(endIdx > startIdx);
+  //+2 is for the null termination and including the end index, we add it anyway just in case
+  const uint32_t len = endIdx - startIdx + 2;
+  const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::CHAR);
+  uint32_t sizeInBytes = sizeof(char) * len;
+  auto* newChar =
+      reinterpret_cast<char*>(m_pool.allocate(sizeInBytes, allocFlags));
+  memset(newChar, -1, sizeInBytes);
+  memcpy(newChar, source + startIdx, sizeInBytes - 1);
+  newChar[len-1] = '\0';
+
+  // now we have some clean up to do based on flags
+  const int inPool = m_pool.allocationInPool(source);
+  const int firstSet = isFlagSet(flags, FREE_FIRST_AFTER_OPERATION);
+  const int shouldFreeFirst = firstSet & inPool;
+  if (shouldFreeFirst) {
+    m_pool.free((void*)source);
   }
   return newChar;
 }

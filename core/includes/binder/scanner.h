@@ -24,7 +24,9 @@ class Scanner {
   void scanToken();
   void addToken(TOKEN_TYPE token);
   bool match(char expected);
-  [[nodiscard]] char peek() const;;
+  [[nodiscard]] char peek() const;
+  void scanString();
+  void addStringToken(uint32_t startIdx, uint32_t endIdx);
 
  private:
   memory::ResizableVector<Token> m_tokens;

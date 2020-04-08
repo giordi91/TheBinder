@@ -63,8 +63,7 @@ TEST_CASE("scan comment", "[scan]") {
   REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
   REQUIRE(tokens[1].m_line == 1);
 }
-TEST_CASE("scan white spaces", "[scan]")
-{
+TEST_CASE("scan white spaces", "[scan]") {
   binder::ContextConfig config{};
   binder::BinderContext context(config);
   binder::Scanner scanner(&context);
@@ -78,12 +77,9 @@ TEST_CASE("scan white spaces", "[scan]")
   REQUIRE(tokens[0].m_line == 0);
   REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::LEFT_BRACE);
   REQUIRE(tokens[1].m_line == 1);
-
-	
 }
 
-TEST_CASE("scan empty", "[scan]")
-{
+TEST_CASE("scan empty", "[scan]") {
   binder::ContextConfig config{};
   binder::BinderContext context(config);
   binder::Scanner scanner(&context);
@@ -93,11 +89,10 @@ TEST_CASE("scan empty", "[scan]")
   const binder::memory::ResizableVector<binder::Token>& tokens =
       scanner.getTokens();
   REQUIRE(tokens.size() == 1);
-  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
 
-TEST_CASE("scan nullptr", "[scan]")
-{
+TEST_CASE("scan nullptr", "[scan]") {
   binder::ContextConfig config{};
   binder::BinderContext context(config);
   binder::Scanner scanner(&context);
@@ -107,6 +102,44 @@ TEST_CASE("scan nullptr", "[scan]")
   const binder::memory::ResizableVector<binder::Token>& tokens =
       scanner.getTokens();
   REQUIRE(tokens.size() == 1);
-  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+
+TEST_CASE("scan string", "[scan]") {
+  binder::ContextConfig config{};
+  binder::BinderContext context(config);
+  binder::Scanner scanner(&context);
+
+  const char* toScan = "!--\"helloworld\"!";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 6);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::BANG);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::MINUS);
+  REQUIRE(tokens[2].m_type == binder::TOKEN_TYPE::MINUS);
+  REQUIRE(tokens[3].m_type == binder::TOKEN_TYPE::STRING);
+  REQUIRE(strcmp(tokens[3].m_lexeme, "helloworld") == 0);
+  REQUIRE(tokens[4].m_type == binder::TOKEN_TYPE::BANG);
+  REQUIRE(tokens[5].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+
+TEST_CASE("scan empty string", "[scan]") {
+  binder::ContextConfig config{};
+  binder::BinderContext context(config);
+  binder::Scanner scanner(&context);
+
+  const char* toScan = "!--\"\"!";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 6);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::BANG);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::MINUS);
+  REQUIRE(tokens[2].m_type == binder::TOKEN_TYPE::MINUS);
+  REQUIRE(tokens[3].m_type == binder::TOKEN_TYPE::STRING);
+  REQUIRE(strcmp(tokens[3].m_lexeme, "") == 0);
+  REQUIRE(tokens[4].m_type == binder::TOKEN_TYPE::BANG);
+  REQUIRE(tokens[5].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 	
 }

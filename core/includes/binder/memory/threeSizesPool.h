@@ -150,7 +150,6 @@ class ThreeSizesPool final {
     auto *header =
         reinterpret_cast<AllocHeader *>(bytePtr - sizeof(AllocHeader));
 
-    const uint32_t allocSize = header->size;
     assert(header->isNode == 0);
 
 #if SE_DEBUG
