@@ -7,3 +7,4 @@
 #include "stringPoolAllocatorTests.cpp"
 #include "tokenTests.cpp"
 #include "treeSizesAllocatorTests.cpp"
+#include "hashMapTests.cpp"

@@ -160,6 +160,7 @@ TEST_CASE("scan parse integer", "[scan]") {
   REQUIRE(tokens[2].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 	
 }
+
 TEST_CASE("scan parse float", "[scan]") {
   binder::ContextConfig config{};
   binder::BinderContext context(config);
@@ -190,4 +191,5 @@ TEST_CASE("scan parse float", "[scan]") {
   REQUIRE(tokens2[0].m_type == binder::TOKEN_TYPE::BANG);
   REQUIRE(tokens2[2].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 	
+
 }

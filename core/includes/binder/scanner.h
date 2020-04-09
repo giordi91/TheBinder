@@ -28,7 +28,10 @@ class Scanner {
   [[nodiscard]] char peekNext() const;
   void scanString();
   void scanNumber();
+  void scanIdentifier();
   static bool isDigit(const char c);
+  static bool isAlpha(const char c);
+  static bool isAlphaNumeric(const char c);
   void addStringToken(uint32_t startIdx, uint32_t endIdx);
   void addNumberToken(uint32_t startIdx, uint32_t endIdx);
 
