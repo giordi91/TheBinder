@@ -49,7 +49,15 @@ public:
         return false;
       }
     }
-    const char *newKey = globals::STRING_POOL->allocatePersistent(key);
+    //NOTE this should use a pool for allocation, as it did in the
+    //engine might need some work
+    //const char *newKey = globals::STRING_POOL->allocatePersistent(key);
+
+    //new allocation
+    const auto length = static_cast<uint32_t>(strlen(key) + 1);
+    void* memory = new char[length]; 
+    memcpy(memory, key, length);
+    const char *newKey = reinterpret_cast<char*>(memory);
     writeToBin(bin, newKey, value);
     setMetadata(bin, BIN_FLAGS::USED);
 
@@ -86,7 +94,8 @@ public:
     assert(meta == static_cast<uint32_t>(BIN_FLAGS::USED));
     if (result) {
       setMetadata(bin, BIN_FLAGS::DELETED);
-      globals::STRING_POOL->free(m_keys[bin]);
+      //NOTE this should use a pool globals::STRING_POOL->free(m_keys[bin]);
+      delete[] m_keys[bin];
       m_keys[bin] = nullptr;
       --m_usedBins;
     }

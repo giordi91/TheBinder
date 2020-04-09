@@ -193,3 +193,45 @@ TEST_CASE("scan parse float", "[scan]") {
 	
 
 }
+TEST_CASE("scan identifiers 1", "[scan]") {
+  binder::ContextConfig config{};
+  binder::BinderContext context(config);
+  binder::Scanner scanner(&context);
+
+  const char* toScan = "chicago woa 123     !";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 5);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::IDENTIFIER);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "chicago") == 0);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::IDENTIFIER);
+  REQUIRE(strcmp(tokens[1].m_lexeme, "woa") == 0);
+  REQUIRE(tokens[2].m_type == binder::TOKEN_TYPE::NUMBER);
+  REQUIRE(strcmp(tokens[2].m_lexeme, "123") == 0);
+  REQUIRE(tokens[3].m_type == binder::TOKEN_TYPE::BANG);
+  REQUIRE(tokens[4].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+
+}
+
+
+TEST_CASE("scan identifiers 2", "[scan]") {
+  binder::ContextConfig config{};
+  binder::BinderContext context(config);
+  binder::Scanner scanner(&context);
+
+  const char* toScan = "var helloWorld = 123";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 5);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::VAR);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "var") == 0);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::IDENTIFIER);
+  REQUIRE(strcmp(tokens[1].m_lexeme, "helloWorld") == 0);
+  REQUIRE(tokens[2].m_type == binder::TOKEN_TYPE::EQUAL);
+  REQUIRE(tokens[3].m_type == binder::TOKEN_TYPE::NUMBER);
+  REQUIRE(strcmp(tokens[3].m_lexeme, "123") == 0);
+  REQUIRE(tokens[4].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+

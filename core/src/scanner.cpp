@@ -1,8 +1,35 @@
 #include "binder/scanner.h"
 
 #include "binder/interpreter.h"
+#include "binder/memory/stringHashMap.h"
 
 namespace binder {
+
+static memory::HashMap<const char *, TOKEN_TYPE, hashString32>
+    STRING_TO_RESERVED(200);
+
+Scanner::Scanner(BinderContext *context) : m_tokens(1024), m_context(context) {
+  // populate the static map
+  if (STRING_TO_RESERVED.getUsedBins() != 0) {
+    return;
+  }
+  STRING_TO_RESERVED.insert("and", TOKEN_TYPE::AND);
+  STRING_TO_RESERVED.insert("class", TOKEN_TYPE::CLASS);
+  STRING_TO_RESERVED.insert("else", TOKEN_TYPE::ELSE);
+  STRING_TO_RESERVED.insert("false", TOKEN_TYPE::BOOL_FALSE);
+  STRING_TO_RESERVED.insert("for", TOKEN_TYPE::FOR);
+  STRING_TO_RESERVED.insert("fun", TOKEN_TYPE::FUN);
+  STRING_TO_RESERVED.insert("if", TOKEN_TYPE::IF);
+  STRING_TO_RESERVED.insert("nil", TOKEN_TYPE::NIL);
+  STRING_TO_RESERVED.insert("or", TOKEN_TYPE::OR);
+  STRING_TO_RESERVED.insert("print", TOKEN_TYPE::PRINT);
+  STRING_TO_RESERVED.insert("return", TOKEN_TYPE::RETURN);
+  STRING_TO_RESERVED.insert("super", TOKEN_TYPE::SUPER);
+  STRING_TO_RESERVED.insert("this", TOKEN_TYPE::THIS);
+  STRING_TO_RESERVED.insert("var", TOKEN_TYPE::VAR);
+  STRING_TO_RESERVED.insert("while", TOKEN_TYPE::WHILE);
+}
+
 void Scanner::scan(const char *source) {
   m_source = source;
   m_tokens.clear();
@@ -186,11 +213,19 @@ void Scanner::scanIdentifier() {
   uint32_t endIdx = current - 1;
   const char *newString = nullptr;
   if (endIdx > start) {
-    newString =
-        m_context->getStringPool().subString(m_source, start, endIdx);
+    newString = m_context->getStringPool().subString(m_source, start, endIdx);
+  }
+  assert(newString != nullptr);
+
+  //now that we have the string lets look it up in our map
+  TOKEN_TYPE type= TOKEN_TYPE::COUNT;
+  bool isReserved = STRING_TO_RESERVED.get(newString,type);
+  if(!isReserved)
+  {
+      type = TOKEN_TYPE::IDENTIFIER;
   }
 
-  assert(newString != nullptr);
+  m_tokens.pushBack({newString,line,type});
 }
 
 bool Scanner::isDigit(const char c) { return (c >= '0') & (c <= '9'); }

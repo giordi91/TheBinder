@@ -1,5 +1,5 @@
-#include "binder/memory/hashing.h"
 #include "binder/memory/hashMap.h"
+#include "binder/memory/hashing.h"
 
 #include "catch.h"
 
@@ -50,7 +50,7 @@ TEST_CASE("hashmap psudo random insert 1000", "[memory]") {
   for (int i = 0; i < count; ++i) {
 
     CHECKED_ELSE(alloc.containsKey(keys[i]) == true) {
-      printf("failed on index %u key values is: %u" ,i,keys[i]);
+      printf("failed on index %u key values is: %u", i, keys[i]);
       FAIL();
     };
     REQUIRE(alloc.get(keys[i], checkValue) == true);
@@ -89,7 +89,7 @@ TEST_CASE("hashmap psudo random insert 1500", "[memory]") {
   for (int i = 0; i < count; ++i) {
 
     CHECKED_ELSE(alloc.containsKey(keys[i]) == true) {
-      printf("failed on index %u key values is: %u" ,i,keys[i]);
+      printf("failed on index %u key values is: %u", i, keys[i]);
       FAIL();
     };
     REQUIRE(alloc.get(keys[i], checkValue) == true);
@@ -126,7 +126,7 @@ TEST_CASE("hashmap psudo random insert 1900", "[memory]") {
   for (int i = 0; i < count; ++i) {
 
     CHECKED_ELSE(alloc.containsKey(keys[i]) == true) {
-      printf("failed on index %u key values is: %u" ,i,keys[i]);
+      printf("failed on index %u key values is: %u", i, keys[i]);
       FAIL();
     };
     REQUIRE(alloc.get(keys[i], checkValue) == true);
@@ -162,7 +162,7 @@ TEST_CASE("hashmap empty 1000", "[memory]") {
   for (int i = 0; i < count; ++i) {
     uint32_t k = rand();
     REQUIRE(alloc.containsKey(k) == false);
-    REQUIRE(alloc.get(k,value) == false);
+    REQUIRE(alloc.get(k, value) == false);
   }
 }
 
@@ -173,6 +173,58 @@ TEST_CASE("hashmap empty 2000", "[memory]") {
   for (int i = 0; i < count; ++i) {
     uint32_t k = rand();
     REQUIRE(alloc.containsKey(k) == false);
-    REQUIRE(alloc.get(k,value) == false);
+    REQUIRE(alloc.get(k, value) == false);
   }
+}
+
+TEST_CASE("string hashmap ", "[memory]") {
+  binder::memory::HashMap<const char *, uint32_t, binder::hashString32> alloc(
+      4600);
+  alloc.insert("and", 1);
+  alloc.insert("class", 2);
+  alloc.insert("else", 3);
+  alloc.insert("false", 4);
+  alloc.insert("for", 5);
+  alloc.insert("fun", 6);
+  alloc.insert("if", 7);
+  alloc.insert("nil", 8);
+  alloc.insert("or", 9);
+  alloc.insert("print", 10);
+  alloc.insert("return", 11);
+  alloc.insert("super", 12);
+  alloc.insert("this", 13);
+  alloc.insert("var", 14);
+  alloc.insert("while", 15);
+
+  uint32_t value = 0;
+  alloc.get("and", value); 
+  REQUIRE(value == 1);
+  alloc.get("class", value); 
+  REQUIRE(value == 2);
+  alloc.get("else", value); 
+  REQUIRE(value == 3);
+  alloc.get("false", value); 
+  REQUIRE(value == 4);
+  alloc.get("for", value); 
+  REQUIRE(value == 5);
+  alloc.get("fun", value); 
+  REQUIRE(value == 6);
+  alloc.get("if", value); 
+  REQUIRE(value == 7);
+  alloc.get("nil", value); 
+  REQUIRE(value == 8);
+  alloc.get("or", value); 
+  REQUIRE(value == 9);
+  alloc.get("print", value); 
+  REQUIRE(value == 10);
+  alloc.get("return", value); 
+  REQUIRE(value == 11);
+  alloc.get("super", value); 
+  REQUIRE(value == 12);
+  alloc.get("this", value); 
+  REQUIRE(value == 13);
+  alloc.get("var", value); 
+  REQUIRE(value == 14);
+  alloc.get("while", value); 
+  REQUIRE(value == 15);
 }

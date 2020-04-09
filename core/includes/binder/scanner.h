@@ -8,8 +8,7 @@ class BinderContext;
 
 class Scanner {
  public:
-  explicit Scanner(BinderContext* context)
-      : m_tokens(1024), m_context(context) {}
+  explicit Scanner(BinderContext* context);
   ~Scanner() = default;
 
   void scan(const char* source);
