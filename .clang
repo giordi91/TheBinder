@@ -1,1 +1,3 @@
 -I core/includes
+-Wno-pragma-once-outside-header
+-Wno-deprecated-declarations

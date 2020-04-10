@@ -20,6 +20,7 @@ project(TheBinderCore)
 	"includes/binder/memory/threeSizesPool.h"
 	"includes/binder/memory/stringPool.h"
 	"includes/binder/memory/resizableVector.h"
+	"includes/binder/memory/stringHashMap.h"
 
 	"src/interpreter.cpp"
 	"src/scanner.cpp"
@@ -27,6 +28,7 @@ project(TheBinderCore)
 	)
 	SET_AS_HEADERS("${SUPPORTING_FILES}")
 
+	add_compile_definitions(FARMHASH_NO_BUILTIN_EXPECT)
     include_directories(
 						${CMAKE_CURRENT_SOURCE_DIR}/includes
 	)

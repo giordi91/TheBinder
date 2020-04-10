@@ -2,6 +2,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <wchar.h>
 
 namespace binder::memory {
 
@@ -28,12 +29,9 @@ inline int isFlagSet(const uint8_t flags,
 }
 
 const char* StringPool::loadFile(const char* path, uint32_t& readFileSize) {
-  FILE* fp = nullptr;
 
-  const errno_t error = fopen_s(&fp, path, "rb");
-  // assert((error == 0) && "could not open file");
-  if (error != 0) {
-    // SE_CORE_ERROR("Could not open file {0}",path);
+  FILE* fp = fopen( path, "rb");
+  if (fp ==nullptr) {
     return nullptr;
   }
 
@@ -167,8 +165,7 @@ const char* StringPool::convert(const wchar_t* string, const uint8_t flags) {
   // make the allocation
   auto* newChar = reinterpret_cast<char*>(m_pool.allocate(len + 1, allocFlags));
   // do the conversion
-  size_t converted;
-  wcstombs_s(&converted, newChar, len + 1, string, len * 2);
+  wcstombs( newChar,  string, len + 1);
 
   // now we have some clean up to do based on flags
   const int firstSet = isFlagSet(flags, FREE_FIRST_AFTER_OPERATION);
@@ -191,8 +188,7 @@ const wchar_t* StringPool::convertWide(const char* string,
   auto* newChar = reinterpret_cast<wchar_t*>(
       m_pool.allocate(sizeof(wchar_t) * (len + 1), allocFlags));
   // do the conversion
-  size_t converted;
-  mbstowcs_s(&converted, newChar, (len + 1 * 2), string, len);
+  mbstowcs( newChar, string, (len + 1 * 2));
 
   // now we have some clean up to do based on flags
   const int inPool = m_pool.allocationInPool(string);

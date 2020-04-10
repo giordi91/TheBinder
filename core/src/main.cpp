@@ -1,5 +1,5 @@
-#include "memory/stringPool.cpp"
 #include "memory/farmhash.cpp"
+#include "memory/stringPool.cpp"
 
 
 #include "scanner.cpp"

@@ -217,15 +217,14 @@ void Scanner::scanIdentifier() {
   }
   assert(newString != nullptr);
 
-  //now that we have the string lets look it up in our map
-  TOKEN_TYPE type= TOKEN_TYPE::COUNT;
-  bool isReserved = STRING_TO_RESERVED.get(newString,type);
-  if(!isReserved)
-  {
-      type = TOKEN_TYPE::IDENTIFIER;
+  // now that we have the string lets look it up in our map
+  TOKEN_TYPE type = TOKEN_TYPE::COUNT;
+  bool isReserved = STRING_TO_RESERVED.get(newString, type);
+  if (!isReserved) {
+    type = TOKEN_TYPE::IDENTIFIER;
   }
 
-  m_tokens.pushBack({newString,line,type});
+  m_tokens.pushBack({newString, line, type});
 }
 
 bool Scanner::isDigit(const char c) { return (c >= '0') & (c <= '9'); }

@@ -1,4 +1,5 @@
 #include "binder/memory/hashMap.h"
+#include "binder/memory/stringHashMap.h"
 #include "binder/memory/hashing.h"
 
 #include "catch.h"
