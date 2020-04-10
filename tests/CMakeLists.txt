@@ -39,7 +39,11 @@ project(Tests)
 						${CMAKE_CURRENT_SOURCE_DIR}/src/
 						${CMAKE_SOURCE_DIR}/core/includes
 	)
-	file(COPY "testData" DESTINATION "${CMAKE_BINARY_DIR}/bin")
+	if(MSVC)
+		file(COPY "testData" DESTINATION "${CMAKE_BINARY_DIR}/bin")
+	else()
+		file(COPY "testData" DESTINATION "${CMAKE_BINARY_DIR}")
+	endif(MSVC)
 
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file
