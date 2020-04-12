@@ -22,3 +22,9 @@ jobs:
       run: |
         cd build/bin/${{matrix.configuration}}
         ./Tests.exe
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: test-win
+        path: build/bin/${{matrix.configuration}}/Tests.exe
+        if: matrix.configuration == 'Release' 
