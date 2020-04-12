@@ -22,9 +22,16 @@ jobs:
       run: |
         cd build/bin/${{matrix.configuration}}
         ./Tests.exe
-    - name: Upload artifact
-      uses: actions/upload-artifact@v1
+
+    - uses: actions/checkout@master
+    - name: Create release
+      uses: Roang-zero1/github-create-release-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create GitHub release
+      uses: Roang-zero1/github-upload-release-artifacts-action@master
       with:
-        name: test-win
-        path: build/bin/${{matrix.configuration}}/Tests.exe
+        args: build/bin/${{matrix.configuration}}/Tests.exe
         if: matrix.configuration == 'Release' 
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
