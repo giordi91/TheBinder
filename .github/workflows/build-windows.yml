@@ -22,16 +22,3 @@ jobs:
       run: |
         cd build/bin/${{matrix.configuration}}
         ./Tests.exe
-
-    - uses: actions/checkout@master
-    - name: Create release
-      uses: Roang-zero1/github-create-release-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Create GitHub release
-      uses: Roang-zero1/github-upload-release-artifacts-action@master
-      with:
-        args: build/bin/${{matrix.configuration}}/Tests.exe
-        if: matrix.configuration == 'Release' 
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
