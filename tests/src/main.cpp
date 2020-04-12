@@ -8,3 +8,4 @@
 #include "tokenTests.cpp"
 #include "treeSizesAllocatorTests.cpp"
 #include "hashMapTests.cpp"
+#include "basicASTPrinterTests.cpp"
