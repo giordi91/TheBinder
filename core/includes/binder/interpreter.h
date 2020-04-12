@@ -4,7 +4,7 @@
 namespace binder {
 
 struct ContextConfig {
-  const int m_stringPoolSizeInMb = 32;
+  int m_stringPoolSizeInMb = 32;
 };
 class BinderContext {
 public:
