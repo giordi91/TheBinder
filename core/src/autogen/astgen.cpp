@@ -9,9 +9,50 @@ namespace binder::autogen{
 
 class Binary : Expr
 {
+public:
 	Expr* left;
 	TOKEN_TYPE operator;
 	Expr* right;
+	Expr* accept(Visitor* visitor) override
+	{ 
+ 		visitor->acceptBinary(this);
+ 		return this;
+	};
 };
+
+class Grouping : Expr
+{
+public:
+	Expr* expr;
+	Expr* accept(Visitor* visitor) override
+	{ 
+ 		visitor->acceptGrouping(this);
+ 		return this;
+	};
+};
+
+class Literal : Expr
+{
+public:
+	const char* value;
+	Expr* accept(Visitor* visitor) override
+	{ 
+ 		visitor->acceptLiteral(this);
+ 		return this;
+	};
+};
+
+class Unary : Expr
+{
+public:
+	TOKEN_TYPE operator;
+	Expr* right;
+	Expr* accept(Visitor* visitor) override
+	{ 
+ 		visitor->acceptUnary(this);
+ 		return this;
+	};
+};
+
 
 }// namespace binder::autogen
