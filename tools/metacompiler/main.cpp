@@ -16,10 +16,10 @@ struct ASTNodeDefinition {
 };
 
 const ASTNodeDefinition definitions[] = {
-    {"Binary", "Expr<T>* left, TOKEN_TYPE op, Expr<T>* right"},
-    {"Grouping", "Expr<T>* expr"},
+    {"Binary", "Expr* left, TOKEN_TYPE op, Expr* right"},
+    {"Grouping", "Expr* expr"},
     {"Literal", "const char* value"},
-    {"Unary", "TOKEN_TYPE op, Expr<T>* right"},
+    {"Unary", "TOKEN_TYPE op, Expr* right"},
 };
 
 void writeHeader(FILE *fp) {
@@ -34,13 +34,13 @@ void writeIncludes(FILE *fp) {
 }
 
 void WriteASTNode(FILE *fp, const ASTNodeDefinition &definition) {
-  fprintf(fp, "template< typename T>\nclass ");
+  fprintf(fp, "class ");
   fprintf(fp, definition.className);
   fprintf(fp, " : public ");
   fprintf(fp, BASE_CLASS_NAME);
-  fprintf(fp, "<T>\n{\npublic:\n\t");
+  fprintf(fp, "\n{\npublic:\n\t");
   fprintf(fp, definition.className);
-  fprintf(fp, "():Expr<T>(){}\n\tvirtual ~");
+  fprintf(fp, "():Expr(){}\n\tvirtual ~");
   fprintf(fp, definition.className);
   fprintf(fp, "()=default;\n");
 
@@ -65,7 +65,7 @@ void WriteASTNode(FILE *fp, const ASTNodeDefinition &definition) {
   }
   // adding the interface
   // accept function
-  fprintf(fp, "\tT accept(Visitor<T>* visitor) override\n"
+  fprintf(fp, "\tvoid* accept(Visitor* visitor) override\n"
               "\t{ \n \t\treturn visitor->accept");
   fprintf(fp, definition.className);
   fprintf(fp, "(this);\n\n\t};\n");
@@ -89,25 +89,25 @@ void closeNamespace(FILE *fp) {
 
 void generateExpressionBaseClass(FILE *fp) {
   fprintf(fp,
-          "template< typename T>\nclass Expr {\n public:\n\tExpr() = default;\n"
+          "class Expr {\n public:\n\tExpr() = default;\n"
           "\tvirtual ~Expr()=default;\n\t //interface\n"
-          "\tT virtual accept(Visitor<T>* visitor)=0;\n};\n\n");
+          "\tvirtual void* accept(Visitor* visitor)=0;\n};\n\n");
 }
 
 void generateVisitorBaseClass(FILE *fp) {
   // forward declare of the expr class
-  fprintf(fp, "template <typename T> class Expr;\n\n");
+  fprintf(fp, "class Expr;\n\n");
   //generate a forward delcare for each class 
   int count = sizeof(definitions) / sizeof(definitions[0]);
   for (int i = 0; i < count; ++i) {
-    fprintf(fp, "template <typename T> class ");
+    fprintf(fp, "class ");
     fprintf(fp, definitions[i].className);
     fprintf(fp, ";\n");
   }
 
 
   // declaring the visitor interface, here the class and constructor destructor
-  fprintf(fp, "\ntemplate< typename T>\nclass Visitor{\n public:\n\tVisitor() "
+  fprintf(fp, "\nclass Visitor{\n public:\n\tVisitor() "
               "= default;\n"
               "\tvirtual ~Visitor()=default;\n\t//interface\n");
 
@@ -116,11 +116,11 @@ void generateVisitorBaseClass(FILE *fp) {
   //specific name to not get too crazy with overload, but probably 
   //overload would make the code a bit clearer? not sure
   for (int i = 0; i < count; ++i) {
-    fprintf(fp, "\tvirtual T accept");
+    fprintf(fp, "\tvirtual void* accept");
     fprintf(fp, definitions[i].className);
     fprintf(fp, "(");
     fprintf(fp, definitions[i].className);
-    fprintf(fp, "<T>* expr) = 0;\n");
+    fprintf(fp, "* expr) = 0;\n");
   }
   // closing the class
   fprintf(fp, "\n};\n");

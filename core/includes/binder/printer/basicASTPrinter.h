@@ -4,43 +4,52 @@
 #include "binder/tokens.h"
 
 namespace binder::printer {
-class BasicASTPrinter : autogen::Visitor<const char *> {
+class BasicASTPrinter : autogen::Visitor {
 public:
   BasicASTPrinter(memory::StringPool &pool)
-      : autogen::Visitor<const char *>(), m_pool(pool){};
+      : autogen::Visitor(), m_pool(pool){};
   virtual ~BasicASTPrinter() = default;
   // interface
-  const char *acceptBinary(autogen::Binary<const char *> *expr) override {
+  void *acceptBinary(autogen::Binary *expr) override {
     return parenthesize(getLexemeFromToken(expr->op), expr->left, expr->right);
   }
-  const char *acceptGrouping(autogen::Grouping<const char *> *expr) override {
-    return parenthesize("grouping", expr->expr, nullptr);
+  void *acceptGrouping(autogen::Grouping *expr) override {
+    return parenthesize("group", expr->expr, nullptr);
   }
-  const char *acceptLiteral(autogen::Literal<const char *> *expr) override {
-    return expr->value;
+  void *acceptLiteral(autogen::Literal *expr) override {
+    return (void *)expr->value;
   }
-  const char *acceptUnary(autogen::Unary<const char *> *expr) override {
+  void *acceptUnary(autogen::Unary *expr) override {
     return parenthesize(getLexemeFromToken(expr->op), expr->right, nullptr);
   }
 
-  const char *print(autogen::Expr<const char *> *expr) {
-    return expr->accept(this);
+  const char *print(autogen::Expr *expr) {
+    return (const char *)expr->accept(this);
   }
 
-  const char *parenthesize(const char *name, autogen::Expr<const char *> *expr1,
-                           autogen::Expr<const char *> *expr2) {
+  char *parenthesize(const char *name, autogen::Expr *expr1,
+                     autogen::Expr *expr2) {
 
     // write the name
     const char *title = m_pool.concatenate("(", " ", name);
-    const char *expr1str = expr1->accept(this);
-    const char *expr1done = m_pool.concatenate(title, expr1str);
-    if(expr2 != nullptr)
-    {
-        const char *expr2str = expr2->accept(this);
-        const char *expr2done = m_pool.concatenate( expr1done,")",expr2str);
-        return expr2done;
+    char *expr1str = (char *)expr1->accept(this);
+    const char flags = binder::memory::FREE_FIRST_AFTER_OPERATION |
+                       binder::memory::FREE_SECOND_AFTER_OPERATION;
+    const char *expr1done = m_pool.concatenate(title, expr1str, nullptr, flags);
+    if (expr2 != nullptr) {
+      // result from second expression
+      char *expr2str = (char *)expr2->accept(this);
+
+      //now we join with a space the first and second expression
+      const char *expr2join =
+          m_pool.concatenate(expr1done, expr2str, " ", flags);
+      //finally we add a closing parent
+      const char *expr2done = m_pool.concatenate(
+          expr2join, ")", nullptr, binder::memory::FREE_FIRST_AFTER_OPERATION);
+      return (char *)expr2done;
     }
-    return m_pool.concatenate(expr1done,")");
+    return (char *)m_pool.concatenate(
+        expr1done, ")", nullptr, binder::memory::FREE_FIRST_AFTER_OPERATION);
   }
 
 private:

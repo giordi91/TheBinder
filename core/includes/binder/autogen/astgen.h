@@ -7,87 +7,81 @@ Metacompiler for "TheBinder" language v0.0.1
 
 namespace binder::autogen{
 
-template <typename T> class Expr;
+class Expr;
 
-template <typename T> class Binary;
-template <typename T> class Grouping;
-template <typename T> class Literal;
-template <typename T> class Unary;
+class Binary;
+class Grouping;
+class Literal;
+class Unary;
 
-template< typename T>
 class Visitor{
  public:
 	Visitor() = default;
 	virtual ~Visitor()=default;
 	//interface
-	virtual T acceptBinary(Binary<T>* expr) = 0;
-	virtual T acceptGrouping(Grouping<T>* expr) = 0;
-	virtual T acceptLiteral(Literal<T>* expr) = 0;
-	virtual T acceptUnary(Unary<T>* expr) = 0;
+	virtual void* acceptBinary(Binary* expr) = 0;
+	virtual void* acceptGrouping(Grouping* expr) = 0;
+	virtual void* acceptLiteral(Literal* expr) = 0;
+	virtual void* acceptUnary(Unary* expr) = 0;
 
 };
-template< typename T>
 class Expr {
  public:
 	Expr() = default;
 	virtual ~Expr()=default;
 	 //interface
-	T virtual accept(Visitor<T>* visitor)=0;
+	virtual void* accept(Visitor* visitor)=0;
 };
 
-template< typename T>
-class Binary : public Expr<T>
+class Binary : public Expr
 {
 public:
-	Binary():Expr<T>(){}
+	Binary():Expr(){}
 	virtual ~Binary()=default;
-	Expr<T>* left;
+	Expr* left;
 	TOKEN_TYPE op;
-	Expr<T>* right;
-	T accept(Visitor<T>* visitor) override
+	Expr* right;
+	void* accept(Visitor* visitor) override
 	{ 
  		return visitor->acceptBinary(this);
 
 	};
 };
 
-template< typename T>
-class Grouping : public Expr<T>
+class Grouping : public Expr
 {
 public:
-	Grouping():Expr<T>(){}
+	Grouping():Expr(){}
 	virtual ~Grouping()=default;
-	Expr<T>* expr;
-	T accept(Visitor<T>* visitor) override
+	Expr* expr;
+	void* accept(Visitor* visitor) override
 	{ 
  		return visitor->acceptGrouping(this);
 
 	};
 };
 
-template< typename T>
-class Literal : public Expr<T>
+class Literal : public Expr
 {
 public:
-	Literal():Expr<T>(){}
+	Literal():Expr(){}
 	virtual ~Literal()=default;
 	const char* value;
-	T accept(Visitor<T>* visitor) override
+	void* accept(Visitor* visitor) override
 	{ 
  		return visitor->acceptLiteral(this);
 
 	};
 };
 
-template< typename T>
-class Unary : public Expr<T>
+class Unary : public Expr
 {
 public:
-	Unary():Expr<T>(){}
+	Unary():Expr(){}
 	virtual ~Unary()=default;
 	TOKEN_TYPE op;
-	Expr<T>* right;
-	T accept(Visitor<T>* visitor) override
+	Expr* right;
+	void* accept(Visitor* visitor) override
 	{ 
  		return visitor->acceptUnary(this);
 
