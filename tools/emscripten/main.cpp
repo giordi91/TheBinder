@@ -5,7 +5,7 @@
 
 extern "C"
 {
-    int test(int v)
+    int testMe(int v)
     {
         return v*2;
     }
@@ -23,6 +23,7 @@ int main() {
   const binder::memory::ResizableVector<binder::Token>& tokens =
       scanner.getTokens();
   std::cout<<"hello scanner "<<tokens.size()<<std::endl;
+  std::cout<<"hello scanner LOL "<<30<<std::endl;
 
   return 0;
 }
