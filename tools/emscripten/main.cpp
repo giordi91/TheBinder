@@ -5,25 +5,16 @@
 
 extern "C"
 {
-    int testMe(int v)
+    void bindExecute(const char* source)
     {
-        return v*2;
+      binder::ContextConfig config{};
+      config.m_stringPoolSizeInMb = 1;
+      binder::BinderContext context(config);
+      binder::Scanner scanner(&context);
+
+      scanner.scan(source);
+      const binder::memory::ResizableVector<binder::Token>& tokens =
+          scanner.getTokens();
+      std::cout<<"TheBinder scanner produced "<<tokens.size()<<" tokens"<<std::endl;
     }
-
-}
-
-int main() {
-  binder::ContextConfig config{};
-  config.m_stringPoolSizeInMb = 1;
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
-
-  const char *toScan = "(){}}{(,.-+*";
-  scanner.scan(toScan);
-  const binder::memory::ResizableVector<binder::Token>& tokens =
-      scanner.getTokens();
-  std::cout<<"hello scanner "<<tokens.size()<<std::endl;
-  std::cout<<"hello scanner LOL "<<30<<std::endl;
-
-  return 0;
 }
