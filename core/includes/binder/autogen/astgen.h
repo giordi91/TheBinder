@@ -67,6 +67,7 @@ class Literal : public Expr
 public:
 	Literal():Expr(){}
 	virtual ~Literal()=default;
+	TOKEN_TYPE type;
 	const char* value;
 	void* accept(Visitor* visitor) override
 	{ 

@@ -6,12 +6,10 @@ void Parser::parse(const memory::ResizableVector<Token> *tokens) {
   current = 0;
   m_tokens = tokens;
 
-  try{
-      m_root = expression();
-  }
-  catch(ParserException error)
-  {
-      m_root =nullptr;
+  try {
+    m_root = expression();
+  } catch (ParserException error) {
+    m_root = nullptr;
   }
 }
 
@@ -106,36 +104,40 @@ autogen::Expr *Parser::unary() {
 autogen::Expr *Parser::primary() {
 
   if (match(TOKEN_TYPE::BOOL_FALSE)) {
-      auto* expr = new autogen::Literal();
-      expr->value = "false";
-      return expr;
+    auto *expr = new autogen::Literal();
+    expr->value = "false";
+    expr->type = TOKEN_TYPE::BOOL_FALSE;
+    return expr;
   }
   if (match(TOKEN_TYPE::BOOL_TRUE)) {
-      auto* expr = new autogen::Literal();
-      expr->value = "true";
-      return expr;
+    auto *expr = new autogen::Literal();
+    expr->value = "true";
+    expr->type = TOKEN_TYPE::BOOL_TRUE;
+    return expr;
   }
   if (match(TOKEN_TYPE::NIL)) {
-      auto* expr = new autogen::Literal();
-      expr->value = nullptr;
-      return expr;
+    auto *expr = new autogen::Literal();
+    expr->value = nullptr;
+    expr->type = TOKEN_TYPE::NIL;
+    return expr;
   }
 
   TOKEN_TYPE types[] = {TOKEN_TYPE::NUMBER, TOKEN_TYPE::STRING};
   if (match(types, 2)) {
 
-    auto *expr= new autogen::Literal();
+    auto *expr = new autogen::Literal();
     expr->value = previous().m_lexeme;
+    expr->type = previous().m_type;
     return expr;
   }
 
   if (match(TOKEN_TYPE::LEFT_PAREN)) {
-      autogen::Expr* expr = expression();
-      consume(TOKEN_TYPE::RIGHT_PAREN,"Expected ')' after expresion.");
+    autogen::Expr *expr = expression();
+    consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after expresion.");
 
-        auto* grouping = new autogen::Grouping();
-        grouping->expr =expr;
-        return grouping;
+    auto *grouping = new autogen::Grouping();
+    grouping->expr = expr;
+    return grouping;
   }
 
   throw error(peek(), "Expected expression.");
@@ -175,25 +177,20 @@ const Token &Parser::advance() {
   return previous();
 }
 
-
 const Token &Parser::peek() const { return (*m_tokens)[current]; };
 const Token &Parser::previous() const { return (*m_tokens)[current - 1]; };
 
-ParserException* Parser::error(const Token& token, const char* message)
-{
-    m_context->reportError(token.m_line,message);
-    return new ParserException();
-
+ParserException *Parser::error(const Token &token, const char *message) {
+  m_context->reportError(token.m_line, message);
+  return new ParserException();
 }
 
-const Token& Parser::consume(TOKEN_TYPE type, const char* message)
-{
-    if(check(type))
-    {
-        return advance();
-    }
+const Token &Parser::consume(TOKEN_TYPE type, const char *message) {
+  if (check(type)) {
+    return advance();
+  }
 
-    throw error(peek(), message);
+  throw error(peek(), message);
 }
 
 } // namespace binder

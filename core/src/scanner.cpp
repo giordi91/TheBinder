@@ -186,7 +186,10 @@ void Scanner::scanString() {
   // after the ", so and the substring method of the pool takes the
   // value up and included to end index, so we need to subtract two
   // since we are passing an end index, m_source[endIdx].
-  addStringToken(start + 1, current - 2);
+  // there is the edge case, as per the addNumberToken, where if the string
+  // is length one would fail, due to startIdx==endIdx, in that case
+  // we only subtract one, not ideal might need some refactor
+  addStringToken(start + 1, current - 2  );
 }
 
 void Scanner::scanNumber() {
@@ -203,7 +206,10 @@ void Scanner::scanNumber() {
   }
 
   // since the current is at the token past the number we subtract 1
-  addNumberToken(start, current - 1);
+  // but there is the edge case where we have a single digit,
+  // which would give us start == current, in that case we bump by one
+  // not ideal, I would love to clean this up and have something more generic
+  addNumberToken(start, current - (current - start == 1 ? 0 : 1));
 }
 
 void Scanner::scanIdentifier() {
@@ -237,7 +243,7 @@ bool Scanner::isAlphaNumeric(const char c) { return isAlpha(c) | isDigit(c); }
 void Scanner::addStringToken(const uint32_t startIdx, const uint32_t endIdx) {
   const char *newString = "";
   // avoiding empty string
-  if (endIdx > startIdx) {
+  if (endIdx >= startIdx) {
     newString =
         m_context->getStringPool().subString(m_source, startIdx, endIdx);
   }

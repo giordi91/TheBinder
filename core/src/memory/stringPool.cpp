@@ -202,7 +202,7 @@ const wchar_t* StringPool::convertWide(const char* string,
 
 const char* StringPool::subString(const char* source, const uint32_t startIdx,
                                   const uint32_t endIdx, const uint8_t flags) {
-  assert(endIdx > startIdx);
+  assert(endIdx >= startIdx);
   //+2 is for the null termination and including the end index, we add it anyway just in case
   const uint32_t len = endIdx - startIdx + 2;
   const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::CHAR);

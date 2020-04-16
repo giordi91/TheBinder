@@ -18,7 +18,7 @@ struct ASTNodeDefinition {
 const ASTNodeDefinition definitions[] = {
     {"Binary", "Expr* left, TOKEN_TYPE op, Expr* right"},
     {"Grouping", "Expr* expr"},
-    {"Literal", "const char* value"},
+    {"Literal", "TOKEN_TYPE type, const char* value"},
     {"Unary", "TOKEN_TYPE op, Expr* right"},
 };
 

@@ -2,10 +2,16 @@
 #include "binder/scanner.h"
 #include "catch.h"
 
-TEST_CASE("scan basic tokens", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+class SetupScannerTestFixture {
+public:
+  SetupScannerTestFixture() : context({}), scanner(&context) {}
+
+protected:
+  binder::BinderContext context;
+  binder::Scanner scanner;
+};
+
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan basic tokens", "[scan]") {
 
   const char* toScan = "(){}}{(,.-+*";
   scanner.scan(toScan);
@@ -27,10 +33,7 @@ TEST_CASE("scan basic tokens", "[scan]") {
   REQUIRE(tokens[12].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
 
-TEST_CASE("scan something= tokens", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan something= tokens", "[scan]") {
 
   const char* toScan = "(=!===<=!>===";
   scanner.scan(toScan);
@@ -48,10 +51,7 @@ TEST_CASE("scan something= tokens", "[scan]") {
   REQUIRE(tokens[8].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
 
-TEST_CASE("scan comment", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan comment", "[scan]") {
 
   const char* toScan = "//=====!/!---\n)";
   scanner.scan(toScan);
@@ -63,10 +63,7 @@ TEST_CASE("scan comment", "[scan]") {
   REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
   REQUIRE(tokens[1].m_line == 1);
 }
-TEST_CASE("scan white spaces", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan white spaces", "[scan]") {
 
   const char* toScan = " ! \n{";
   scanner.scan(toScan);
@@ -79,10 +76,7 @@ TEST_CASE("scan white spaces", "[scan]") {
   REQUIRE(tokens[1].m_line == 1);
 }
 
-TEST_CASE("scan empty", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan empty", "[scan]") {
 
   const char* toScan = "";
   scanner.scan(toScan);
@@ -92,10 +86,7 @@ TEST_CASE("scan empty", "[scan]") {
   REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
 
-TEST_CASE("scan nullptr", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan nullptr", "[scan]") {
 
   const char* toScan = nullptr;
   scanner.scan(toScan);
@@ -105,10 +96,7 @@ TEST_CASE("scan nullptr", "[scan]") {
   REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
 
-TEST_CASE("scan string", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan string", "[scan]") {
 
   const char* toScan = "!--\"helloworld\"!";
   scanner.scan(toScan);
@@ -124,10 +112,7 @@ TEST_CASE("scan string", "[scan]") {
   REQUIRE(tokens[5].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
 
-TEST_CASE("scan empty string", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan empty string", "[scan]") {
 
   const char* toScan = "!--\"\"!";
   scanner.scan(toScan);
@@ -144,10 +129,7 @@ TEST_CASE("scan empty string", "[scan]") {
 	
 }
 
-TEST_CASE("scan parse integer", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan parse integer", "[scan]") {
 
   const char* toScan = " 1234!";
   scanner.scan(toScan);
@@ -161,10 +143,7 @@ TEST_CASE("scan parse integer", "[scan]") {
 	
 }
 
-TEST_CASE("scan parse float", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan parse float", "[scan]") {
 
   const char* toScan = "     \n1234.123333\n(!";
   scanner.scan(toScan);
@@ -193,10 +172,7 @@ TEST_CASE("scan parse float", "[scan]") {
 	
 
 }
-TEST_CASE("scan identifiers 1", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan identifiers 1", "[scan]") {
 
   const char* toScan = "chicago woa 123     !";
   scanner.scan(toScan);
@@ -215,10 +191,7 @@ TEST_CASE("scan identifiers 1", "[scan]") {
 }
 
 
-TEST_CASE("scan identifiers 2", "[scan]") {
-  binder::ContextConfig config{};
-  binder::BinderContext context(config);
-  binder::Scanner scanner(&context);
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan identifiers 2", "[scan]") {
 
   const char* toScan = "var helloWorld = 123";
   scanner.scan(toScan);
@@ -235,3 +208,67 @@ TEST_CASE("scan identifiers 2", "[scan]") {
   REQUIRE(tokens[4].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
 
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan single digit", "[scan]") {
+
+  const char* toScan = "1";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 2);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::NUMBER);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "1") == 0);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+
+
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan single char string", "[scan]") {
+  const char* toScan = "\"c\"";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 2);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::STRING);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "c") == 0);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan double char string", "[scan]") {
+  const char* toScan = "\"ci\"";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 2);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::STRING);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "ci") == 0);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan string with number1", "[scan]") {
+  const char* toScan = "\"c5\"";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 2);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::STRING);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "c5") == 0);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan string with number2", "[scan]") {
+  const char* toScan = "\"hello521world\"";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 2);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::STRING);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "hello521world") == 0);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan single char number string", "[scan]") {
+  const char* toScan = "\"3\"";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 2);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::STRING);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "3") == 0);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
