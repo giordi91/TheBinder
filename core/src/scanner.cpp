@@ -209,7 +209,7 @@ void Scanner::scanNumber() {
   // but there is the edge case where we have a single digit,
   // which would give us start == current, in that case we bump by one
   // not ideal, I would love to clean this up and have something more generic
-  addNumberToken(start, current - (current - start == 1 ? 0 : 1));
+  addNumberToken(start, current - 1);
 }
 
 void Scanner::scanIdentifier() {

@@ -229,6 +229,7 @@ TEST_CASE_METHOD(SetupScannerTestFixture,"scan single char string", "[scan]") {
   REQUIRE(tokens.size() == 2);
   REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::STRING);
   REQUIRE(strcmp(tokens[0].m_lexeme, "c") == 0);
+  REQUIRE(strlen(tokens[0].m_lexeme) == 1);
   REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
 TEST_CASE_METHOD(SetupScannerTestFixture,"scan double char string", "[scan]") {
@@ -272,3 +273,21 @@ TEST_CASE_METHOD(SetupScannerTestFixture,"scan single char number string", "[sca
   REQUIRE(strcmp(tokens[0].m_lexeme, "3") == 0);
   REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
 }
+
+TEST_CASE_METHOD(SetupScannerTestFixture,"scan mad single digit", "[scan]") {
+  const char* toScan = "1*3.14";
+  scanner.scan(toScan);
+  const binder::memory::ResizableVector<binder::Token>& tokens =
+      scanner.getTokens();
+  REQUIRE(tokens.size() == 4);
+  REQUIRE(tokens[0].m_type == binder::TOKEN_TYPE::NUMBER);
+  REQUIRE(strcmp(tokens[0].m_lexeme, "1") == 0);
+  REQUIRE(strlen(tokens[0].m_lexeme) ==1);
+  REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::STAR);
+  REQUIRE(tokens[2].m_type == binder::TOKEN_TYPE::NUMBER);
+  REQUIRE(strcmp(tokens[2].m_lexeme, "3.14") == 0);
+  REQUIRE(strlen(tokens[2].m_lexeme) ==4);
+  REQUIRE(tokens[3].m_type == binder::TOKEN_TYPE::END_OF_FILE);
+}
+
+
