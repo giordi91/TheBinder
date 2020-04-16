@@ -1,7 +1,7 @@
 #include "binder/interpreter.h"
 #include "binder/parser.h"
+#include "binder/printer/jsonASTPrinter.h"
 #include "binder/scanner.h"
-#include "binder/printer/basicASTPrinter.h"
 
 #include "catch.h"
 
@@ -54,9 +54,9 @@ const binder::autogen::Binary *compareBinary(const binder::autogen::Expr *expr,
 
 template <typename L>
 const binder::autogen::Unary *compareUnary(const binder::autogen::Expr *expr,
-                                             binder::TOKEN_TYPE expectedType,
-                                             const L **lhs) {
-  auto *unary= dynamic_cast<const binder::autogen::Unary*>(expr);
+                                           binder::TOKEN_TYPE expectedType,
+                                           const L **lhs) {
+  auto *unary = dynamic_cast<const binder::autogen::Unary *>(expr);
   REQUIRE(unary != nullptr);
   REQUIRE(unary->op == expectedType);
 
@@ -138,11 +138,7 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
   const binder::autogen::Expr *root = parser.getRoot();
   REQUIRE(root != nullptr);
 
-
-  //binder::printer::BasicASTPrinter printer(context.getStringPool());
-  //printf(printer.print((binder::autogen::Expr*)root));
-  
-  //this is the AST that we would expect
+  // this is the AST that we would expect
   //(+ (group (- (* 1 3.14))) (group (- (- 13))))
   // top should be a binary, with a left of grouping and right of Literal
   const binder::autogen::Grouping *grpLhs = nullptr;
@@ -150,25 +146,26 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
   compareBinary(root, binder::TOKEN_TYPE::PLUS, &grpLhs, &grpRhs);
 
   // now lets go down the left hand side first
-  // we expect a unary operation which negates a binary, 
-  // that seems counter intuitive but remember then we evaluate from 
+  // we expect a unary operation which negates a binary,
+  // that seems counter intuitive but remember then we evaluate from
   // the leaves of the tree, so you see lower precendece outside
-  const binder::autogen::Binary*lhsBinary= nullptr;
+  const binder::autogen::Binary *lhsBinary = nullptr;
   compareUnary(grpLhs->expr, binder::TOKEN_TYPE::MINUS, &lhsBinary);
 
-  //so now the unary should have the binary insider it
-  const binder::autogen::Literal *binLhs= nullptr;
+  // so now the unary should have the binary insider it
+  const binder::autogen::Literal *binLhs = nullptr;
   const binder::autogen::Literal *binRhs = nullptr;
   compareBinary(lhsBinary, binder::TOKEN_TYPE::STAR, &binLhs, &binRhs);
 
-  compareLiteral(binLhs, binder::TOKEN_TYPE::NUMBER,"1");
-  compareLiteral(binRhs, binder::TOKEN_TYPE::NUMBER,"3.14");
+  compareLiteral(binLhs, binder::TOKEN_TYPE::NUMBER, "1");
+  compareLiteral(binRhs, binder::TOKEN_TYPE::NUMBER, "3.14");
 
-  //now we can go down the initial binary rhs, the (--13) part
-  const binder::autogen::Unary*insideUnary = nullptr;
+  // now we can go down the initial binary rhs, the (--13) part
+  // grpRhs->expr is already the first unary, so comparing a unary and
+  // getting back out the second unary, which then in ther ->right has the final
+  // literal being the number.
+  const binder::autogen::Unary *insideUnary = nullptr;
   compareUnary(grpRhs->expr, binder::TOKEN_TYPE::MINUS, &insideUnary);
 
   compareLiteral(insideUnary->right, binder::TOKEN_TYPE::NUMBER, "13");
-
-
 }
