@@ -130,6 +130,8 @@ int main() {
   FILE *fp = fopen(outputFile, "w");
   assert(fp != nullptr);
 
+  //writing header guard
+  fprintf(fp, "#pragma once \n");
   writeHeader(fp);
   writeIncludes(fp);
   openNamespace(fp);

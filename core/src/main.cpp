@@ -4,3 +4,4 @@
 
 #include "scanner.cpp"
 #include "interpreter.cpp"
+#include "parser.cpp"

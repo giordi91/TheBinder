@@ -9,3 +9,4 @@
 #include "treeSizesAllocatorTests.cpp"
 #include "hashMapTests.cpp"
 #include "basicASTPrinterTests.cpp"
+#include "parserTests.cpp"
