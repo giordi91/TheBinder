@@ -19,7 +19,6 @@ public:
   }
   void *acceptLiteral(autogen::Literal *expr) override {
 
-    const char sf = binder::memory::FREE_SECOND_AFTER_OPERATION;
     const char ff = binder::memory::FREE_FIRST_AFTER_OPERATION;
 
     const char *title = m_pool.concatenate("{ \"type\" : \"", "\"",

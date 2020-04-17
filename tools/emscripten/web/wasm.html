@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Emscripten-Generated Code</title>
+    <link rel="stylesheet" href="css/aststyle.css"> 
+    <link rel="stylesheet" href="css/bodystyle.css"> 
+    <style>
+      .emscripten { 
+          padding-right: 0; 
+          margin-left: auto; 
+          margin-right: auto; 
+          display: block; 
+          background-color: #181818;
+          border-color: #99cc66;
+          font-family: monospace; 
+          color: white; 
+          width: 80%; 
+      }
+      textarea.emscripten { 
+          font-family: monospace; 
+          width: 80%; 
+      }
+    </style>
+  </head>
+  <script src="js/astbuilder.js"></script>
+  <script src="js/glue.js"></script>
+  <body>
+    <h1 class="title" >THE BINDER v0.0.1</h1>
+    <label for="source" class="greentext">Write your source code here and press enter to evaluate</label>
+    <textarea class="emscripten" id="source" rows="16" ></textarea>
+    <label  for="output" class="greentext">code output:</label>
+    <textarea class="emscripten" id="output" rows="8"></textarea>
+    <button type="button" class="collapsible">AST</button>
+    <div class="content" id="AST">
+    </div>
+
+
+    <script type='text/javascript'>
+
+    //triggering the glue code for html elements
+    initPage();
+
+    //this is the actual function that gets evaluated when enter is pressed
+    //in the input source text area
+    function processCode() {
+    
+      var element = document.getElementById('source');
+    
+      //debug string
+      // var source = "(){}}{(,.-+*";
+      var source = element.value;
+      //in order to feed the string to wasm, it neesd to be converted to essentially a char*
+      var ptr = allocate(intArrayFromString(source), 'i8', ALLOC_NORMAL);
+      //now we can load the function which I have cwrapped and added to the module
+      var AST = Module.binderExecuteWASM(source);
+      //logging the ast for debug purpose
+      console.log(AST);
+      //passing the AST to our visualizaiton function
+      showAST(AST); 
+      //the manulaly converted string needs to be freed by us, same goes for the returned
+      //value by wasm
+      _free(ptr);
+      _free(AST);
+    }
+    //========== EMSCRIPTEN STUFF =================
+
+      var Module = {
+        preRun: [],
+          postRun: [()=>{
+          
+          console.log("loaded");
+          Module.binderExecuteWASM = this.cwrap('bindExecute','string',['string']);
+          console.log(Module);
+          }], 
+         print: 
+          (text)=>{
+            console.log(text);
+          var element = document.getElementById('output');
+              if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight; // focus on bottom
+              }
+          },
+        printErr: function(text) {
+          if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+          console.error(text);
+        },
+      };
+
+    </script>
+    {{{ SCRIPT }}}
+  </body>
+</html>
