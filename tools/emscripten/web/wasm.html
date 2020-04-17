@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="en-us">
+<html lang="en-us" class="gr__nerdfonts_com" dir="ltr" >
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>Emscripten-Generated Code</title>
     <link rel="stylesheet" href="css/aststyle.css"> 
     <link rel="stylesheet" href="css/bodystyle.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
       .emscripten { 
           padding-right: 0; 
@@ -28,13 +29,36 @@
   <script src="js/glue.js"></script>
   <body>
     <h1 class="title" >THE BINDER v0.0.1</h1>
-    <label for="source" class="greentext">Write your source code here and press enter to evaluate</label>
+    <hr class="thickbar">
+    <p class="greentext"> This is a toy language written in c++ following the <a href="https://craftinginterpreters.com/" target="_blank">crafting interpreter book</a>, and ported to WASM . For now is quite limited but I will keep building on it. Feel free to hack around! Check the  
+<a href="https://github.com/giordi91/thebinder" target="_blank"><i class="fa fa-github" style="font-size:30px;" ></i> repository</a> out and my previous language 
+<a  href="https://github.com/giordi91/babycpp" target="_blank"><i class="fa fa-github" style="font-size:30px;"></i> babycpp!</a><p>
+    <hr class="thickbar">
+    <h3 class="greentext" >What can you do</h1>
+    <div class="tab">
+          <button class="tablinks" onclick="openActionTab(event, 'expressions')">Expressions</button>
+            <button class="tablinks" onclick="openActionTab(event, 'soon')">Coming soon...</button>
+    </div>
+    <div id="expressions" class="tabcontent">
+        <p>You can evaluate mathematical expressions like.</p>
+        <p>(-1*3.14)+(-13)</p>
+    </div>
+
+    <div id="soon" class="tabcontent" style="display:none">
+        <p> I am currently working on this in my spare time, soon you will be
+        able to actually execute expressions and from there i will be adding 
+        features like loops , branches , variables etc.
+    </div>
+
+
+    <hr class="thickbar">
+    <label for="source" class="greentext">Write your source code here and press enter to evaluate:</label>
     <textarea class="emscripten" id="source" rows="16" ></textarea>
     <label  for="output" class="greentext">code output:</label>
     <textarea class="emscripten" id="output" rows="8"></textarea>
-    <button type="button" class="collapsible">AST</button>
-    <div class="content" id="AST">
-    </div>
+    <button type="button" class="collapsible">&#x25B6; AST</button>
+    <div class="content" id="AST"></div>
+    <hr class="thickbar">
 
 
     <script type='text/javascript'>
