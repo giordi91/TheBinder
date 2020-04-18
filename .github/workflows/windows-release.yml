@@ -33,8 +33,8 @@ jobs:
     #    choco install python3 -no-progress -y
     #    choco install nodejs -no-progress -y
     #    choco install javaruntime -no-progress -y
-    - uses: lovasoa/setup-emscripten@master
-    - name: build js for release
+    - uses: mymindstorm/setup-emsdk@v4
+    - name: Setup Emscripten toolchain
       run: |
         #cd build
         #git clone https://github.com/emscripten-core/emsdk.git
