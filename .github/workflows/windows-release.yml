@@ -6,7 +6,7 @@ on: [push]
 #    # Sequence of patterns matched against refs/tags
 #    tags:
 #    - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-name: Upload Release Asset
+name: Javascript build release
 jobs:
   windows:
     runs-on: windows-latest
@@ -27,20 +27,21 @@ jobs:
       run: |
         cd build/bin/${{matrix.configuration}}
         ./Tests.exe
-    - name: install deps emscripten
-      run: |
-        Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-        choco install python3 -no-progress
-        choco install nodejs -no-progress
-        choco install javaruntime -no-progress
+    #- name: install deps emscripten
+    #  run: |
+    #    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+    #    choco install python3 -no-progress -y
+    #    choco install nodejs -no-progress -y
+    #    choco install javaruntime -no-progress -y
+    - uses: lovasoa/setup-emscripten@master
     - name: build js for release
       run: |
-        cd build
-        git clone https://github.com/emscripten-core/emsdk.git
+        #cd build
+        #git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
-        .\emsdk activate latest
-        .\emsdk_env.bat
-        cd ../../customBuild/
+        #.\emsdk activate latest
+        #.\emsdk_env.bat
+        cd customBuild/
         .\build-js.bat
       #    - name: Create Release
       #      id: create_release
