@@ -50,7 +50,7 @@ jobs:
         draft: false
         prerelease: false
     - name: Upload wasm 
-      id: upload-release-asset 
+      id: upload-release-asset-wasm 
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +62,7 @@ jobs:
         asset_content_type: application/wasm
 
     - name: Upload js 
-      id: upload-release-asset 
+      id: upload-release-asset-js 
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
