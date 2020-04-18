@@ -30,9 +30,9 @@ jobs:
     - name: install deps emscripten
       run: |
         Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-        choco install python3
-        choco install nodejs
-        choco install javaruntime
+        choco install python3 -no-progress
+        choco install nodejs -no-progress
+        choco install javaruntime -no-progress
     - name: build js for release
       run: |
         cd build
