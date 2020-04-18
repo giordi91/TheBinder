@@ -29,13 +29,13 @@ jobs:
         ./Tests.exe
     - name: build js for release
       run: |
-      cd build
-      git clone https://github.com/emscripten-core/emsdk.git
-      cd emsdk
-      .\emsdk activate latest
-      .\emsdk_env.bat
-      cd ../../customBuild/
-      .\build-js.bat
+        cd build
+        git clone https://github.com/emscripten-core/emsdk.git
+        cd emsdk
+        .\emsdk activate latest
+        .\emsdk_env.bat
+        cd ../../customBuild/
+        .\build-js.bat
       #    - name: Create Release
       #      id: create_release
       #      uses: actions/create-release@v1
