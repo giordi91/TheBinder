@@ -63,6 +63,3 @@ jobs:
         asset_path: build/mono/js/theBinder_v0.0.1.zip
         asset_name: theBinder_v0.0.1.zip
         asset_content_type: application/zip
-
-
-
