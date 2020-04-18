@@ -1,4 +1,4 @@
-#include "binder/interpreter.h"
+#include "binder/context.h"
 #include "binder/scanner.h"
 #include "catch.h"
 

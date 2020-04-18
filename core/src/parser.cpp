@@ -1,3 +1,4 @@
+#include "binder/context.h"
 #include "binder/parser.h"
 
 namespace binder {
@@ -23,7 +24,7 @@ autogen::Expr *Parser::equality() {
   while (match(types, 2)) {
     Token op = previous();
     autogen::Expr *right = comparison();
-    // what to do about this allocations?
+    //TODO  deal with this allocation
     autogen::Binary *binary = new autogen::Binary();
     binary->left = expr;
     binary->op = op.m_type;

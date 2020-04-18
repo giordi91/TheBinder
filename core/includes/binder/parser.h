@@ -3,7 +3,6 @@
 #include "binder/memory/resizableVector.h"
 #include "binder/tokens.h"
 #include "binder/autogen/astgen.h"
-#include "binder/interpreter.h"
 
 #include <exception>
 
@@ -17,6 +16,7 @@ struct ParserException : public std::exception{
 
 
 namespace binder {
+class BinderContext;
 
 class Parser {
 public:

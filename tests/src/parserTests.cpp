@@ -1,4 +1,4 @@
-#include "binder/interpreter.h"
+#include "binder/context.h"
 #include "binder/parser.h"
 #include "binder/printer/jsonASTPrinter.h"
 #include "binder/scanner.h"

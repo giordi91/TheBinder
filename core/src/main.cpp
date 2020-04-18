@@ -3,5 +3,6 @@
 
 
 #include "scanner.cpp"
+#include "context.cpp"
 #include "interpreter.cpp"
 #include "parser.cpp"
