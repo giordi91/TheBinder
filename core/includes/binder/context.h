@@ -14,11 +14,16 @@ public:
   void run(const char *code);
 
   void reportError(const int line, const char *message) {
-    report(line, "", message);
     m_hadError = true;
+    if (m_errorReportingEnabled) {
+      report(line, "", message);
+    }
   };
 
   memory::StringPool &getStringPool() { return m_stringPool; }
+
+  bool hadError() const { return m_hadError; }
+  void setErrorReportingEnabled(bool value) { m_errorReportingEnabled = value; }
 
 private:
   static void report(const int line, const char *location, const char *message);
@@ -27,6 +32,7 @@ private:
   const ContextConfig m_config;
   memory::StringPool m_stringPool;
   bool m_hadError = false;
+  bool m_errorReportingEnabled = true;
 };
 
 } // namespace binder

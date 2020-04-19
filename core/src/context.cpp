@@ -22,6 +22,7 @@ void BinderContext::runFile(const char* filePath) {
   }
 }
 
+
 void BinderContext::run(const char* code) {}
 
 void BinderContext::report(const int line, const char* location,

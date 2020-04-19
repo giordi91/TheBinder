@@ -20,6 +20,14 @@ class SetupParserTestFixture {
 public:
   SetupParserTestFixture() : context({}), scanner(&context), parser(&context) {}
 
+  const binder::autogen::Expr *parse(const char *source) {
+    scanner.scan(source);
+    const binder::memory::ResizableVector<binder::Token> &tokens =
+        scanner.getTokens();
+    parser.parse(&tokens);
+    return parser.getRoot();
+  }
+
 protected:
   binder::BinderContext context;
   binder::Scanner scanner;
@@ -67,12 +75,7 @@ const binder::autogen::Unary *compareUnary(const binder::autogen::Expr *expr,
 
 TEST_CASE_METHOD(SetupParserTestFixture, "basic number parse", "[parser]") {
 
-  const char *toScan = "12345.5";
-  scanner.scan(toScan);
-  const binder::memory::ResizableVector<binder::Token> &tokens =
-      scanner.getTokens();
-  parser.parse(&tokens);
-  const binder::autogen::Expr *root = parser.getRoot();
+  const binder::autogen::Expr *root = parse("12345.5");
   REQUIRE(root != nullptr);
   compareLiteral(root, binder::TOKEN_TYPE::NUMBER, "12345.5");
 }
@@ -80,12 +83,7 @@ TEST_CASE_METHOD(SetupParserTestFixture, "basic number parse", "[parser]") {
 TEST_CASE_METHOD(SetupParserTestFixture, "basic multiply", "[parser]") {
 
   // no space in the rhs
-  const char *toScan = "77 *323.2";
-  scanner.scan(toScan);
-  const binder::memory::ResizableVector<binder::Token> &tokens =
-      scanner.getTokens();
-  parser.parse(&tokens);
-  const binder::autogen::Expr *root = parser.getRoot();
+  const binder::autogen::Expr *root = parse("77 *323.2");
   REQUIRE(root != nullptr);
 
   const binder::autogen::Literal *l = nullptr;
@@ -102,13 +100,7 @@ TEST_CASE_METHOD(SetupParserTestFixture, "basic multiply", "[parser]") {
 
 TEST_CASE_METHOD(SetupParserTestFixture, "MAD 1", "[parser]") {
 
-  // no space in the rhs
-  const char *toScan = "(144.4*3.14)+12";
-  scanner.scan(toScan);
-  const binder::memory::ResizableVector<binder::Token> &tokens =
-      scanner.getTokens();
-  parser.parse(&tokens);
-  const binder::autogen::Expr *root = parser.getRoot();
+  const binder::autogen::Expr *root = parse("(144.4*3.14)+12");
   REQUIRE(root != nullptr);
 
   // top should be a binary, with a left of grouping and right of Literal
@@ -129,13 +121,7 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 1", "[parser]") {
 
 TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
 
-  // no space in the rhs
-  const char *toScan = "(-1*3.14)+(--13)";
-  scanner.scan(toScan);
-  const binder::memory::ResizableVector<binder::Token> &tokens =
-      scanner.getTokens();
-  parser.parse(&tokens);
-  const binder::autogen::Expr *root = parser.getRoot();
+  const binder::autogen::Expr *root = parse("(-1*3.14)+(--13)");
   REQUIRE(root != nullptr);
 
   // this is the AST that we would expect
