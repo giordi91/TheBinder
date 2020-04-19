@@ -45,7 +45,7 @@ private:
   const Token& peek() const;
   const Token& previous() const;
   const Token& consume(TOKEN_TYPE type, const char* message);
-  ParserException* error(const Token& token, const char* message);
+  ParserException error(const Token& token, const char* message);
 
 
 private:

@@ -155,3 +155,42 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
 
   compareLiteral(insideUnary->right, binder::TOKEN_TYPE::NUMBER, "13");
 }
+
+TEST_CASE_METHOD(SetupParserTestFixture, "expression error 1", "[parser]") {
+  context.setErrorReportingEnabled(false);
+  const binder::autogen::Expr *root = parse("1 ** 1");
+  REQUIRE(root == nullptr);
+  REQUIRE(context.hadError()==true);
+  context.setErrorReportingEnabled(true);
+
+}
+
+TEST_CASE_METHOD(SetupParserTestFixture, "expression error 2", "[parser]") {
+  context.setErrorReportingEnabled(false);
+  const binder::autogen::Expr *root = parse("(1 * 1");
+  REQUIRE(root == nullptr);
+  REQUIRE(context.hadError()==true);
+  context.setErrorReportingEnabled(true);
+
+}
+
+TEST_CASE_METHOD(SetupParserTestFixture, "expression error 3", "[parser]") {
+
+  const binder::autogen::Expr *root = parse("-1 * \"t\"");
+  REQUIRE(root != nullptr);
+  REQUIRE(context.hadError()==false);
+
+  const binder::autogen::Binary *bin = nullptr;
+  compareUnary(root, binder::TOKEN_TYPE::MINUS, &bin);
+
+  const binder::autogen::Literal *lhs= nullptr;
+  const binder::autogen::Literal* rhs= nullptr;
+  compareBinary(bin, binder::TOKEN_TYPE::STAR, &lhs, &rhs);
+
+
+  compareLiteral(lhs, binder::TOKEN_TYPE::NUMBER, "1");
+  compareLiteral(rhs, binder::TOKEN_TYPE::STRING, "t");
+
+
+}
+

@@ -1,5 +1,6 @@
 #include "binder/context.h"
 #include "binder/parser.h"
+#include <stdio.h>
 
 namespace binder {
 
@@ -9,7 +10,7 @@ void Parser::parse(const memory::ResizableVector<Token> *tokens) {
 
   try {
     m_root = expression();
-  } catch (ParserException error) {
+  } catch (ParserException e) {
     m_root = nullptr;
   }
 }
@@ -24,7 +25,7 @@ autogen::Expr *Parser::equality() {
   while (match(types, 2)) {
     Token op = previous();
     autogen::Expr *right = comparison();
-    //TODO  deal with this allocation
+    // TODO  deal with this allocation
     autogen::Binary *binary = new autogen::Binary();
     binary->left = expr;
     binary->op = op.m_type;
@@ -141,7 +142,7 @@ autogen::Expr *Parser::primary() {
     return grouping;
   }
 
-  throw error(peek(), "Expected expression.");
+  throw error(peek(), "Expected primary expression.");
 }
 
 bool Parser::match(const TOKEN_TYPE *types, const int size) {
@@ -181,9 +182,9 @@ const Token &Parser::advance() {
 const Token &Parser::peek() const { return (*m_tokens)[current]; };
 const Token &Parser::previous() const { return (*m_tokens)[current - 1]; };
 
-ParserException *Parser::error(const Token &token, const char *message) {
+ParserException Parser::error(const Token &token, const char *message) {
   m_context->reportError(token.m_line, message);
-  return new ParserException();
+  return ParserException();
 }
 
 const Token &Parser::consume(TOKEN_TYPE type, const char *message) {

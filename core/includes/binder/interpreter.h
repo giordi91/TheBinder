@@ -10,10 +10,11 @@ class Expr;
 //used to keep track of the type of our runtime
 enum class RuntimeValueType
 {
-    NUMBER,
+    NUMBER=0,
     STRING,
     NIL,
     BOOLEAN,
+    INVALID
 };
 
 
@@ -32,7 +33,9 @@ struct RuntimeValue
         const char* string;
         bool boolean;
     };
-    RuntimeValueType type;
+    RuntimeValueType type = RuntimeValueType::INVALID;
+
+    const char* toString(BinderContext* context);
 };
 
 // NOTE possibly have an abstract class at the base as

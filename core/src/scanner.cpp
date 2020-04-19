@@ -26,6 +26,7 @@ Scanner::Scanner(BinderContext *context) : m_tokens(1024), m_context(context) {
   STRING_TO_RESERVED.insert("return", TOKEN_TYPE::RETURN);
   STRING_TO_RESERVED.insert("super", TOKEN_TYPE::SUPER);
   STRING_TO_RESERVED.insert("this", TOKEN_TYPE::THIS);
+  STRING_TO_RESERVED.insert("true", TOKEN_TYPE::BOOL_TRUE);
   STRING_TO_RESERVED.insert("var", TOKEN_TYPE::VAR);
   STRING_TO_RESERVED.insert("while", TOKEN_TYPE::WHILE);
 }
