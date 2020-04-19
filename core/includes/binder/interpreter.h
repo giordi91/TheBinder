@@ -17,6 +17,9 @@ enum class RuntimeValueType
 };
 
 
+class BinderContext;
+
+
 //this is our generic runtime value and can be any 
 //of the supported types.
 //not a huge fan of crazy modern bananas c++ but I guess this might
@@ -37,10 +40,13 @@ struct RuntimeValue
 class ASTInterpreter {
 
 public:
-  ASTInterpreter() = default;
+  ASTInterpreter(BinderContext* context):m_context(context){};
   ~ASTInterpreter() = default;
 
-  const char *interpret(autogen::Expr *ASTRoot);
+  RuntimeValue* interpret(autogen::Expr *ASTRoot);
+private:
+  BinderContext* m_context;
+
 };
 
 } // namespace binder
