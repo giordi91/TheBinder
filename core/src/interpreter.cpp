@@ -15,6 +15,7 @@ const char *RuntimeValue::toString(BinderContext *context) {
   memory::StringPool &pool = context->getStringPool();
   char valueStr[50];
   const char *finalStrValue = valueStr;
+  bool shouldFreeValueStr = false;
   switch (type) {
   case (RuntimeValueType::NUMBER): {
     snprintf(valueStr, 50, "%f", number);
@@ -29,7 +30,8 @@ const char *RuntimeValue::toString(BinderContext *context) {
     break;
   }
   case (RuntimeValueType::STRING): {
-    finalStrValue = string;
+    finalStrValue = pool.concatenate("\"", "\"", string);
+    shouldFreeValueStr = true;
     break;
   }
   default:
@@ -37,11 +39,14 @@ const char *RuntimeValue::toString(BinderContext *context) {
            "unhandled value in runtime type, it is INVALID, report as bug");
   }
 
+  char ff = memory::FREE_FIRST_AFTER_OPERATION;
+  char fs = memory::FREE_SECOND_AFTER_OPERATION;
+  char flags = shouldFreeValueStr ? fs | ff : ff;
+
   // ok now we have the value so we need to compose a message
   const char *temp = pool.concatenate("Runtime value with type ", " and value ",
                                       RUNTIME_TYPE_NAMES[(int)type]);
-  return pool.concatenate(temp, finalStrValue, nullptr,
-                          memory::FREE_FIRST_AFTER_OPERATION);
+  return pool.concatenate(temp, finalStrValue, nullptr, flags);
 }
 
 struct RuntimeException : public std::exception {
@@ -96,11 +101,11 @@ const char *buildBinaryOperationError(BinderContext *context,
 
   const char *temp =
       pool.concatenate(base, "and \n left value: \n\t", getLexemeFromToken(op));
-  //we can free temp and joiner
-  temp = pool.concatenate(temp, "\n right value:\n\t",leftValue, ff|fj);
-  //we can free both sides since are result of concatenationor build
-  //by the toString (which result is in the pool)
-  temp = pool.concatenate(temp, "\n", rightValue, ff|fs);
+  // we can free temp and joiner
+  temp = pool.concatenate(temp, "\n right value:\n\t", leftValue, ff | fj);
+  // we can free both sides since are result of concatenationor build
+  // by the toString (which result is in the pool)
+  temp = pool.concatenate(temp, "\n", rightValue, ff | fs);
 
   return temp;
 }
@@ -123,6 +128,11 @@ bool isEqual(RuntimeValue *left, RuntimeValue *right) {
   return left->number == right->number;
 }
 
+bool areBothNumbers(RuntimeValue *left, RuntimeValue *right) {
+  return (left->type == RuntimeValueType::NUMBER) &
+         (right->type == RuntimeValueType::NUMBER);
+}
+
 // visitor to evaluate  the code
 class ASTInterpreterVisitor : public autogen::Visitor {
 public:
@@ -142,18 +152,23 @@ public:
     assertBinaryFull(left, right);
     switch (expr->op) {
     case (TOKEN_TYPE::MINUS): {
-      assertBinaryNumber(left, right);
+      if (!areBothNumbers(left, right)) {
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::MINUS));
+      }
       left->number = (left->number) - (right->number);
       return left;
     }
     case (TOKEN_TYPE::SLASH): {
-      assertBinaryNumber(left, right);
+      if (!areBothNumbers(left, right)) {
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::SLASH));
+      }
       left->number = (left->number) / (right->number);
       return left;
     }
     case (TOKEN_TYPE::STAR): {
-      // assertBinaryNumber(left, right);
-      if (left->type != right->type) {
+      if (!areBothNumbers(left, right)) {
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::STAR));
       }
@@ -161,19 +176,20 @@ public:
       return left;
     }
     case (TOKEN_TYPE::PLUS): {
-      if ((left->type == RuntimeValueType::NUMBER) &
-          (right->type == RuntimeValueType::NUMBER)) {
+      if (areBothNumbers(left, right)) {
         left->number = (left->number) + (right->number);
         return left;
       } else if ((left->type == RuntimeValueType::STRING) &
                  (right->type == RuntimeValueType::STRING)) {
         // TODO figure out if it safe to free the strings
+        // how to keep track of a concatenated string should i just
+        // flush ad the end and not track for runtime concatenated strings?
         left->string =
             m_context->getStringPool().concatenate(left->string, right->string);
         return left;
       } else {
-        assert(0 && "cannot mix strings and numbers for + operation");
-        return nullptr;
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::PLUS));
       }
     }
       // comparison operatrions

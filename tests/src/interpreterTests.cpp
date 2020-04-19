@@ -73,24 +73,25 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mult", "[interpreter]") {
     double left = randfrom(-10000.0, 10000.0);
     double right = randfrom(-10000.0, 10000.0);
     char source[150];
-    snprintf(source, 150, "%f * %f", left,right);
+    snprintf(source, 150, "%f * %f", left, right);
     binder::RuntimeValue *result = interpret(source);
     REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
-    REQUIRE(result->number == Approx(left*right));
+    REQUIRE(result->number == Approx(left * right));
   }
 }
 
-TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mad unary", "[interpreter]") {
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mad unary",
+                 "[interpreter]") {
 
   for (int i = 0; i < 2000; ++i) {
     double left = randfrom(-10000.0, 10000.0);
     double right = randfrom(-10000.0, 10000.0);
     double add = randfrom(-10000.0, 10000.0);
     char source[200];
-    snprintf(source, 200, "-((%f * %f) + %f)", left,right,add);
+    snprintf(source, 200, "-((%f * %f) + %f)", left, right, add);
     binder::RuntimeValue *result = interpret(source);
     REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
-    REQUIRE(result->number == Approx(-((left*right) + add)));
+    REQUIRE(result->number == Approx(-((left * right) + add)));
   }
 }
 
@@ -101,24 +102,72 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "expression 1", "[interpreter]") {
   REQUIRE(result->number == Approx(9.86));
 }
 
-TEST_CASE_METHOD(SetupInterpreterTestFixture, "error 1", "[interpreter]") {
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "error binary runtime mul bool",
+                 "[interpreter]") {
 
   context.setErrorReportingEnabled(false);
   binder::RuntimeValue *result = interpret("-1 * true");
   REQUIRE(result == nullptr);
-  REQUIRE(context.hadError()==true);
+  REQUIRE(context.hadError() == true);
   context.setErrorReportingEnabled(true);
 }
 
-
-TEST_CASE_METHOD(SetupInterpreterTestFixture, "error 2", "[interpreter]") {
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "error binary runtime mul str",
+                 "[interpreter]") {
 
   context.setErrorReportingEnabled(false);
   binder::RuntimeValue *result = interpret("-1 * \"t\"");
   REQUIRE(result == nullptr);
-  REQUIRE(context.hadError()==true);
+  REQUIRE(context.hadError() == true);
   context.setErrorReportingEnabled(true);
-
 }
 
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "error binary runtime divide",
+                 "[interpreter]") {
 
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret("11.2 / \"error\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "error binary runtime minus",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret("10 - \"minus!\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "error binary runtime add str",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret("15.201 + \"letsadd\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "error binary runtime add str 2",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret(" \"letsadd\" + 2222");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime add str str",
+                 "[interpreter]") {
+
+  binder::RuntimeValue *result = interpret(" \"hello \" + \"world\"");
+  REQUIRE(result != nullptr);
+  REQUIRE(context.hadError() == false);
+  REQUIRE(result->type == binder::RuntimeValueType::STRING);
+  REQUIRE(strcmp(result->string, "hello world") == 0);
+}
