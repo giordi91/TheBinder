@@ -16,10 +16,10 @@ struct ASTNodeDefinition {
 };
 
 const ASTNodeDefinition definitions[] = {
-    {"Binary", "Expr* left, TOKEN_TYPE op, Expr* right"},
-    {"Grouping", "Expr* expr"},
-    {"Literal", "TOKEN_TYPE type, const char* value"},
-    {"Unary", "TOKEN_TYPE op, Expr* right"},
+    {"Binary", "Expr* left,Expr* right, TOKEN_TYPE op"},
+    {"Grouping", "Expr* expr, Expr* _padding1, TOKEN_TYPE _padding2"},
+    {"Literal", "const char* value,Expr* _padding1, TOKEN_TYPE type"},
+    {"Unary", "Expr* right,Expr* _padding1, TOKEN_TYPE op"},
 };
 
 void writeHeader(FILE *fp) {
@@ -88,16 +88,15 @@ void closeNamespace(FILE *fp) {
 }
 
 void generateExpressionBaseClass(FILE *fp) {
-  fprintf(fp,
-          "class Expr {\n public:\n\tExpr() = default;\n"
-          "\tvirtual ~Expr()=default;\n\t //interface\n"
-          "\tvirtual void* accept(Visitor* visitor)=0;\n};\n\n");
+  fprintf(fp, "class Expr {\n public:\n\tExpr() = default;\n"
+              "\tvirtual ~Expr()=default;\n\t //interface\n"
+              "\tvirtual void* accept(Visitor* visitor)=0;\n};\n\n");
 }
 
 void generateVisitorBaseClass(FILE *fp) {
   // forward declare of the expr class
   fprintf(fp, "class Expr;\n\n");
-  //generate a forward delcare for each class 
+  // generate a forward delcare for each class
   int count = sizeof(definitions) / sizeof(definitions[0]);
   for (int i = 0; i < count; ++i) {
     fprintf(fp, "class ");
@@ -105,16 +104,15 @@ void generateVisitorBaseClass(FILE *fp) {
     fprintf(fp, ";\n");
   }
 
-
   // declaring the visitor interface, here the class and constructor destructor
   fprintf(fp, "\nclass Visitor{\n public:\n\tVisitor() "
               "= default;\n"
               "\tvirtual ~Visitor()=default;\n\t//interface\n");
 
-  //here we loop all the class the visitor needs to be able to accept
-  //and generate an accept method for the specific class, we use the 
-  //specific name to not get too crazy with overload, but probably 
-  //overload would make the code a bit clearer? not sure
+  // here we loop all the class the visitor needs to be able to accept
+  // and generate an accept method for the specific class, we use the
+  // specific name to not get too crazy with overload, but probably
+  // overload would make the code a bit clearer? not sure
   for (int i = 0; i < count; ++i) {
     fprintf(fp, "\tvirtual void* accept");
     fprintf(fp, definitions[i].className);
@@ -126,11 +124,33 @@ void generateVisitorBaseClass(FILE *fp) {
   fprintf(fp, "\n};\n");
 }
 
+void insertStaticClassSizeCheck(FILE *fp) {
+  fprintf(fp, "//This class is only here to trigger compile time checks\nclass "
+              "Checks{\n");
+  fprintf(fp, "\tpublic:\nstatic void sizeCheck(){\n");
+  int count = sizeof(definitions) / sizeof(definitions[0]);
+  for (int i = 0; i < count; ++i) {
+    fprintf(fp, "\t\tconstexpr int %sSize = sizeof(%s);\n",
+            definitions[i].className, definitions[i].className);
+  }
+  for (int i = 1; i < count; ++i) {
+
+    fprintf(fp,
+            "\t\tstatic_assert(%sSize == %sSize, \"Size of %s does not match "
+            "size of %s, due to memory pools expecting same size, all AST "
+            "nodes need to have same size\");\n",
+            definitions[i - 1].className, definitions[i].className,
+            definitions[i - 1].className, definitions[i].className);
+  }
+
+  fprintf(fp,"}};\n");
+}
+
 int main() {
   FILE *fp = fopen(outputFile, "w");
   assert(fp != nullptr);
 
-  //writing header guard
+  // writing header guard
   fprintf(fp, "#pragma once \n");
   writeHeader(fp);
   writeIncludes(fp);
@@ -138,6 +158,7 @@ int main() {
   generateVisitorBaseClass(fp);
   generateExpressionBaseClass(fp);
   generateASTClasses(fp);
+  insertStaticClassSizeCheck(fp);
   closeNamespace(fp);
   fclose(fp);
 

@@ -40,8 +40,8 @@ public:
 	Binary():Expr(){}
 	virtual ~Binary()=default;
 	Expr* left;
-	TOKEN_TYPE op;
 	Expr* right;
+	TOKEN_TYPE op;
 	void* accept(Visitor* visitor) override
 	{ 
  		return visitor->acceptBinary(this);
@@ -55,6 +55,8 @@ public:
 	Grouping():Expr(){}
 	virtual ~Grouping()=default;
 	Expr* expr;
+	Expr* _padding1;
+	TOKEN_TYPE _padding2;
 	void* accept(Visitor* visitor) override
 	{ 
  		return visitor->acceptGrouping(this);
@@ -67,8 +69,9 @@ class Literal : public Expr
 public:
 	Literal():Expr(){}
 	virtual ~Literal()=default;
-	TOKEN_TYPE type;
 	const char* value;
+	Expr* _padding1;
+	TOKEN_TYPE type;
 	void* accept(Visitor* visitor) override
 	{ 
  		return visitor->acceptLiteral(this);
@@ -81,8 +84,9 @@ class Unary : public Expr
 public:
 	Unary():Expr(){}
 	virtual ~Unary()=default;
-	TOKEN_TYPE op;
 	Expr* right;
+	Expr* _padding1;
+	TOKEN_TYPE op;
 	void* accept(Visitor* visitor) override
 	{ 
  		return visitor->acceptUnary(this);
@@ -90,5 +94,17 @@ public:
 	};
 };
 
+//This class is only here to trigger compile time checks
+class Checks{
+	public:
+static void sizeCheck(){
+		constexpr int BinarySize = sizeof(Binary);
+		constexpr int GroupingSize = sizeof(Grouping);
+		constexpr int LiteralSize = sizeof(Literal);
+		constexpr int UnarySize = sizeof(Unary);
+		static_assert(BinarySize == GroupingSize, "Size of Binary does not match size of Grouping, due to memory pools expecting same size, all AST nodes need to have same size");
+		static_assert(GroupingSize == LiteralSize, "Size of Grouping does not match size of Literal, due to memory pools expecting same size, all AST nodes need to have same size");
+		static_assert(LiteralSize == UnarySize, "Size of Literal does not match size of Unary, due to memory pools expecting same size, all AST nodes need to have same size");
+}};
 
 }// namespace binder::autogen

@@ -171,3 +171,63 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime add str str",
   REQUIRE(result->type == binder::RuntimeValueType::STRING);
   REQUIRE(strcmp(result->string, "hello world") == 0);
 }
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime > str",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret(" 12 > \"hello\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime >= str",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret(" 12 >= \"hello\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime < str",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret(" 12 < \"hello\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime <= str",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret(" 12 <= \"hello\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime != str",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret(" 12 != \"hello\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime == str",
+                 "[interpreter]") {
+
+  context.setErrorReportingEnabled(false);
+  binder::RuntimeValue *result = interpret(" 12 == \"hello\"");
+  REQUIRE(result == nullptr);
+  REQUIRE(context.hadError() == true);
+  context.setErrorReportingEnabled(true);
+}

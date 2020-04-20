@@ -100,7 +100,7 @@ const char *buildBinaryOperationError(BinderContext *context,
   const char fs = memory::FREE_SECOND_AFTER_OPERATION;
 
   const char *temp =
-      pool.concatenate(base, "and \n left value: \n\t", getLexemeFromToken(op));
+      pool.concatenate(base, " and \n left value: \n\t", getLexemeFromToken(op));
   // we can free temp and joiner
   temp = pool.concatenate(temp, "\n right value:\n\t", leftValue, ff | fj);
   // we can free both sides since are result of concatenationor build
@@ -118,10 +118,6 @@ void assertBinaryFull(RuntimeValue *left, RuntimeValue *right) {
           right->type == RuntimeValueType::STRING));
 }
 
-void assertBinaryNumber(RuntimeValue *left, RuntimeValue *right) {
-  assert((left->type == RuntimeValueType::NUMBER));
-  assert(right->type == RuntimeValueType::NUMBER);
-}
 
 bool isEqual(RuntimeValue *left, RuntimeValue *right) {
   // TODO handle null
@@ -194,33 +190,51 @@ public:
     }
       // comparison operatrions
     case (TOKEN_TYPE::GREATER): {
-      assertBinaryNumber(left, right);
+      if (!areBothNumbers(left, right)) {
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::GREATER));
+      }
       left->number = (left->number) > (right->number);
       return left;
     }
     case (TOKEN_TYPE::GREATER_EQUAL): {
-      assertBinaryNumber(left, right);
+      if (!areBothNumbers(left, right)) {
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::GREATER_EQUAL));
+      }
       left->number = (left->number) >= (right->number);
       return left;
     }
     case (TOKEN_TYPE::LESS): {
-      assertBinaryNumber(left, right);
+      if (!areBothNumbers(left, right)) {
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::LESS));
+      }
       left->number = (left->number) < (right->number);
       return left;
     }
     case (TOKEN_TYPE::LESS_EQUAL): {
-      assertBinaryNumber(left, right);
+      if (!areBothNumbers(left, right)) {
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::LESS_EQUAL));
+      }
       left->number = (left->number) <= (right->number);
       return left;
     }
     case (TOKEN_TYPE::BANG_EQUAL): {
-      assertBinaryNumber(left, right);
+      if (!areBothNumbers(left, right)) {
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::BANG_EQUAL));
+      }
       left->boolean = !isEqual(left, right);
       left->type = RuntimeValueType::BOOLEAN;
       return left;
     }
     case (TOKEN_TYPE::EQUAL_EQUAL): {
-      assertBinaryNumber(left, right);
+      if (!areBothNumbers(left, right)) {
+        throw error(m_context, buildBinaryOperationError(m_context, left, right,
+                                                         TOKEN_TYPE::EQUAL_EQUAL));
+      }
       left->boolean = isEqual(left, right);
       left->type = RuntimeValueType::BOOLEAN;
       return left;
@@ -318,6 +332,9 @@ RuntimeValue *ASTInterpreter::interpret(autogen::Expr *ASTRoot) {
   // and exit earlier
   assert(ASTRoot != nullptr);
 
+  //TODO sure, thrwoing is easy to get out of recursion....but what about
+  //heap memory? Here probably i want to use a pool to allocate the AST
+  //nodes
   try {
     ASTInterpreterVisitor visitor(m_context);
     return (RuntimeValue *)ASTRoot->accept(&visitor);
