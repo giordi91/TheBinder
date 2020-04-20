@@ -19,6 +19,19 @@ const char *bindExecute(const char *source) {
   binder::Scanner scanner(&context);
   binder::Parser parser(&context);
 
+
+  int* test = nullptr;
+  int index = 39;
+  std::cout<<"input value "<<39<<std::endl;
+  memcpy(&test,&index,sizeof(int));
+  std::cout<<"ptr value "<<test<<std::endl;
+
+  int back = -1;
+  memcpy(&back, &test,sizeof(int));
+  std::cout<<"back value "<<back<<std::endl;
+
+
+
   scanner.scan(source);
   const binder::memory::ResizableVector<binder::Token> &tokens =
       scanner.getTokens();

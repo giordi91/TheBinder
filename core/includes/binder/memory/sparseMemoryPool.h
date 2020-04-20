@@ -35,11 +35,8 @@ public:
 
     m_memory = new T[poolSize];
     m_poolSize = poolSize;
-    // m_freeList = new uint32_t[poolSize];
-    // initializing the "linked list", nextAlloc is already init to 0;
-    for (uint32_t i = 0; i < poolSize; ++i) {
-      *(reinterpret_cast<uint32_t *>(&m_memory[i])) = i + 1;
-    }
+
+    setupLinkedList();
 
 #if SE_DEBUG
     m_freedMemory = new char[poolSize];
@@ -99,6 +96,21 @@ public:
     return m_memory[index];
   }
 
+  //TODO can we avoid the setup of linked list somehow? 
+  //to note this is not a fast operation, the whole pool is getting
+  //iterate to set the linked list of allocations
+  void clear()
+  {
+      setupLinkedList();
+      m_nextAllocation =0;
+      m_allocationCount =0;
+#if SE_DEBUG
+      //clearing the debug memory to zero
+      memset(m_freedMemory,0,sizeof(T)*m_poolSize);
+#endif
+
+  }
+
 #if SE_DEBUG
   bool assertEverythingDealloc() const {
     bool toReturn = true;
@@ -109,6 +121,16 @@ public:
     return toReturn;
   }
 #endif
+private:
+  inline void setupLinkedList()
+  {
+    // m_freeList = new uint32_t[poolSize];
+    // initializing the "linked list", nextAlloc is already init to 0;
+    for (uint32_t i = 0; i < m_poolSize; ++i) {
+      *(reinterpret_cast<uint32_t *>(&m_memory[i])) = i + 1;
+    }
+
+  }
 
 private:
   T *m_memory = nullptr;

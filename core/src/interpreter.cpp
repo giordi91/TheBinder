@@ -10,6 +10,29 @@ namespace binder {
 
 static const char *RUNTIME_TYPE_NAMES[] = {"NUMBER", "STRING", "NIL", "BOOLEAN",
                                            "INVALID"};
+
+inline void *toVoid(uint32_t index) {
+  // using same type pointer rather than void* at least i am sure
+  // alignment matches
+  uint32_t *result;
+  // just making sure i can actually fit a 32 bit value in here, probably
+  // overkill but better be safe than sorry
+  assert(sizeof(uint32_t *) >= 4);
+  memcpy(&result, &index, sizeof(index));
+  return result;
+}
+
+inline bool isAligned(void *pointer, size_t byte_count) {
+  return (uintptr_t)pointer % byte_count == 0;
+}
+
+inline uint32_t toIndex(void *ptr) {
+
+  uint32_t result;
+  memcpy(&result, &ptr, sizeof(uint32_t));
+  return result;
+}
+
 // error handling
 const char *RuntimeValue::toString(BinderContext *context) {
   memory::StringPool &pool = context->getStringPool();
@@ -99,8 +122,8 @@ const char *buildBinaryOperationError(BinderContext *context,
   const char fj = memory::FREE_JOINER_AFTER_OPERATION;
   const char fs = memory::FREE_SECOND_AFTER_OPERATION;
 
-  const char *temp =
-      pool.concatenate(base, " and \n left value: \n\t", getLexemeFromToken(op));
+  const char *temp = pool.concatenate(base, " and \n left value: \n\t",
+                                      getLexemeFromToken(op));
   // we can free temp and joiner
   temp = pool.concatenate(temp, "\n right value:\n\t", leftValue, ff | fj);
   // we can free both sides since are result of concatenationor build
@@ -118,7 +141,6 @@ void assertBinaryFull(RuntimeValue *left, RuntimeValue *right) {
           right->type == RuntimeValueType::STRING));
 }
 
-
 bool isEqual(RuntimeValue *left, RuntimeValue *right) {
   // TODO handle null
   return left->number == right->number;
@@ -132,14 +154,26 @@ bool areBothNumbers(RuntimeValue *left, RuntimeValue *right) {
 // visitor to evaluate  the code
 class ASTInterpreterVisitor : public autogen::Visitor {
 public:
-  ASTInterpreterVisitor(BinderContext *context)
-      : autogen::Visitor(), m_context(context){};
+  ASTInterpreterVisitor(
+      BinderContext *context,
+      memory::SparseMemoryPool<RuntimeValue> *runtimeValuePool)
+      : autogen::Visitor(), m_context(context),
+        m_runtimeValuePool(runtimeValuePool){};
   virtual ~ASTInterpreterVisitor() = default;
   // interface
   void *acceptBinary(autogen::Binary *expr) override {
     // TODO proper casting
-    RuntimeValue *left = (RuntimeValue *)evaluate(expr->left);
-    RuntimeValue *right = (RuntimeValue *)evaluate(expr->right);
+
+    // keeping as indexes until needed, in this way
+    // we avoid pointer invalidation due to pool re-allocations
+    uint32_t leftIdx = toIndex(evaluate(expr->left));
+    uint32_t rightIdx = toIndex(evaluate(expr->right));
+
+    RuntimeValue *left = getRuntime(leftIdx);
+    RuntimeValue *right = getRuntime(rightIdx);
+
+    // RuntimeValue *left = (RuntimeValue *)evaluate(expr->left);
+    // RuntimeValue *right = (RuntimeValue *)evaluate(expr->right);
 
     // TODO handle null value
     // TODO after this operation we can probably deallocate the
@@ -153,7 +187,8 @@ public:
                                                          TOKEN_TYPE::MINUS));
       }
       left->number = (left->number) - (right->number);
-      return left;
+      releaseRuntime(rightIdx);
+      return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::SLASH): {
       if (!areBothNumbers(left, right)) {
@@ -161,7 +196,8 @@ public:
                                                          TOKEN_TYPE::SLASH));
       }
       left->number = (left->number) / (right->number);
-      return left;
+      releaseRuntime(rightIdx);
+      return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::STAR): {
       if (!areBothNumbers(left, right)) {
@@ -169,12 +205,13 @@ public:
                                                          TOKEN_TYPE::STAR));
       }
       left->number = (left->number) * (right->number);
-      return left;
+      releaseRuntime(rightIdx);
+      return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::PLUS): {
       if (areBothNumbers(left, right)) {
         left->number = (left->number) + (right->number);
-        return left;
+        return toVoid(leftIdx);
       } else if ((left->type == RuntimeValueType::STRING) &
                  (right->type == RuntimeValueType::STRING)) {
         // TODO figure out if it safe to free the strings
@@ -182,7 +219,8 @@ public:
         // flush ad the end and not track for runtime concatenated strings?
         left->string =
             m_context->getStringPool().concatenate(left->string, right->string);
-        return left;
+        releaseRuntime(rightIdx);
+        return toVoid(leftIdx);
       } else {
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::PLUS));
@@ -195,15 +233,18 @@ public:
                                                          TOKEN_TYPE::GREATER));
       }
       left->number = (left->number) > (right->number);
-      return left;
+      releaseRuntime(rightIdx);
+        return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::GREATER_EQUAL): {
       if (!areBothNumbers(left, right)) {
-        throw error(m_context, buildBinaryOperationError(m_context, left, right,
-                                                         TOKEN_TYPE::GREATER_EQUAL));
+        throw error(m_context,
+                    buildBinaryOperationError(m_context, left, right,
+                                              TOKEN_TYPE::GREATER_EQUAL));
       }
       left->number = (left->number) >= (right->number);
-      return left;
+      releaseRuntime(rightIdx);
+        return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::LESS): {
       if (!areBothNumbers(left, right)) {
@@ -211,33 +252,40 @@ public:
                                                          TOKEN_TYPE::LESS));
       }
       left->number = (left->number) < (right->number);
-      return left;
+      releaseRuntime(rightIdx);
+        return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::LESS_EQUAL): {
       if (!areBothNumbers(left, right)) {
-        throw error(m_context, buildBinaryOperationError(m_context, left, right,
-                                                         TOKEN_TYPE::LESS_EQUAL));
+        throw error(m_context,
+                    buildBinaryOperationError(m_context, left, right,
+                                              TOKEN_TYPE::LESS_EQUAL));
       }
       left->number = (left->number) <= (right->number);
-      return left;
+      releaseRuntime(rightIdx);
+        return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::BANG_EQUAL): {
       if (!areBothNumbers(left, right)) {
-        throw error(m_context, buildBinaryOperationError(m_context, left, right,
-                                                         TOKEN_TYPE::BANG_EQUAL));
+        throw error(m_context,
+                    buildBinaryOperationError(m_context, left, right,
+                                              TOKEN_TYPE::BANG_EQUAL));
       }
       left->boolean = !isEqual(left, right);
       left->type = RuntimeValueType::BOOLEAN;
-      return left;
+      releaseRuntime(rightIdx);
+        return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::EQUAL_EQUAL): {
       if (!areBothNumbers(left, right)) {
-        throw error(m_context, buildBinaryOperationError(m_context, left, right,
-                                                         TOKEN_TYPE::EQUAL_EQUAL));
+        throw error(m_context,
+                    buildBinaryOperationError(m_context, left, right,
+                                              TOKEN_TYPE::EQUAL_EQUAL));
       }
       left->boolean = isEqual(left, right);
       left->type = RuntimeValueType::BOOLEAN;
-      return left;
+      releaseRuntime(rightIdx);
+        return toVoid(leftIdx);
     }
 
     default:
@@ -252,19 +300,20 @@ public:
   }
   void *acceptLiteral(autogen::Literal *expr) override {
 
-    // TODO naked alloc
-    RuntimeValue *value = new RuntimeValue();
+    uint32_t index = 0;
+    RuntimeValue &value = m_runtimeValuePool->getFreeMemoryData(index);
+
     // we need to figure out what we are dealing with
     switch (expr->type) {
     case (TOKEN_TYPE::NUMBER): {
-      value->number = strtod(expr->value, nullptr);
-      value->type = RuntimeValueType::NUMBER;
+      value.number = strtod(expr->value, nullptr);
+      value.type = RuntimeValueType::NUMBER;
       break;
     }
 
     case (TOKEN_TYPE::STRING): {
-      value->string = expr->value;
-      value->type = RuntimeValueType::STRING;
+      value.string = expr->value;
+      value.type = RuntimeValueType::STRING;
       break;
     }
     default: {
@@ -273,12 +322,15 @@ public:
     }
     }
 
-    return value;
+    return toVoid(index);
   }
   void *acceptUnary(autogen::Unary *expr) override {
     // we have an expression to evaluate, the right hand side
-    RuntimeValue *rightValue =
-        reinterpret_cast<RuntimeValue *>(evaluate(expr->right));
+    uint32_t rightIdx =
+        toIndex((evaluate(expr->right)));
+
+
+    RuntimeValue *rightValue = getRuntime(rightIdx);
 
     switch (expr->op) {
     case (TOKEN_TYPE::MINUS): {
@@ -299,8 +351,8 @@ public:
       break;
     }
     }
-
-    return rightValue;
+    //no need to free anything we re-used the same value, modified in place
+    return  toVoid(rightIdx);
   }
 
 private:
@@ -320,8 +372,15 @@ private:
     return true;
   }
 
+  RuntimeValue *getRuntime(uint32_t poolIdx) {
+    return &(*m_runtimeValuePool)[poolIdx];
+  }
+
+  void releaseRuntime(uint32_t poolIdx) { m_runtimeValuePool->free(poolIdx); }
+
 private:
   BinderContext *m_context;
+  memory::SparseMemoryPool<RuntimeValue> *m_runtimeValuePool;
 };
 
 RuntimeValue *ASTInterpreter::interpret(autogen::Expr *ASTRoot) {
@@ -332,12 +391,13 @@ RuntimeValue *ASTInterpreter::interpret(autogen::Expr *ASTRoot) {
   // and exit earlier
   assert(ASTRoot != nullptr);
 
-  //TODO sure, thrwoing is easy to get out of recursion....but what about
-  //heap memory? Here probably i want to use a pool to allocate the AST
-  //nodes
+  // TODO sure, thrwoing is easy to get out of recursion....but what about
+  // heap memory? Here probably i want to use a pool to allocate the AST
+  // nodes
   try {
-    ASTInterpreterVisitor visitor(m_context);
-    return (RuntimeValue *)ASTRoot->accept(&visitor);
+    ASTInterpreterVisitor visitor(m_context, &m_pool);
+    uint32_t index = toIndex(ASTRoot->accept(&visitor));
+    return &m_pool[index];
   } catch (RuntimeException e) {
     return nullptr;
   }

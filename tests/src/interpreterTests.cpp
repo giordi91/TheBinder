@@ -64,6 +64,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "random unary", "[interpreter]") {
     binder::RuntimeValue *result = interpret(source);
     REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
     REQUIRE(result->number == Approx(-value));
+    interpreter.flushMemory();
   }
 }
 
@@ -77,6 +78,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mult", "[interpreter]") {
     binder::RuntimeValue *result = interpret(source);
     REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
     REQUIRE(result->number == Approx(left * right));
+    interpreter.flushMemory();
   }
 }
 
@@ -92,6 +94,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mad unary",
     binder::RuntimeValue *result = interpret(source);
     REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
     REQUIRE(result->number == Approx(-((left * right) + add)));
+    interpreter.flushMemory();
   }
 }
 
@@ -231,3 +234,6 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime == str",
   REQUIRE(context.hadError() == true);
   context.setErrorReportingEnabled(true);
 }
+
+
+
