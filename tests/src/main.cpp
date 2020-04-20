@@ -5,10 +5,12 @@
 #include "scannerTests.cpp"
 #include "stackAllocatorTests.cpp"
 #include "stringPoolAllocatorTests.cpp"
+#include "sparseMemoryPoolTests.cpp"
 #include "tokenTests.cpp"
 #include "treeSizesAllocatorTests.cpp"
 #include "hashMapTests.cpp"
 #include "basicASTPrinterTests.cpp"
 #include "parserTests.cpp"
 #include "interpreterTests.cpp"
+
 
