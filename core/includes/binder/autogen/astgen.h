@@ -14,10 +14,10 @@ class Grouping;
 class Literal;
 class Unary;
 
-class Visitor{
+class ExprVisitor{
  public:
-	Visitor() = default;
-	virtual ~Visitor()=default;
+	ExprVisitor() = default;
+	virtual ~ExprVisitor()=default;
 	//interface
 	virtual void* acceptBinary(Binary* expr) = 0;
 	virtual void* acceptGrouping(Grouping* expr) = 0;
@@ -30,7 +30,7 @@ class Expr {
 	Expr() = default;
 	virtual ~Expr()=default;
 	 //interface
-	virtual void* accept(Visitor* visitor)=0;
+	virtual void* accept(ExprVisitor* visitor)=0;
 };
 
 class Binary : public Expr
@@ -41,10 +41,9 @@ public:
 	Expr* left;
 	Expr* right;
 	TOKEN_TYPE op;
-	void* accept(Visitor* visitor) override
+	void* accept(ExprVisitor* visitor) override
 	{ 
  		return visitor->acceptBinary(this);
-
 	};
 };
 
@@ -56,10 +55,9 @@ public:
 	Expr* expr;
 	Expr* _padding1;
 	TOKEN_TYPE _padding2;
-	void* accept(Visitor* visitor) override
+	void* accept(ExprVisitor* visitor) override
 	{ 
  		return visitor->acceptGrouping(this);
-
 	};
 };
 
@@ -71,10 +69,9 @@ public:
 	const char* value;
 	Expr* _padding1;
 	TOKEN_TYPE type;
-	void* accept(Visitor* visitor) override
+	void* accept(ExprVisitor* visitor) override
 	{ 
  		return visitor->acceptLiteral(this);
-
 	};
 };
 
@@ -86,17 +83,66 @@ public:
 	Expr* right;
 	Expr* _padding1;
 	TOKEN_TYPE op;
-	void* accept(Visitor* visitor) override
+	void* accept(ExprVisitor* visitor) override
 	{ 
  		return visitor->acceptUnary(this);
+	};
+};
 
+//=============================================================
+//=============================================================
+//=============================================================
+
+
+class Stmt;
+class Expression;
+class Print;
+
+class StmtVisitor{
+ public:
+	StmtVisitor() = default;
+	virtual ~StmtVisitor()=default;
+	//interface
+	virtual void* acceptExpression(Expression* stmt) = 0;
+	virtual void* acceptPrint(Print* stmt) = 0;
+
+};
+class Stmt{
+ public:
+	Stmt() = default;
+	virtual ~Stmt()=default;
+	 //interface
+	virtual void* accept(StmtVisitor* visitor)=0;
+};
+
+class Expression : public Stmt
+{
+public:
+	Expression(): Stmt(){}
+	virtual ~Expression()=default;
+	Expr* expression;
+	void* accept(StmtVisitor* visitor) override
+	{ 
+ 		return visitor->acceptExpression(this);
+	};
+};
+
+class Print : public Stmt
+{
+public:
+	Print(): Stmt(){}
+	virtual ~Print()=default;
+	Expr* expression;
+	void* accept(StmtVisitor* visitor) override
+	{ 
+ 		return visitor->acceptPrint(this);
 	};
 };
 
 //This class is only here to trigger compile time checks
-class Checks{
-	public:
-static void sizeCheck(){
+class ExprChecks{
+public:
+	static void sizeCheck(){
 		constexpr int BinarySize = sizeof(Binary);
 		constexpr int GroupingSize = sizeof(Grouping);
 		constexpr int LiteralSize = sizeof(Literal);
@@ -104,6 +150,14 @@ static void sizeCheck(){
 		static_assert(BinarySize == GroupingSize, "Size of Binary does not match size of Grouping, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(GroupingSize == LiteralSize, "Size of Grouping does not match size of Literal, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(LiteralSize == UnarySize, "Size of Literal does not match size of Unary, due to memory pools expecting same size, all AST nodes need to have same size");
+}};
+//This class is only here to trigger compile time checks
+class StmtChecks{
+public:
+	static void sizeCheck(){
+		constexpr int ExpressionSize = sizeof(Expression);
+		constexpr int PrintSize = sizeof(Print);
+		static_assert(ExpressionSize == PrintSize, "Size of Expression does not match size of Print, due to memory pools expecting same size, all AST nodes need to have same size");
 }};
 
 }// namespace binder::autogen

@@ -152,12 +152,12 @@ bool areBothNumbers(RuntimeValue *left, RuntimeValue *right) {
 }
 
 // visitor to evaluate  the code
-class ASTInterpreterVisitor : public autogen::Visitor {
+class ASTInterpreterVisitor : public autogen::ExprVisitor {
 public:
   ASTInterpreterVisitor(
       BinderContext *context,
       memory::SparseMemoryPool<RuntimeValue> *runtimeValuePool)
-      : autogen::Visitor(), m_context(context),
+      : autogen::ExprVisitor(), m_context(context),
         m_runtimeValuePool(runtimeValuePool){};
   virtual ~ASTInterpreterVisitor() = default;
   // interface

@@ -4,10 +4,10 @@
 #include "binder/tokens.h"
 
 namespace binder::printer {
-class BasicASTPrinter : autogen::Visitor {
+class BasicASTPrinter : autogen::ExprVisitor {
 public:
   BasicASTPrinter(memory::StringPool &pool)
-      : autogen::Visitor(), m_pool(pool){};
+      : autogen::ExprVisitor(), m_pool(pool){};
   virtual ~BasicASTPrinter() = default;
   // interface
   void *acceptBinary(autogen::Binary *expr) override {

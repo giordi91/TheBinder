@@ -5,9 +5,9 @@
 #include "binder/tokens.h"
 
 namespace binder::printer {
-class JSONASTPrinter : autogen::Visitor {
+class JSONASTPrinter : autogen::ExprVisitor {
 public:
-  JSONASTPrinter(memory::StringPool &pool) : autogen::Visitor(), m_pool(pool){};
+  JSONASTPrinter(memory::StringPool &pool) : autogen::ExprVisitor(), m_pool(pool){};
   virtual ~JSONASTPrinter() = default;
   // interface
   void *acceptBinary(autogen::Binary *expr) override {
