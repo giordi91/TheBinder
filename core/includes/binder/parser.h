@@ -35,6 +35,9 @@ private:
   autogen::Expr* multiplication();
   autogen::Expr* unary();
   autogen::Expr* primary();
+  autogen::Stmt* statement();
+  autogen::Stmt* printStatement(); 
+  autogen::Stmt* expressionStatement(); 
 
 
   bool match(const TOKEN_TYPE* types, const int size);

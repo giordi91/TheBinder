@@ -145,6 +145,29 @@ autogen::Expr *Parser::primary() {
   throw error(peek(), "Expected primary expression.");
 }
 
+autogen::Stmt *Parser::statement() {
+  if (match(TOKEN_TYPE::PRINT)) {
+    return printStatement();
+  }
+  return expressionStatement();
+}
+
+autogen::Stmt *Parser::printStatement() {
+    autogen::Expr* value =  expression();
+    consume(TOKEN_TYPE::SEMICOLON,"Expect ';' after print expression.");
+    auto* stmt = new autogen::Print();
+    stmt->expression= value;
+    return stmt;
+}
+autogen::Stmt *Parser::expressionStatement() {
+    autogen::Expr* value =  expression();
+    consume(TOKEN_TYPE::SEMICOLON,"Expect ';' after expression.");
+    auto* stmt = new autogen::Expression();
+    stmt->expression= value;
+    return stmt;
+}
+// utility functions
+
 bool Parser::match(const TOKEN_TYPE *types, const int size) {
   for (int i = 0; i < size; ++i) {
     if (check(types[i])) {
