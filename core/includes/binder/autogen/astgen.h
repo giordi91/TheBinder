@@ -9,7 +9,6 @@ Metacompiler for "TheBinder" language v0.0.1
 namespace binder::autogen{
 
 class Expr;
-
 class Binary;
 class Grouping;
 class Literal;
@@ -37,7 +36,7 @@ class Expr {
 class Binary : public Expr
 {
 public:
-	Binary():Expr(){}
+	Binary(): Expr(){}
 	virtual ~Binary()=default;
 	Expr* left;
 	Expr* right;
@@ -52,7 +51,7 @@ public:
 class Grouping : public Expr
 {
 public:
-	Grouping():Expr(){}
+	Grouping(): Expr(){}
 	virtual ~Grouping()=default;
 	Expr* expr;
 	Expr* _padding1;
@@ -67,7 +66,7 @@ public:
 class Literal : public Expr
 {
 public:
-	Literal():Expr(){}
+	Literal(): Expr(){}
 	virtual ~Literal()=default;
 	const char* value;
 	Expr* _padding1;
@@ -82,7 +81,7 @@ public:
 class Unary : public Expr
 {
 public:
-	Unary():Expr(){}
+	Unary(): Expr(){}
 	virtual ~Unary()=default;
 	Expr* right;
 	Expr* _padding1;
