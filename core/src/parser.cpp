@@ -93,7 +93,7 @@ autogen::Expr *Parser::unary() {
   // TODO change for array len
   if (match(types, 2)) {
     Token op = previous();
-    autogen::Expr *right = addition();
+    autogen::Expr *right = unary();
 
     // find a way for brace init
     auto *unary = new autogen::Unary();

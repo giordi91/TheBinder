@@ -92,7 +92,8 @@ TEST_CASE_METHOD(SetupParserTestFixture, "basic multiply", "[parser]") {
   const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
    parse("77 *323.2;");
   REQUIRE(stmts.size() == 1);
-  auto *root= (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
+  auto *root= (dynamic_cast<binder::autogen::Expression
+*>(stmts[0]))->expression;
 
   const binder::autogen::Literal *l = nullptr;
   const binder::autogen::Literal *r = nullptr;
@@ -106,12 +107,36 @@ TEST_CASE_METHOD(SetupParserTestFixture, "basic multiply", "[parser]") {
   compareLiteral(r, binder::TOKEN_TYPE::NUMBER, "323.2");
 }
 
+TEST_CASE_METHOD(SetupParserTestFixture, "unary precedence", "[parser]") {
+
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+      parse("-1+ 5;");
+  REQUIRE(stmts.size() == 1);
+  auto *root =
+      (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
+
+  // top should be a binary, with a left of grouping and right of Literal
+  const binder::autogen::Unary *lhs = nullptr;
+  const binder::autogen::Literal *rhs = nullptr;
+  compareBinary(root, binder::TOKEN_TYPE::PLUS, &lhs, &rhs);
+  // making sure rhs is correct now we dive in the multiplication
+  compareLiteral(rhs, binder::TOKEN_TYPE::NUMBER, "5");
+
+  const binder::autogen::Literal *literal = nullptr;
+  // binary is oround a groping so extract it and check the binary
+  compareUnary(lhs, binder::TOKEN_TYPE::MINUS, &literal);
+
+  // now inspect lhs and rhs
+  compareLiteral(literal, binder::TOKEN_TYPE::NUMBER, "1");
+}
+
 TEST_CASE_METHOD(SetupParserTestFixture, "MAD 1", "[parser]") {
 
   const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
-   parse("(144.4*3.14)+12;");
+      parse("(144.4*3.14)+12;");
   REQUIRE(stmts.size() == 1);
-  auto *root= (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
+  auto *root =
+      (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
 
   // top should be a binary, with a left of grouping and right of Literal
   const binder::autogen::Grouping *grp = nullptr;
@@ -132,12 +157,13 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 1", "[parser]") {
 TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
 
   const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
-   parse("(-1*3.14)+(--13);");
+      parse("(-1*3.14)+(--13);");
   REQUIRE(stmts.size() == 1);
-  auto *root= (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
+  auto *root =
+      (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
 
   // this is the AST that we would expect
-  //(+ (group (- (* 1 3.14))) (group (- (- 13))))
+  //(+ (group (* (- 1)  3.14))) (group (- (- 13))))
   // top should be a binary, with a left of grouping and right of Literal
   const binder::autogen::Grouping *grpLhs = nullptr;
   const binder::autogen::Grouping *grpRhs = nullptr;
@@ -147,16 +173,16 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
   // we expect a unary operation which negates a binary,
   // that seems counter intuitive but remember then we evaluate from
   // the leaves of the tree, so you see lower precendece outside
-  const binder::autogen::Binary *lhsBinary = nullptr;
-  compareUnary(grpLhs->expr, binder::TOKEN_TYPE::MINUS, &lhsBinary);
+  const binder::autogen::Unary *unary = nullptr;
+  const binder::autogen::Literal *literal = nullptr;
 
-  // so now the unary should have the binary insider it
-  const binder::autogen::Literal *binLhs = nullptr;
-  const binder::autogen::Literal *binRhs = nullptr;
-  compareBinary(lhsBinary, binder::TOKEN_TYPE::STAR, &binLhs, &binRhs);
+  compareBinary(grpLhs->expr, binder::TOKEN_TYPE::STAR, &unary, &literal);
 
-  compareLiteral(binLhs, binder::TOKEN_TYPE::NUMBER, "1");
-  compareLiteral(binRhs, binder::TOKEN_TYPE::NUMBER, "3.14");
+  const binder::autogen::Literal *literalLhs= nullptr;
+  compareUnary(unary,binder::TOKEN_TYPE::MINUS, &literalLhs);
+  compareLiteral(literalLhs, binder::TOKEN_TYPE::NUMBER, "1");
+  compareLiteral(literal, binder::TOKEN_TYPE::NUMBER, "3.14");
+
 
   // now we can go down the initial binary rhs, the (--13) part
   // grpRhs->expr is already the first unary, so comparing a unary and
@@ -168,20 +194,24 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
   compareLiteral(insideUnary->right, binder::TOKEN_TYPE::NUMBER, "13");
 }
 
-/*
 TEST_CASE_METHOD(SetupParserTestFixture, "expression error 1", "[parser]") {
+
+
   context.setErrorReportingEnabled(false);
-  const binder::autogen::Expr *root = parse("1 ** 1");
-  REQUIRE(root == nullptr);
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+      parse("1 ** 1;");
+  REQUIRE(stmts.size() == 0);
   REQUIRE(context.hadError()==true);
   context.setErrorReportingEnabled(true);
 
 }
 
 TEST_CASE_METHOD(SetupParserTestFixture, "expression error 2", "[parser]") {
+
   context.setErrorReportingEnabled(false);
-  const binder::autogen::Expr *root = parse("(1 * 1");
-  REQUIRE(root == nullptr);
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+      parse("(1 * 1;");
+  REQUIRE(stmts.size() == 0);
   REQUIRE(context.hadError()==true);
   context.setErrorReportingEnabled(true);
 
@@ -189,21 +219,12 @@ TEST_CASE_METHOD(SetupParserTestFixture, "expression error 2", "[parser]") {
 
 TEST_CASE_METHOD(SetupParserTestFixture, "expression error 3", "[parser]") {
 
-  const binder::autogen::Expr *root = parse("-1 * \"t\"");
-  REQUIRE(stmts.size() != 0);
-  REQUIRE(context.hadError()==false);
 
-  const binder::autogen::Binary *bin = nullptr;
-  compareUnary(root, binder::TOKEN_TYPE::MINUS, &bin);
-
-  const binder::autogen::Literal *lhs= nullptr;
-  const binder::autogen::Literal* rhs= nullptr;
-  compareBinary(bin, binder::TOKEN_TYPE::STAR, &lhs, &rhs);
-
-
-  compareLiteral(lhs, binder::TOKEN_TYPE::NUMBER, "1");
-  compareLiteral(rhs, binder::TOKEN_TYPE::STRING, "t");
-
+  context.setErrorReportingEnabled(false);
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+      parse("-1 * \"t\"");
+  REQUIRE(stmts.size() == 0);
+  REQUIRE(context.hadError()==true);
+  context.setErrorReportingEnabled(true);
 
 }
-*/
