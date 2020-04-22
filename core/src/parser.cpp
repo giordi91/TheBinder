@@ -9,9 +9,11 @@ void Parser::parse(const memory::ResizableVector<Token> *tokens) {
   m_tokens = tokens;
   m_stmts.clear();
 
-  while (!isAtEnd())
-  {
+  try {
+    while (!isAtEnd()) {
       m_stmts.pushBack(statement());
+    }
+  } catch (ParserException e) {
   }
 }
 
@@ -153,18 +155,18 @@ autogen::Stmt *Parser::statement() {
 }
 
 autogen::Stmt *Parser::printStatement() {
-    autogen::Expr* value =  expression();
-    consume(TOKEN_TYPE::SEMICOLON,"Expect ';' after print expression.");
-    auto* stmt = new autogen::Print();
-    stmt->expression= value;
-    return stmt;
+  autogen::Expr *value = expression();
+  consume(TOKEN_TYPE::SEMICOLON, "Expect ';' after print expression.");
+  auto *stmt = new autogen::Print();
+  stmt->expression = value;
+  return stmt;
 }
 autogen::Stmt *Parser::expressionStatement() {
-    autogen::Expr* value =  expression();
-    consume(TOKEN_TYPE::SEMICOLON,"Expect ';' after expression.");
-    auto* stmt = new autogen::Expression();
-    stmt->expression= value;
-    return stmt;
+  autogen::Expr *value = expression();
+  consume(TOKEN_TYPE::SEMICOLON, "Expect ';' after expression.");
+  auto *stmt = new autogen::Expression();
+  stmt->expression = value;
+  return stmt;
 }
 // utility functions
 

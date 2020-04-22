@@ -27,6 +27,6 @@ void BinderContext::run(const char* code) {}
 
 void BinderContext::report(const int line, const char* location,
                            const char* message) {
-  printf("[ line %i ] Error %s: %s", line, location, message);
+  printf("[ line %i ] Error %s: %s\n", line, location, message);
 }
 }  // namespace binder

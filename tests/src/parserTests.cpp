@@ -85,13 +85,14 @@ TEST_CASE_METHOD(SetupParserTestFixture, "basic number parse", "[parser]") {
   auto *stmt= dynamic_cast<binder::autogen::Expression *>(stmts[0]);
   compareLiteral(stmt->expression, binder::TOKEN_TYPE::NUMBER, "12345.5");
 }
-/*
 
 TEST_CASE_METHOD(SetupParserTestFixture, "basic multiply", "[parser]") {
 
   // no space in the rhs
-  const binder::autogen::Expr *root = parse("77 *323.2");
-  REQUIRE(root != nullptr);
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+   parse("77 *323.2;");
+  REQUIRE(stmts.size() == 1);
+  auto *root= (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
 
   const binder::autogen::Literal *l = nullptr;
   const binder::autogen::Literal *r = nullptr;
@@ -107,8 +108,10 @@ TEST_CASE_METHOD(SetupParserTestFixture, "basic multiply", "[parser]") {
 
 TEST_CASE_METHOD(SetupParserTestFixture, "MAD 1", "[parser]") {
 
-  const binder::autogen::Expr *root = parse("(144.4*3.14)+12");
-  REQUIRE(root != nullptr);
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+   parse("(144.4*3.14)+12;");
+  REQUIRE(stmts.size() == 1);
+  auto *root= (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
 
   // top should be a binary, with a left of grouping and right of Literal
   const binder::autogen::Grouping *grp = nullptr;
@@ -128,8 +131,10 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 1", "[parser]") {
 
 TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
 
-  const binder::autogen::Expr *root = parse("(-1*3.14)+(--13)");
-  REQUIRE(root != nullptr);
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+   parse("(-1*3.14)+(--13);");
+  REQUIRE(stmts.size() == 1);
+  auto *root= (dynamic_cast<binder::autogen::Expression *>(stmts[0]))->expression;
 
   // this is the AST that we would expect
   //(+ (group (- (* 1 3.14))) (group (- (- 13))))
@@ -163,6 +168,7 @@ TEST_CASE_METHOD(SetupParserTestFixture, "MAD 2", "[parser]") {
   compareLiteral(insideUnary->right, binder::TOKEN_TYPE::NUMBER, "13");
 }
 
+/*
 TEST_CASE_METHOD(SetupParserTestFixture, "expression error 1", "[parser]") {
   context.setErrorReportingEnabled(false);
   const binder::autogen::Expr *root = parse("1 ** 1");
@@ -184,7 +190,7 @@ TEST_CASE_METHOD(SetupParserTestFixture, "expression error 2", "[parser]") {
 TEST_CASE_METHOD(SetupParserTestFixture, "expression error 3", "[parser]") {
 
   const binder::autogen::Expr *root = parse("-1 * \"t\"");
-  REQUIRE(root != nullptr);
+  REQUIRE(stmts.size() != 0);
   REQUIRE(context.hadError()==false);
 
   const binder::autogen::Binary *bin = nullptr;
