@@ -31,15 +31,25 @@ const char *bindExecute(const char *source) {
   const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
       parser.getStmts();
   interpreter.interpret(stmts);
-  // const binder::autogen::Expr *expr = parser.getRoot();
-  // const char *ast = binder::printer::JSONASTPrinter(context.getStringPool())
-  //                      .print((binder::autogen::Expr *)expr);
 
-  //// make a heap copy of the ast
-  // int len = strlen(ast);
-  // const char *toReturn = new char[len + 1];
-  // memcpy((char *)toReturn, ast, len + 1);
-  // return toReturn;
-  return "{}";
+  auto &m_pool = context.getStringPool();
+  const char *ast = m_pool.allocate("{ \"nodes\" : [");
+
+  const char jf = binder::memory::FREE_JOINER_AFTER_OPERATION;
+  const char ff = binder::memory::FREE_FIRST_AFTER_OPERATION;
+
+  for (int i = 0; i < stmts.size(); ++i) {
+    const char *node = binder::printer::JSONASTPrinter(m_pool).print(stmts[i]);
+    if (i != stmts.size() - 1) {
+      ast = m_pool.concatenate(ast, ",", node, ff | jf);
+    } else {
+      ast = m_pool.concatenate(ast, "]}", node, ff | jf);
+    }
+  }
+  // make a heap copy of the ast
+  int len = strlen(ast);
+  const char *toReturn = new char[len + 1];
+  memcpy((char *)toReturn, ast, len + 1);
+  return toReturn;
 }
 }

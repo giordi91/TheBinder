@@ -22,9 +22,27 @@ function showAST(AST) {
   var ul = document.createElement('ul');
   ul.setAttribute('id', 'astUL');
   element.appendChild(ul);
-  processASTNode(ul, j);
+
+  //the json constaints a series of top level nodes,
+  //which are statements, for each statement we have
+  //and AST tree to render
+  for(var i =0; i < j.nodes.length;++i)
+  {
+
+      var node = j.nodes[i];
+      var n = createFoldableNode(ul,node.name);
+      ul.appendChild(n);
+      
+      //lets add a nested body such that we can append to it
+      var typeBody = document.createElement('ul');
+      typeBody.setAttribute("class", "nested");
+      n.appendChild(typeBody);
+
+      processASTNode(typeBody, node.expr);
+  }
   addCallbacksToFoldables();
 }
+
 function createFoldableNode(parentNode, name) {
   var typeli = document.createElement('li');
   var span = document.createElement('span');

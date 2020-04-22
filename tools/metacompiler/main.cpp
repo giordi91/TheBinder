@@ -110,7 +110,7 @@ void generateStmtBaseClass(FILE *fp) {
   fprintf(fp,
           "class %s{\n public:\n\t%s() = default;\n"
           "\tvirtual ~%s()=default;\n\t //interface\n"
-          "\tvirtual void accept(StmtVisitor* visitor)=0;\n};\n\n",
+          "\tvirtual void* accept(StmtVisitor* visitor)=0;\n};\n\n",
           className, className, className);
 }
 
@@ -210,12 +210,12 @@ int main() {
   // visitor
   forwardDeclareClass(fp, "Stmt");
   generateVisitorBaseClass(fp, "StmtVisitor", statementsDefinitions, stmtCount,
-                           "stmt", "void");
+                           "stmt", "void*");
   // Stmt base class
   generateStmtBaseClass(fp);
   // Statement classes
   generateFromDefinitions(fp, "Stmt", statementsDefinitions, stmtCount,
-                          "StmtVisitor","void");
+                          "StmtVisitor","void*");
 
   // compile time check
   insertStaticClassSizeCheck(fp, "ExprChecks", exprDefinitions, exprCount);

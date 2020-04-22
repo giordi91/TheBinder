@@ -382,12 +382,13 @@ public:
     return toVoid(rightIdx);
   }
 
-  void acceptExpression(autogen::Expression *stmt) override {
+  void *acceptExpression(autogen::Expression *stmt) override {
     // we eval the side effect and free the expression
     uint32_t index = toIndex(evaluate(stmt->expression));
     releaseRuntime(index);
+    return nullptr;
   };
-  void acceptPrint(autogen::Print *stmt) override {
+  void *acceptPrint(autogen::Print *stmt) override {
     uint32_t index = toIndex(evaluate(stmt->expression));
     RuntimeValue *value = getRuntime(index);
 
@@ -397,6 +398,7 @@ public:
       m_context->getStringPool().free(str);
       releaseRuntime(index);
     }
+    return nullptr;
   };
 
 private:
