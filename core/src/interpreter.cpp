@@ -34,7 +34,7 @@ inline uint32_t toIndex(void *ptr) {
 }
 
 // error handling
-const char *RuntimeValue::toString(BinderContext *context) {
+const char *RuntimeValue::debugToString(BinderContext *context) {
   memory::StringPool &pool = context->getStringPool();
   char valueStr[50];
   const char *finalStrValue = valueStr;
@@ -70,6 +70,31 @@ const char *RuntimeValue::toString(BinderContext *context) {
   const char *temp = pool.concatenate("Runtime value with type ", " and value ",
                                       RUNTIME_TYPE_NAMES[(int)type]);
   return pool.concatenate(temp, finalStrValue, nullptr, flags);
+}
+const char *RuntimeValue::toString(BinderContext *context) {
+  memory::StringPool &pool = context->getStringPool();
+  switch (type) {
+  case (RuntimeValueType::NUMBER): {
+    char value[50];
+    snprintf(value, 50, "%f", number);
+    return pool.allocate(value);
+  }
+  case (RuntimeValueType::BOOLEAN): {
+    const char *value = boolean ? "true" : "false";
+    return pool.allocate(value);
+  }
+  case (RuntimeValueType::NIL): {
+    const char *value = "nil";
+    return pool.allocate(value);
+  }
+  case (RuntimeValueType::STRING): {
+    return pool.concatenate("\"", "\"", string);
+  }
+  default:
+    assert(0 &&
+           "unhandled value in runtime type, it is INVALID, report as bug");
+  }
+  return nullptr;
 }
 
 struct RuntimeException : public std::exception {
@@ -115,8 +140,8 @@ const char *buildBinaryOperationError(BinderContext *context,
   assert(left->type != RuntimeValueType::INVALID);
   assert(right->type != RuntimeValueType::INVALID);
 
-  const char *leftValue = left->toString(context);
-  const char *rightValue = right->toString(context);
+  const char *leftValue = left->debugToString(context);
+  const char *rightValue = right->debugToString(context);
 
   const char ff = memory::FREE_FIRST_AFTER_OPERATION;
   const char fj = memory::FREE_JOINER_AFTER_OPERATION;
@@ -127,7 +152,7 @@ const char *buildBinaryOperationError(BinderContext *context,
   // we can free temp and joiner
   temp = pool.concatenate(temp, "\n right value:\n\t", leftValue, ff | fj);
   // we can free both sides since are result of concatenationor build
-  // by the toString (which result is in the pool)
+  // by the debugToString (which result is in the pool)
   temp = pool.concatenate(temp, "\n", rightValue, ff | fs);
 
   return temp;
@@ -152,7 +177,8 @@ bool areBothNumbers(RuntimeValue *left, RuntimeValue *right) {
 }
 
 // visitor to evaluate  the code
-class ASTInterpreterVisitor : public autogen::ExprVisitor {
+class ASTInterpreterVisitor : public autogen::ExprVisitor,
+                              public autogen::StmtVisitor {
 public:
   ASTInterpreterVisitor(
       BinderContext *context,
@@ -160,6 +186,9 @@ public:
       : autogen::ExprVisitor(), m_context(context),
         m_runtimeValuePool(runtimeValuePool){};
   virtual ~ASTInterpreterVisitor() = default;
+
+  void setSuppressPrint(bool value) { m_suppressPrints = value; }
+
   // interface
   void *acceptBinary(autogen::Binary *expr) override {
     // TODO proper casting
@@ -234,7 +263,7 @@ public:
       }
       left->number = (left->number) > (right->number);
       releaseRuntime(rightIdx);
-        return toVoid(leftIdx);
+      return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::GREATER_EQUAL): {
       if (!areBothNumbers(left, right)) {
@@ -244,7 +273,7 @@ public:
       }
       left->number = (left->number) >= (right->number);
       releaseRuntime(rightIdx);
-        return toVoid(leftIdx);
+      return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::LESS): {
       if (!areBothNumbers(left, right)) {
@@ -253,7 +282,7 @@ public:
       }
       left->number = (left->number) < (right->number);
       releaseRuntime(rightIdx);
-        return toVoid(leftIdx);
+      return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::LESS_EQUAL): {
       if (!areBothNumbers(left, right)) {
@@ -263,7 +292,7 @@ public:
       }
       left->number = (left->number) <= (right->number);
       releaseRuntime(rightIdx);
-        return toVoid(leftIdx);
+      return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::BANG_EQUAL): {
       if (!areBothNumbers(left, right)) {
@@ -274,7 +303,7 @@ public:
       left->boolean = !isEqual(left, right);
       left->type = RuntimeValueType::BOOLEAN;
       releaseRuntime(rightIdx);
-        return toVoid(leftIdx);
+      return toVoid(leftIdx);
     }
     case (TOKEN_TYPE::EQUAL_EQUAL): {
       if (!areBothNumbers(left, right)) {
@@ -285,7 +314,7 @@ public:
       left->boolean = isEqual(left, right);
       left->type = RuntimeValueType::BOOLEAN;
       releaseRuntime(rightIdx);
-        return toVoid(leftIdx);
+      return toVoid(leftIdx);
     }
 
     default:
@@ -326,9 +355,7 @@ public:
   }
   void *acceptUnary(autogen::Unary *expr) override {
     // we have an expression to evaluate, the right hand side
-    uint32_t rightIdx =
-        toIndex((evaluate(expr->right)));
-
+    uint32_t rightIdx = toIndex((evaluate(expr->right)));
 
     RuntimeValue *rightValue = getRuntime(rightIdx);
 
@@ -351,9 +378,26 @@ public:
       break;
     }
     }
-    //no need to free anything we re-used the same value, modified in place
-    return  toVoid(rightIdx);
+    // no need to free anything we re-used the same value, modified in place
+    return toVoid(rightIdx);
   }
+
+  void acceptExpression(autogen::Expression *stmt) override {
+    // we eval the side effect and free the expression
+    uint32_t index = toIndex(evaluate(stmt->expression));
+    releaseRuntime(index);
+  };
+  void acceptPrint(autogen::Print *stmt) override {
+    uint32_t index = toIndex(evaluate(stmt->expression));
+    RuntimeValue *value = getRuntime(index);
+
+    if (!m_suppressPrints) {
+      const char *str = value->toString(m_context);
+      printf("%s\n", str);
+      m_context->getStringPool().free(str);
+      releaseRuntime(index);
+    }
+  };
 
 private:
   void *evaluate(autogen::Expr *expr) {
@@ -381,25 +425,32 @@ private:
 private:
   BinderContext *m_context;
   memory::SparseMemoryPool<RuntimeValue> *m_runtimeValuePool;
+  bool m_suppressPrints = false;
 };
 
-RuntimeValue *ASTInterpreter::interpret(autogen::Expr *ASTRoot) {
+void ASTInterpreter::interpret(
+    const binder::memory::ResizableVector<autogen::Stmt *> &stmts) {
   // TODO can I propagate const to the accept? unluckily I don't think I can
   // I need to investigate
 
   // if issues happened at parser time, we should not reach this point
   // and exit earlier
-  assert(ASTRoot != nullptr);
+
+  uint32_t count = stmts.size();
+  assert(stmts.size() != 0);
 
   // TODO sure, thrwoing is easy to get out of recursion....but what about
   // heap memory? Here probably i want to use a pool to allocate the AST
   // nodes
   try {
     ASTInterpreterVisitor visitor(m_context, &m_pool);
-    uint32_t index = toIndex(ASTRoot->accept(&visitor));
-    return &m_pool[index];
+    visitor.setSuppressPrint(m_suppressPrints);
+    for (uint32_t i = 0; i < count; ++i) {
+      stmts[i]->accept(&visitor);
+    }
+    // uint32_t index = toIndex(ASTRoot->accept(&visitor));
+    // return &m_pool[index];
   } catch (RuntimeException e) {
-    return nullptr;
   }
 }
 

@@ -103,8 +103,8 @@ class StmtVisitor{
 	StmtVisitor() = default;
 	virtual ~StmtVisitor()=default;
 	//interface
-	virtual void* acceptExpression(Expression* stmt) = 0;
-	virtual void* acceptPrint(Print* stmt) = 0;
+	virtual void acceptExpression(Expression* stmt) = 0;
+	virtual void acceptPrint(Print* stmt) = 0;
 
 };
 class Stmt{
@@ -112,7 +112,7 @@ class Stmt{
 	Stmt() = default;
 	virtual ~Stmt()=default;
 	 //interface
-	virtual void* accept(StmtVisitor* visitor)=0;
+	virtual void accept(StmtVisitor* visitor)=0;
 };
 
 class Expression : public Stmt
@@ -121,7 +121,7 @@ public:
 	Expression(): Stmt(){}
 	virtual ~Expression()=default;
 	Expr* expression;
-	void* accept(StmtVisitor* visitor) override
+	void accept(StmtVisitor* visitor) override
 	{ 
  		return visitor->acceptExpression(this);
 	};
@@ -133,7 +133,7 @@ public:
 	Print(): Stmt(){}
 	virtual ~Print()=default;
 	Expr* expression;
-	void* accept(StmtVisitor* visitor) override
+	void accept(StmtVisitor* visitor) override
 	{ 
  		return visitor->acceptPrint(this);
 	};

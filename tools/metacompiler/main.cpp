@@ -39,7 +39,7 @@ void writeIncludes(FILE *fp) {
 
 void WriteASTNode(FILE *fp, const char *baseClass,
                   const ASTNodeDefinition &definition,
-                  const char *visitorName) {
+                  const char *visitorName, const char* returnType) {
 
   fprintf(fp, "class ");
   fprintf(fp, definition.className);
@@ -73,9 +73,9 @@ void WriteASTNode(FILE *fp, const char *baseClass,
   // adding the interface
   // accept function
   fprintf(fp,
-          "\tvoid* accept(%s* visitor) override\n"
+          "\t%s accept(%s* visitor) override\n"
           "\t{ \n \t\treturn visitor->accept",
-          visitorName);
+           returnType,visitorName);
   fprintf(fp, definition.className);
   fprintf(fp, "(this);\n\t};\n");
 
@@ -85,10 +85,11 @@ void WriteASTNode(FILE *fp, const char *baseClass,
 
 void generateFromDefinitions(FILE *fp, const char *baseClass,
                              const ASTNodeDefinition *definitions,
-                             const int count, const char *visitorName) {
+                             const int count, const char *visitorName,
+                             const char *returnType) {
   // int count = ;
   for (int i = 0; i < count; ++i) {
-    WriteASTNode(fp, baseClass, definitions[i], visitorName);
+    WriteASTNode(fp, baseClass, definitions[i], visitorName,returnType);
   }
 }
 
@@ -109,9 +110,10 @@ void generateStmtBaseClass(FILE *fp) {
   fprintf(fp,
           "class %s{\n public:\n\t%s() = default;\n"
           "\tvirtual ~%s()=default;\n\t //interface\n"
-          "\tvirtual void* accept(StmtVisitor* visitor)=0;\n};\n\n",
+          "\tvirtual void accept(StmtVisitor* visitor)=0;\n};\n\n",
           className, className, className);
 }
+
 
 void forwardDeclareClass(FILE *fp, const char *className) {
   fprintf(fp, "class %s;\n", className);
@@ -119,7 +121,7 @@ void forwardDeclareClass(FILE *fp, const char *className) {
 
 void generateVisitorBaseClass(FILE *fp, const char *className,
                               const ASTNodeDefinition *definitions, int count,
-                              const char *paramName) {
+                              const char *paramName, const char* returnType) {
   // generate a forward delcare for each class
   // int count = sizeof(exprDefinitions) / sizeof(exprDefinitions[0]);
   for (int i = 0; i < count; ++i) {
@@ -138,7 +140,7 @@ void generateVisitorBaseClass(FILE *fp, const char *className,
   // specific name to not get too crazy with overload, but probably
   // overload would make the code a bit clearer? not sure
   for (int i = 0; i < count; ++i) {
-    fprintf(fp, "\tvirtual void* accept");
+    fprintf(fp, "\tvirtual %s accept",returnType);
     fprintf(fp, definitions[i].className);
     fprintf(fp, "(");
     fprintf(fp, definitions[i].className);
@@ -192,12 +194,12 @@ int main() {
   // forward declare of the expr class needed by visitor
   forwardDeclareClass(fp, "Expr");
   generateVisitorBaseClass(fp, "ExprVisitor", exprDefinitions, exprCount,
-                           "expr");
+                           "expr","void*");
   // expressions base class
   generateExpressionBaseClass(fp);
   // AST nodes
-  generateFromDefinitions(fp, "Expr", exprDefinitions, exprCount,
-                          "ExprVisitor");
+  generateFromDefinitions(fp, "Expr", exprDefinitions, exprCount, "ExprVisitor",
+                          "void*");
   fprintf(fp,
           "//=============================================================\n");
   fprintf(fp,
@@ -208,16 +210,17 @@ int main() {
   // visitor
   forwardDeclareClass(fp, "Stmt");
   generateVisitorBaseClass(fp, "StmtVisitor", statementsDefinitions, stmtCount,
-                           "stmt");
+                           "stmt", "void");
   // Stmt base class
   generateStmtBaseClass(fp);
   // Statement classes
   generateFromDefinitions(fp, "Stmt", statementsDefinitions, stmtCount,
-                          "StmtVisitor");
+                          "StmtVisitor","void");
 
   // compile time check
   insertStaticClassSizeCheck(fp, "ExprChecks", exprDefinitions, exprCount);
-  insertStaticClassSizeCheck(fp, "StmtChecks", statementsDefinitions, stmtCount);
+  insertStaticClassSizeCheck(fp, "StmtChecks", statementsDefinitions,
+                             stmtCount);
   // wrapping up
   closeNamespace(fp);
   fclose(fp);

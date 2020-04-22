@@ -7,6 +7,9 @@
 
 #include "catch.h"
 
+// TODO here we shoulud have possibly a print handler
+// that would allow us to actually redirect the out and read it
+// for now is good enough
 class SetupInterpreterTestFixture {
 public:
   SetupInterpreterTestFixture()
@@ -19,10 +22,12 @@ public:
     const binder::memory::ResizableVector<binder::Token> &tokens =
         scanner.getTokens();
     parser.parse(&tokens);
-    const binder::autogen::Expr *root = parser.getRoot();
-    REQUIRE(root != nullptr);
+    const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+        parser.getStmts();
+    REQUIRE(stmts.size() != 0);
     // TODO not pretty the const cast, need to see what I can do about it
-    return interpreter.interpret((binder::autogen::Expr *)root);
+    interpreter.interpret(stmts);
+    return nullptr;
   }
 
 protected:
@@ -38,6 +43,15 @@ double randfrom(double min, double max) {
   return min + (rand() / div);
 }
 
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "print single number",
+                 "[interpreter]") {
+
+  interpreter.setSuppressPrint(true);
+  const char *source = "print 12;";
+  interpret(source);
+}
+
+/*
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "single number",
                  "[interpreter]") {
 
@@ -235,5 +249,4 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime == str",
   context.setErrorReportingEnabled(true);
 }
 
-
-
+*/

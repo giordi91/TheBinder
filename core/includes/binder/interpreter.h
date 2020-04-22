@@ -1,10 +1,12 @@
 #pragma once
 #include "binder/memory/sparseMemoryPool.h"
+#include "binder/memory/resizableVector.h"
 
 namespace binder {
 
 namespace autogen {
 class Expr;
+class Stmt;
 }
 
 // used to keep track of the type of our runtime
@@ -24,6 +26,7 @@ struct RuntimeValue {
   };
   RuntimeValueType type = RuntimeValueType::INVALID;
 
+  const char *debugToString(BinderContext *context);
   const char *toString(BinderContext *context);
 };
 
@@ -38,12 +41,14 @@ public:
       : m_context(context), m_pool(poolSize){};
   ~ASTInterpreter() = default;
 
-  RuntimeValue *interpret(autogen::Expr *ASTRoot);
+  void interpret(const binder::memory::ResizableVector<autogen::Stmt *> &stmts);
   void flushMemory() { m_pool.clear(); };
+  void setSuppressPrint(bool value){m_suppressPrints = value;}
 
 private:
   BinderContext *m_context;
   memory::SparseMemoryPool<RuntimeValue> m_pool;
+  bool m_suppressPrints = false;
 };
 
 } // namespace binder

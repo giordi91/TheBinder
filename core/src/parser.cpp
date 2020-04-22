@@ -7,11 +7,11 @@ namespace binder {
 void Parser::parse(const memory::ResizableVector<Token> *tokens) {
   current = 0;
   m_tokens = tokens;
+  m_stmts.clear();
 
-  try {
-    m_root = expression();
-  } catch (ParserException e) {
-    m_root = nullptr;
+  while (!isAtEnd())
+  {
+      m_stmts.pushBack(statement());
   }
 }
 
