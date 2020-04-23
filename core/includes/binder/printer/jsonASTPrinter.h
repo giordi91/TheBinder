@@ -92,6 +92,7 @@ public:
                                       ff);
   };
 
+
 private:
   memory::StringPool &m_pool;
 };
