@@ -70,7 +70,6 @@ struct Token {
   const char* m_lexeme{};
   uint32_t m_line{};
   TOKEN_TYPE m_type = TOKEN_TYPE::END_OF_FILE;
-  uint16_t padding = 0;
 };
 
 }  // namespace binder

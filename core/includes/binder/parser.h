@@ -35,8 +35,10 @@ private:
   autogen::Expr *unary();
   autogen::Expr *primary();
   autogen::Stmt *statement();
+  autogen::Stmt *declaration();
   autogen::Stmt *printStatement();
   autogen::Stmt *expressionStatement();
+  autogen::Stmt *varDeclaration();
 
   bool match(const TOKEN_TYPE *types, const int size);
   bool match(const TOKEN_TYPE type);

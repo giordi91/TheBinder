@@ -13,6 +13,7 @@ class Binary;
 class Grouping;
 class Literal;
 class Unary;
+class Variable;
 
 class ExprVisitor{
  public:
@@ -23,6 +24,7 @@ class ExprVisitor{
 	virtual void* acceptGrouping(Grouping* expr) = 0;
 	virtual void* acceptLiteral(Literal* expr) = 0;
 	virtual void* acceptUnary(Unary* expr) = 0;
+	virtual void* acceptVariable(Variable* expr) = 0;
 
 };
 class Expr {
@@ -89,6 +91,19 @@ public:
 	};
 };
 
+class Variable : public Expr
+{
+public:
+	Variable(): Expr(){}
+	virtual ~Variable()=default;
+	Token name;
+	TOKEN_TYPE _typePadding;
+	void* accept(ExprVisitor* visitor) override
+	{ 
+ 		return visitor->acceptVariable(this);
+	};
+};
+
 //=============================================================
 //=============================================================
 //=============================================================
@@ -97,6 +112,7 @@ public:
 class Stmt;
 class Expression;
 class Print;
+class Var;
 
 class StmtVisitor{
  public:
@@ -105,6 +121,7 @@ class StmtVisitor{
 	//interface
 	virtual void* acceptExpression(Expression* stmt) = 0;
 	virtual void* acceptPrint(Print* stmt) = 0;
+	virtual void* acceptVar(Var* stmt) = 0;
 
 };
 class Stmt{
@@ -139,6 +156,19 @@ public:
 	};
 };
 
+class Var : public Stmt
+{
+public:
+	Var(): Stmt(){}
+	virtual ~Var()=default;
+	Token token;
+	Expr* initializer;
+	void* accept(StmtVisitor* visitor) override
+	{ 
+ 		return visitor->acceptVar(this);
+	};
+};
+
 //This class is only here to trigger compile time checks
 class ExprChecks{
 public:
@@ -147,17 +177,11 @@ public:
 		constexpr int GroupingSize = sizeof(Grouping);
 		constexpr int LiteralSize = sizeof(Literal);
 		constexpr int UnarySize = sizeof(Unary);
+		constexpr int VariableSize = sizeof(Variable);
 		static_assert(BinarySize == GroupingSize, "Size of Binary does not match size of Grouping, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(GroupingSize == LiteralSize, "Size of Grouping does not match size of Literal, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(LiteralSize == UnarySize, "Size of Literal does not match size of Unary, due to memory pools expecting same size, all AST nodes need to have same size");
-}};
-//This class is only here to trigger compile time checks
-class StmtChecks{
-public:
-	static void sizeCheck(){
-		constexpr int ExpressionSize = sizeof(Expression);
-		constexpr int PrintSize = sizeof(Print);
-		static_assert(ExpressionSize == PrintSize, "Size of Expression does not match size of Print, due to memory pools expecting same size, all AST nodes need to have same size");
+		static_assert(UnarySize == VariableSize, "Size of Unary does not match size of Variable, due to memory pools expecting same size, all AST nodes need to have same size");
 }};
 
 }// namespace binder::autogen

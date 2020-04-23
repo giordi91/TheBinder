@@ -19,11 +19,13 @@ const ASTNodeDefinition exprDefinitions[] = {
     {"Grouping", "Expr* expr, Expr* _padding1, TOKEN_TYPE _padding2"},
     {"Literal", "const char* value,Expr* _padding1, TOKEN_TYPE type"},
     {"Unary", "Expr* right,Expr* _padding1, TOKEN_TYPE op"},
+    {"Variable", "Token name, TOKEN_TYPE _typePadding"},
 };
 
 const ASTNodeDefinition statementsDefinitions[] = {
     {"Expression", "Expr* expression"},
     {"Print", "Expr* expression"},
+    {"Var", "Token token, Expr* initializer"},
 };
 
 void writeHeader(FILE *fp) {
@@ -219,8 +221,11 @@ int main() {
 
   // compile time check
   insertStaticClassSizeCheck(fp, "ExprChecks", exprDefinitions, exprCount);
-  insertStaticClassSizeCheck(fp, "StmtChecks", statementsDefinitions,
-                             stmtCount);
+  //TODO temporarely disabled, I need to know more about statements to know if they 
+  //can be pooled and or optimized for size
+  //insertStaticClassSizeCheck(fp, "StmtChecks", statementsDefinitions,
+  //                           stmtCount);
+
   // wrapping up
   closeNamespace(fp);
   fclose(fp);

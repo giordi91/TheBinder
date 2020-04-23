@@ -9,11 +9,8 @@ void Parser::parse(const memory::ResizableVector<Token> *tokens) {
   m_tokens = tokens;
   m_stmts.clear();
 
-  try {
-    while (!isAtEnd()) {
-      m_stmts.pushBack(statement());
-    }
-  } catch (ParserException e) {
+  while (!isAtEnd()) {
+    m_stmts.pushBack(declaration());
   }
 }
 
@@ -135,6 +132,13 @@ autogen::Expr *Parser::primary() {
     return expr;
   }
 
+  if(match(TOKEN_TYPE::IDENTIFIER))
+  {
+    auto *expr = new autogen::Variable();
+    expr->name = previous();
+    return expr;
+  }
+
   if (match(TOKEN_TYPE::LEFT_PAREN)) {
     autogen::Expr *expr = expression();
     consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after expresion.");
@@ -152,6 +156,36 @@ autogen::Stmt *Parser::statement() {
     return printStatement();
   }
   return expressionStatement();
+}
+
+autogen::Stmt *Parser::declaration() {
+
+  try {
+    if (match(TOKEN_TYPE::VAR)) {
+      return varDeclaration();
+    }
+
+    return statement();
+  } catch (ParserException e) {
+    // TODO sync here
+    // TODO catch the nullptr outside and do not add it
+    // to the list
+    return nullptr;
+  }
+}
+
+autogen::Stmt *Parser::varDeclaration() {
+  Token name = consume(TOKEN_TYPE::IDENTIFIER, "Expected variable name.");
+
+  autogen::Expr *initializer = nullptr;
+  if (match(TOKEN_TYPE::EQUAL)) {
+    initializer = expression();
+  }
+  consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after variable declaration.");
+  auto *var = new autogen::Var();
+  var->token = name;
+  var->initializer = initializer;
+  return var;
 }
 
 autogen::Stmt *Parser::printStatement() {
