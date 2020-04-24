@@ -10,9 +10,13 @@ public:
   ~Enviroment() = default;
   // TODO block copy/assigment constructor etc
 
-  void define(const char* variable, RuntimeValue* value)
-  {
-      m_values.insert(variable,value);
+  void define(const char *variable, RuntimeValue *value) {
+    m_values.insert(variable, value);
+  }
+  RuntimeValue *get(const char *variable) const {
+    RuntimeValue *value = nullptr;
+    m_values.get(variable, value);
+    return value;
   }
 
 private:

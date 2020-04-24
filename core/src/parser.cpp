@@ -10,7 +10,10 @@ void Parser::parse(const memory::ResizableVector<Token> *tokens) {
   m_stmts.clear();
 
   while (!isAtEnd()) {
-    m_stmts.pushBack(declaration());
+    autogen::Stmt *stmt = declaration();
+    if (stmt != nullptr) {
+      m_stmts.pushBack(stmt);
+    }
   }
 }
 
@@ -132,8 +135,7 @@ autogen::Expr *Parser::primary() {
     return expr;
   }
 
-  if(match(TOKEN_TYPE::IDENTIFIER))
-  {
+  if (match(TOKEN_TYPE::IDENTIFIER)) {
     auto *expr = new autogen::Variable();
     expr->name = previous();
     return expr;
@@ -170,6 +172,7 @@ autogen::Stmt *Parser::declaration() {
     // TODO sync here
     // TODO catch the nullptr outside and do not add it
     // to the list
+    syncronize();
     return nullptr;
   }
 }
@@ -244,6 +247,32 @@ const Token &Parser::previous() const { return (*m_tokens)[current - 1]; };
 ParserException Parser::error(const Token &token, const char *message) {
   m_context->reportError(token.m_line, message);
   return ParserException();
+}
+
+void Parser::syncronize() {
+  // eating the error
+  advance();
+  while (!isAtEnd()) {
+    // eat until semicolon
+    if (previous().m_type == TOKEN_TYPE::SEMICOLON)
+      return;
+    advance();
+  }
+
+  switch (peek().m_type) {
+  case TOKEN_TYPE::CLASS:
+  case TOKEN_TYPE::FUN:
+  case TOKEN_TYPE::VAR:
+  case TOKEN_TYPE::FOR:
+  case TOKEN_TYPE::IF:
+  case TOKEN_TYPE::WHILE:
+  case TOKEN_TYPE::PRINT:
+  case TOKEN_TYPE::RETURN:
+    return;
+  default:
+    break;
+  }
+  advance();
 }
 
 const Token &Parser::consume(TOKEN_TYPE type, const char *message) {

@@ -1,6 +1,7 @@
 #pragma once
 #include "binder/memory/sparseMemoryPool.h"
 #include "binder/memory/resizableVector.h"
+#include "binder/enviroment.h"
 
 namespace binder {
 
@@ -47,6 +48,7 @@ public:
 
 private:
   BinderContext *m_context;
+  Enviroment m_enviroment;
   memory::SparseMemoryPool<RuntimeValue> m_pool;
   bool m_suppressPrints = false;
 };

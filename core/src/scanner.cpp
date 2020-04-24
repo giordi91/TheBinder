@@ -219,7 +219,7 @@ void Scanner::scanIdentifier() {
 
   uint32_t endIdx = current - 1;
   const char *newString = nullptr;
-  if (endIdx > start) {
+  if (endIdx >= start) {
     newString = m_context->getStringPool().subString(m_source, start, endIdx);
   }
   assert(newString != nullptr);

@@ -49,6 +49,24 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "print single number",
   interpreter.setSuppressPrint(true);
   const char *source = "print 12;";
   interpret(source);
+  interpreter.setSuppressPrint(false);
+}
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "basic variable ",
+                 "[interpreter]") {
+
+  interpreter.setSuppressPrint(true);
+  const char *source = "var a = 12;";
+  interpret(source);
+  interpreter.setSuppressPrint(false);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "basic variable and print",
+                 "[interpreter]") {
+
+  interpreter.setSuppressPrint(true);
+  const char *source = "var a = 12; print a;";
+  interpret(source);
+  interpreter.setSuppressPrint(false);
 }
 
 /*

@@ -40,6 +40,7 @@ private:
   autogen::Stmt *expressionStatement();
   autogen::Stmt *varDeclaration();
 
+  void syncronize();
   bool match(const TOKEN_TYPE *types, const int size);
   bool match(const TOKEN_TYPE type);
   bool check(TOKEN_TYPE type);

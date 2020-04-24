@@ -182,9 +182,10 @@ class ASTInterpreterVisitor : public autogen::ExprVisitor,
 public:
   ASTInterpreterVisitor(
       BinderContext *context,
-      memory::SparseMemoryPool<RuntimeValue> *runtimeValuePool)
+      memory::SparseMemoryPool<RuntimeValue> *runtimeValuePool,Enviroment* enviroment)
       : autogen::ExprVisitor(), m_context(context),
-        m_runtimeValuePool(runtimeValuePool){};
+        m_runtimeValuePool(runtimeValuePool), m_enviroment(enviroment){};
+        
   virtual ~ASTInterpreterVisitor() = default;
 
   void setSuppressPrint(bool value) { m_suppressPrints = value; }
@@ -382,6 +383,15 @@ public:
     return toVoid(rightIdx);
   }
 
+  void *acceptVariable(autogen::Variable *expr) override {
+      //we just straight up return the value which again
+      //is a index in the pool masked as void*
+      //whoever uses this value will properly convert back
+      //to index and extract the real runtime value from it
+      return m_enviroment->get(expr->name.m_lexeme);
+  }
+
+  //statements
   void *acceptExpression(autogen::Expression *stmt) override {
     // we eval the side effect and free the expression
     uint32_t index = toIndex(evaluate(stmt->expression));
@@ -398,6 +408,22 @@ public:
       m_context->getStringPool().free(str);
       releaseRuntime(index);
     }
+    return nullptr;
+  };
+
+  void *acceptVar(autogen::Var *stmt) override {
+
+    RuntimeValue *value = nullptr;
+    if (stmt->initializer != nullptr) {
+      //now this is really important, we don't deal with runtime value pointers
+      //directly ever, unless we actually evaluate the value, when that happens
+      //pointer is converted to pool index. This pointer should not be dereferenced
+      //also check acceptVariable() to see usage
+      value = (RuntimeValue*)evaluate(stmt->initializer);
+    }
+
+    m_enviroment->define(stmt->token.m_lexeme, value);
+
     return nullptr;
   };
 
@@ -427,6 +453,7 @@ private:
 private:
   BinderContext *m_context;
   memory::SparseMemoryPool<RuntimeValue> *m_runtimeValuePool;
+  Enviroment* m_enviroment;
   bool m_suppressPrints = false;
 };
 
@@ -445,7 +472,7 @@ void ASTInterpreter::interpret(
   // heap memory? Here probably i want to use a pool to allocate the AST
   // nodes
   try {
-    ASTInterpreterVisitor visitor(m_context, &m_pool);
+    ASTInterpreterVisitor visitor(m_context, &m_pool,&m_enviroment);
     visitor.setSuppressPrint(m_suppressPrints);
     for (uint32_t i = 0; i < count; ++i) {
       stmts[i]->accept(&visitor);

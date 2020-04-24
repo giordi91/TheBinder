@@ -22,6 +22,9 @@ public:
   void *acceptUnary(autogen::Unary *expr) override {
     return parenthesize(getLexemeFromToken(expr->op), expr->right, nullptr);
   }
+  void *acceptVariable(autogen::Variable *expr) override {
+    return  (void*)expr->name.m_lexeme;
+  }
 
   const char *print(autogen::Expr *expr) {
     return (const char *)expr->accept(this);
