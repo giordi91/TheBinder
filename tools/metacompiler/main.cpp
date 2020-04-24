@@ -14,12 +14,15 @@ struct ASTNodeDefinition {
   ;
 };
 
+//TODO here we force them to be the same size for pool allocation
+//which is a bit of a pain to be compatible wit ha 32 bit system like
+//WASM, one option would be to give the pool the minimum size maybe?
 const ASTNodeDefinition exprDefinitions[] = {
     {"Binary", "Expr* left,Expr* right, TOKEN_TYPE op"},
     {"Grouping", "Expr* expr, Expr* _padding1, TOKEN_TYPE _padding2"},
     {"Literal", "const char* value,Expr* _padding1, TOKEN_TYPE type"},
     {"Unary", "Expr* right,Expr* _padding1, TOKEN_TYPE op"},
-    {"Variable", "Token name, TOKEN_TYPE _typePadding"},
+    {"Variable", "const char* name,Expr* _padding1, TOKEN_TYPE _padding2"},
 };
 
 const ASTNodeDefinition statementsDefinitions[] = {

@@ -388,7 +388,7 @@ public:
       //is a index in the pool masked as void*
       //whoever uses this value will properly convert back
       //to index and extract the real runtime value from it
-      return m_enviroment->get(expr->name.m_lexeme);
+      return m_enviroment->get(expr->name);
   }
 
   //statements

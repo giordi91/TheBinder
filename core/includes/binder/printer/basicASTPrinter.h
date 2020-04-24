@@ -23,7 +23,7 @@ public:
     return parenthesize(getLexemeFromToken(expr->op), expr->right, nullptr);
   }
   void *acceptVariable(autogen::Variable *expr) override {
-    return  (void*)expr->name.m_lexeme;
+    return  (void*)expr->name;
   }
 
   const char *print(autogen::Expr *expr) {

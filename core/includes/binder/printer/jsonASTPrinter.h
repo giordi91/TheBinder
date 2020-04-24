@@ -33,6 +33,13 @@ public:
                         nullptr);
   }
 
+  void *acceptVariable(autogen::Variable *expr) override {
+
+    const char *body = m_pool.concatenate(
+        "{ \"type\" : \"var\", \"value\" :\"", "\"}", expr->name);
+    return (char *)body;
+  }
+
   const char *print(autogen::Stmt *stmt) {
     return (const char *)stmt->accept(this);
   }
@@ -92,6 +99,16 @@ public:
                                       ff);
   };
 
+  void *acceptVar(autogen::Var *stmt) override {
+
+    const char ff = binder::memory::FREE_FIRST_AFTER_OPERATION;
+    const char fj = binder::memory::FREE_JOINER_AFTER_OPERATION;
+
+    const char *expr = (char *)stmt->initializer->accept(this);
+    const char *tmp = m_pool.concatenate("{\"expr\" : ", ",\n", expr, fj);
+    return (char *)m_pool.concatenate(tmp, "\"name\" :\"var\"}\n", nullptr,
+                                      ff);
+  };
 
 private:
   memory::StringPool &m_pool;

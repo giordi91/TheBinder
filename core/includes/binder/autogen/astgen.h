@@ -96,8 +96,9 @@ class Variable : public Expr
 public:
 	Variable(): Expr(){}
 	virtual ~Variable()=default;
-	Token name;
-	TOKEN_TYPE _typePadding;
+	const char* name;
+	Expr* _padding1;
+	TOKEN_TYPE _padding2;
 	void* accept(ExprVisitor* visitor) override
 	{ 
  		return visitor->acceptVariable(this);

@@ -137,7 +137,7 @@ autogen::Expr *Parser::primary() {
 
   if (match(TOKEN_TYPE::IDENTIFIER)) {
     auto *expr = new autogen::Variable();
-    expr->name = previous();
+    expr->name = previous().m_lexeme;
     return expr;
   }
 
