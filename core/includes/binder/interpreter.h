@@ -43,7 +43,10 @@ public:
   ~ASTInterpreter() = default;
 
   void interpret(const binder::memory::ResizableVector<autogen::Stmt *> &stmts);
-  void flushMemory() { m_pool.clear(); };
+  void flushMemory() { 
+      m_pool.clear(); 
+      m_enviroment.clear();
+  };
   void setSuppressPrint(bool value){m_suppressPrints = value;}
 
 private:

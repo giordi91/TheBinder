@@ -125,6 +125,15 @@ public:
   HashMap(const HashMap &) = delete;
   HashMap &operator=(const HashMap &) = delete;
 
+  void clear() {
+    //iterating all the bins making sure to set them as free
+    for (int i = 0; i < m_bins; ++i) {
+      setMetadata(i, BIN_FLAGS::FREE);
+    }
+    //clearing the used bins counter
+    m_usedBins = 0;
+  }
+
 private:
   enum class BIN_FLAGS { NONE = 0, FREE = 1, DELETED = 2, USED = 3 };
 

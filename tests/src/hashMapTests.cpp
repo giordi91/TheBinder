@@ -1,6 +1,7 @@
 #include "binder/memory/hashMap.h"
-#include "binder/memory/stringHashMap.h"
 #include "binder/memory/hashing.h"
+#include "binder/memory/stringHashMap.h"
+#include "binder/memory/resizableVector.h"
 
 #include "catch.h"
 
@@ -198,34 +199,66 @@ TEST_CASE("string hashmap ", "[memory]") {
   alloc.insert("while", 15);
 
   uint32_t value = 0;
-  alloc.get("and", value); 
+  alloc.get("and", value);
   REQUIRE(value == 1);
-  alloc.get("class", value); 
+  alloc.get("class", value);
   REQUIRE(value == 2);
-  alloc.get("else", value); 
+  alloc.get("else", value);
   REQUIRE(value == 3);
-  alloc.get("false", value); 
+  alloc.get("false", value);
   REQUIRE(value == 4);
-  alloc.get("for", value); 
+  alloc.get("for", value);
   REQUIRE(value == 5);
-  alloc.get("fun", value); 
+  alloc.get("fun", value);
   REQUIRE(value == 6);
-  alloc.get("if", value); 
+  alloc.get("if", value);
   REQUIRE(value == 7);
-  alloc.get("nil", value); 
+  alloc.get("nil", value);
   REQUIRE(value == 8);
-  alloc.get("or", value); 
+  alloc.get("or", value);
   REQUIRE(value == 9);
-  alloc.get("print", value); 
+  alloc.get("print", value);
   REQUIRE(value == 10);
-  alloc.get("return", value); 
+  alloc.get("return", value);
   REQUIRE(value == 11);
-  alloc.get("super", value); 
+  alloc.get("super", value);
   REQUIRE(value == 12);
-  alloc.get("this", value); 
+  alloc.get("this", value);
   REQUIRE(value == 13);
-  alloc.get("var", value); 
+  alloc.get("var", value);
   REQUIRE(value == 14);
-  alloc.get("while", value); 
+  alloc.get("while", value);
   REQUIRE(value == 15);
+}
+
+TEST_CASE("hashmap clear", "[memory]") {
+  binder::memory::HashMap<uint32_t, uint32_t, binder::hashUint32> alloc(4600);
+
+  const int count = 100;
+  for (int i = 0; i < count; ++i) {
+    uint32_t k = rand();
+    uint32_t v = rand();
+    alloc.insert(k, v);
+  }
+
+  REQUIRE(alloc.getUsedBins() == count);
+  alloc.clear();
+  REQUIRE(alloc.getUsedBins() == 0);
+
+  binder::memory::ResizableVector<uint32_t> ks(count);
+  binder::memory::ResizableVector<uint32_t> vs(count);
+  for (int i = 0; i < count; ++i) {
+    uint32_t k = rand();
+    uint32_t v = rand();
+    alloc.insert(k, v);
+    ks.pushBack(k);
+    vs.pushBack(v);
+  }
+
+  for(int i =0; i <count;++i)
+  {
+      uint32_t value;
+      alloc.get(ks[i],value);
+      REQUIRE(value == vs[i]);
+  }
 }

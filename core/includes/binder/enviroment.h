@@ -19,6 +19,12 @@ public:
     return value;
   }
 
+  void clear()
+  {
+      m_values.clear();
+
+  }
+
 private:
   memory::HashMap<const char *, RuntimeValue *, hashString32> m_values;
 };
