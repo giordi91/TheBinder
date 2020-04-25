@@ -13,6 +13,17 @@ public:
   void define(const char *variable, RuntimeValue *value) {
     m_values.insert(variable, value);
   }
+
+  bool assign(const char *variable, RuntimeValue *value)
+  {
+      if(m_values.containsKey(variable))
+      {
+          m_values.insert(variable,value);
+          return true;
+      }
+      return false;
+  }
+
   RuntimeValue *get(const char *variable) const {
     RuntimeValue *value = nullptr;
     m_values.get(variable, value);

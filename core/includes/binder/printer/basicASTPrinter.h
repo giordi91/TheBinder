@@ -23,7 +23,14 @@ public:
     return parenthesize(getLexemeFromToken(expr->op), expr->right, nullptr);
   }
   void *acceptVariable(autogen::Variable *expr) override {
-    return  (void*)expr->name;
+    return (void *)expr->name;
+  }
+
+  void *acceptAssign(autogen::Assign *expr) override {
+    const char *name = m_pool.concatenate("assign ", expr->name);
+    const char *paren = parenthesize("assign", expr->value, nullptr);
+    m_pool.free(name);
+    return (char *)paren;
   }
 
   const char *print(autogen::Expr *expr) {
@@ -43,10 +50,10 @@ public:
       // result from second expression
       char *expr2str = (char *)expr2->accept(this);
 
-      //now we join with a space the first and second expression
+      // now we join with a space the first and second expression
       const char *expr2join =
           m_pool.concatenate(expr1done, expr2str, " ", flags);
-      //finally we add a closing parent
+      // finally we add a closing parent
       const char *expr2done = m_pool.concatenate(
           expr2join, ")", nullptr, binder::memory::FREE_FIRST_AFTER_OPERATION);
       return (char *)expr2done;

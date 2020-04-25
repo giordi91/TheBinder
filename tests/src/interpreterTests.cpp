@@ -69,6 +69,15 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "basic variable and print",
   interpreter.setSuppressPrint(false);
 }
 
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "assign and print re-assign",
+                 "[interpreter]") {
+
+  interpreter.setSuppressPrint(false);
+  const char *source = "var a = 1; print a = 2;";
+  interpret(source);
+  interpreter.setSuppressPrint(false);
+}
+
 /*
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "single number",
                  "[interpreter]") {

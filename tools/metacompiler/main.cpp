@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 // this should be run from the build/mono folder
 const char *outputFile = "../../core/includes/binder/autogen/astgen.h";
@@ -14,10 +15,11 @@ struct ASTNodeDefinition {
   ;
 };
 
-//TODO here we force them to be the same size for pool allocation
-//which is a bit of a pain to be compatible wit ha 32 bit system like
-//WASM, one option would be to give the pool the minimum size maybe?
+// TODO here we force them to be the same size for pool allocation
+// which is a bit of a pain to be compatible wit ha 32 bit system like
+// WASM, one option would be to give the pool the minimum size maybe?
 const ASTNodeDefinition exprDefinitions[] = {
+    {"Assign", "const char*name,Expr* value, TOKEN_TYPE _padding1"},
     {"Binary", "Expr* left,Expr* right, TOKEN_TYPE op"},
     {"Grouping", "Expr* expr, Expr* _padding1, TOKEN_TYPE _padding2"},
     {"Literal", "const char* value,Expr* _padding1, TOKEN_TYPE type"},
@@ -43,8 +45,8 @@ void writeIncludes(FILE *fp) {
 }
 
 void WriteASTNode(FILE *fp, const char *baseClass,
-                  const ASTNodeDefinition &definition,
-                  const char *visitorName, const char* returnType) {
+                  const ASTNodeDefinition &definition, const char *visitorName,
+                  const char *returnType) {
 
   fprintf(fp, "class ");
   fprintf(fp, definition.className);
@@ -80,7 +82,7 @@ void WriteASTNode(FILE *fp, const char *baseClass,
   fprintf(fp,
           "\t%s accept(%s* visitor) override\n"
           "\t{ \n \t\treturn visitor->accept",
-           returnType,visitorName);
+          returnType, visitorName);
   fprintf(fp, definition.className);
   fprintf(fp, "(this);\n\t};\n");
 
@@ -94,7 +96,7 @@ void generateFromDefinitions(FILE *fp, const char *baseClass,
                              const char *returnType) {
   // int count = ;
   for (int i = 0; i < count; ++i) {
-    WriteASTNode(fp, baseClass, definitions[i], visitorName,returnType);
+    WriteASTNode(fp, baseClass, definitions[i], visitorName, returnType);
   }
 }
 
@@ -107,6 +109,7 @@ void closeNamespace(FILE *fp) {
 void generateExpressionBaseClass(FILE *fp) {
   fprintf(fp, "class Expr {\n public:\n\tExpr() = default;\n"
               "\tvirtual ~Expr()=default;\n\t //interface\n"
+              "\tAST_TYPE astType;\n"
               "\tvirtual void* accept(ExprVisitor* visitor)=0;\n};\n\n");
 }
 
@@ -115,10 +118,10 @@ void generateStmtBaseClass(FILE *fp) {
   fprintf(fp,
           "class %s{\n public:\n\t%s() = default;\n"
           "\tvirtual ~%s()=default;\n\t //interface\n"
+          "\tAST_TYPE astType;\n"
           "\tvirtual void* accept(StmtVisitor* visitor)=0;\n};\n\n",
           className, className, className);
 }
-
 
 void forwardDeclareClass(FILE *fp, const char *className) {
   fprintf(fp, "class %s;\n", className);
@@ -126,7 +129,7 @@ void forwardDeclareClass(FILE *fp, const char *className) {
 
 void generateVisitorBaseClass(FILE *fp, const char *className,
                               const ASTNodeDefinition *definitions, int count,
-                              const char *paramName, const char* returnType) {
+                              const char *paramName, const char *returnType) {
   // generate a forward delcare for each class
   // int count = sizeof(exprDefinitions) / sizeof(exprDefinitions[0]);
   for (int i = 0; i < count; ++i) {
@@ -145,7 +148,7 @@ void generateVisitorBaseClass(FILE *fp, const char *className,
   // specific name to not get too crazy with overload, but probably
   // overload would make the code a bit clearer? not sure
   for (int i = 0; i < count; ++i) {
-    fprintf(fp, "\tvirtual %s accept",returnType);
+    fprintf(fp, "\tvirtual %s accept", returnType);
     fprintf(fp, definitions[i].className);
     fprintf(fp, "(");
     fprintf(fp, definitions[i].className);
@@ -180,6 +183,44 @@ void insertStaticClassSizeCheck(FILE *fp, const char *className,
   fprintf(fp, "}};\n");
 }
 
+void generateExprTypeEnum(FILE* fp, const ASTNodeDefinition *exprDefinitions, int exprCount,
+                          const ASTNodeDefinition *stmtDefinitions, int stmtCount) {
+  fprintf(fp, "enum class AST_TYPE {\n");
+  for(int i= 0; i < exprCount; ++i)
+  {
+      const ASTNodeDefinition& definition = exprDefinitions[i];
+      int len = strlen(definition.className);
+      char up = 0;
+
+          if(i != 0)
+          {
+              fprintf(fp, ",\n");
+          }
+      for(int c =0; c< len;++c)
+      {
+          up =toupper(definition.className[c]);
+          fputc( up,fp);
+      }
+  }
+
+
+  for(int i= 0; i < stmtCount; ++i)
+  {
+      const ASTNodeDefinition& definition = stmtDefinitions[i];
+      int len = strlen(definition.className);
+      char up = 0;
+
+      fprintf(fp, ",\n");
+      for(int c =0; c< len;++c)
+      {
+          up =toupper(definition.className[c]);
+          fputc( up,fp);
+      }
+  }
+
+  fprintf(fp, "};\n\n");
+}
+
 int main() {
 
   FILE *fp = fopen(outputFile, "w");
@@ -195,11 +236,15 @@ int main() {
   int stmtCount =
       sizeof(statementsDefinitions) / sizeof(statementsDefinitions[0]);
 
+  // generate enum
+  generateExprTypeEnum(fp, exprDefinitions, exprCount, statementsDefinitions,
+                       stmtCount);
+
   // Visitor
   // forward declare of the expr class needed by visitor
   forwardDeclareClass(fp, "Expr");
   generateVisitorBaseClass(fp, "ExprVisitor", exprDefinitions, exprCount,
-                           "expr","void*");
+                           "expr", "void*");
   // expressions base class
   generateExpressionBaseClass(fp);
   // AST nodes
@@ -220,13 +265,13 @@ int main() {
   generateStmtBaseClass(fp);
   // Statement classes
   generateFromDefinitions(fp, "Stmt", statementsDefinitions, stmtCount,
-                          "StmtVisitor","void*");
+                          "StmtVisitor", "void*");
 
   // compile time check
   insertStaticClassSizeCheck(fp, "ExprChecks", exprDefinitions, exprCount);
-  //TODO temporarely disabled, I need to know more about statements to know if they 
-  //can be pooled and or optimized for size
-  //insertStaticClassSizeCheck(fp, "StmtChecks", statementsDefinitions,
+  // TODO temporarely disabled, I need to know more about statements to know if
+  // they can be pooled and or optimized for size insertStaticClassSizeCheck(fp,
+  // "StmtChecks", statementsDefinitions,
   //                           stmtCount);
 
   // wrapping up

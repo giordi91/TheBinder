@@ -8,7 +8,19 @@ Metacompiler for "TheBinder" language v0.0.1
 
 namespace binder::autogen{
 
+enum class AST_TYPE {
+ASSIGN,
+BINARY,
+GROUPING,
+LITERAL,
+UNARY,
+VARIABLE,
+EXPRESSION,
+PRINT,
+VAR};
+
 class Expr;
+class Assign;
 class Binary;
 class Grouping;
 class Literal;
@@ -20,6 +32,7 @@ class ExprVisitor{
 	ExprVisitor() = default;
 	virtual ~ExprVisitor()=default;
 	//interface
+	virtual void* acceptAssign(Assign* expr) = 0;
 	virtual void* acceptBinary(Binary* expr) = 0;
 	virtual void* acceptGrouping(Grouping* expr) = 0;
 	virtual void* acceptLiteral(Literal* expr) = 0;
@@ -32,7 +45,22 @@ class Expr {
 	Expr() = default;
 	virtual ~Expr()=default;
 	 //interface
+	AST_TYPE astType;
 	virtual void* accept(ExprVisitor* visitor)=0;
+};
+
+class Assign : public Expr
+{
+public:
+	Assign(): Expr(){}
+	virtual ~Assign()=default;
+	const char*name;
+	Expr* value;
+	TOKEN_TYPE _padding1;
+	void* accept(ExprVisitor* visitor) override
+	{ 
+ 		return visitor->acceptAssign(this);
+	};
 };
 
 class Binary : public Expr
@@ -130,6 +158,7 @@ class Stmt{
 	Stmt() = default;
 	virtual ~Stmt()=default;
 	 //interface
+	AST_TYPE astType;
 	virtual void* accept(StmtVisitor* visitor)=0;
 };
 
@@ -174,11 +203,13 @@ public:
 class ExprChecks{
 public:
 	static void sizeCheck(){
+		constexpr int AssignSize = sizeof(Assign);
 		constexpr int BinarySize = sizeof(Binary);
 		constexpr int GroupingSize = sizeof(Grouping);
 		constexpr int LiteralSize = sizeof(Literal);
 		constexpr int UnarySize = sizeof(Unary);
 		constexpr int VariableSize = sizeof(Variable);
+		static_assert(AssignSize == BinarySize, "Size of Assign does not match size of Binary, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(BinarySize == GroupingSize, "Size of Binary does not match size of Grouping, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(GroupingSize == LiteralSize, "Size of Grouping does not match size of Literal, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(LiteralSize == UnarySize, "Size of Literal does not match size of Unary, due to memory pools expecting same size, all AST nodes need to have same size");

@@ -28,6 +28,7 @@ public:
 private:
   // private interface
   autogen::Expr *expression();
+  autogen::Expr *assignment();
   autogen::Expr *equality();
   autogen::Expr *comparison();
   autogen::Expr *addition();
