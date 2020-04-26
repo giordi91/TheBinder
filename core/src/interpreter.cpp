@@ -76,7 +76,8 @@ const char *RuntimeValue::toString(BinderContext *context) {
   switch (type) {
   case (RuntimeValueType::NUMBER): {
     char value[50];
-    snprintf(value, 50, "%02.*f",5, number);
+    snprintf(value, 50, "%02.*f", context->getConfig().printFloatPrecision,
+             number);
     return pool.allocate(value);
   }
   case (RuntimeValueType::BOOLEAN): {
@@ -417,7 +418,7 @@ public:
 
     if (!m_suppressPrints) {
       const char *str = value->toString(m_context);
-      printf("%s\n", str);
+      m_context->print(str);
       m_context->getStringPool().free(str);
       releaseRuntime(index);
     }
@@ -469,6 +470,15 @@ private:
   Enviroment *m_enviroment;
   bool m_suppressPrints = false;
 };
+
+RuntimeValue *ASTInterpreter::getRuntimeVariable(const char *variableName) {
+  // this is a void* encoded pool index;
+  void *runtime = m_enviroment.get(variableName);
+  assert(runtime != nullptr);
+  uint32_t index = toIndex(runtime);
+  // now we can convert to the actual runtime value
+  return &m_pool[index];
+}
 
 void ASTInterpreter::interpret(
     const binder::memory::ResizableVector<autogen::Stmt *> &stmts) {

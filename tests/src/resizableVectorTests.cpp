@@ -312,3 +312,12 @@ TEST_CASE("Vector remove by patching", "[memory]") {
   REQUIRE(value == 6.0f);
 
 }
+
+TEST_CASE("double resize with bigger reserve", "[memory]") {
+
+  binder::memory::ResizableVector<float> vec(256);
+  vec.resize(5);
+  REQUIRE(vec.size()==5);
+  vec.resize(15);
+  REQUIRE(vec.size()==15);
+}

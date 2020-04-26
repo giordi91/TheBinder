@@ -84,8 +84,8 @@ public:
       reallocateMemoryInternal(newSize * 2);
       m_reserved = newSize * 2;
       m_size = newSize;
-    } else if (newSize < m_size) {
-      // here we perform a trunctation
+    } else {
+      //updating the size
       m_size = newSize;
     }
   }

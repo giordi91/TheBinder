@@ -49,6 +49,9 @@ public:
   };
   void setSuppressPrint(bool value){m_suppressPrints = value;}
 
+
+  RuntimeValue *getRuntimeVariable(const char* variableName);
+
 private:
   BinderContext *m_context;
   Enviroment m_enviroment;

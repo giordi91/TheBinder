@@ -262,3 +262,27 @@ TEST_CASE("hashmap clear", "[memory]") {
       REQUIRE(value == vs[i]);
   }
 }
+
+TEST_CASE("hashmap clear on same key", "[memory]") {
+  binder::memory::HashMap<uint32_t, uint32_t, binder::hashUint32> alloc(4600);
+  alloc.insert(10,88);
+  alloc.clear();
+  alloc.insert(10,88);
+  uint32_t value;
+  bool result = alloc.get(10,value);
+  REQUIRE(result == true);
+  REQUIRE(value == 88);
+
+}
+
+TEST_CASE("hashmap clear on same key string", "[memory]") {
+  binder::memory::HashMap<const char*, uint32_t, binder::hashString32> alloc(100);
+  alloc.insert("x",99);
+  alloc.clear();
+  alloc.insert("x",121);
+  uint32_t value;
+  bool result = alloc.get("x",value);
+  REQUIRE(result == true);
+  REQUIRE(value == 121);
+
+}

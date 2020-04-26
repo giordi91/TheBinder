@@ -30,14 +30,15 @@ public:
 
     // modding wit the bin count
     uint32_t bin = computedHash % m_bins;
-    if (m_keys[bin] != nullptr && strcmp(m_keys[bin], key) == 0) {
+    uint32_t meta = getMetadata(bin);
+    if ((m_keys[bin] != nullptr && strcmp(m_keys[bin], key) == 0) &
+        (meta == static_cast<uint32_t>(BIN_FLAGS::USED))) {
       // key exists we just override the value
       m_values[bin] = value;
       return true;
     }
 
     const uint32_t startBin = bin;
-    uint32_t meta = getMetadata(bin);
     bool free = canWriteToBin(meta);
     while (!free) {
       ++bin;
@@ -48,15 +49,15 @@ public:
         return false;
       }
     }
-    //NOTE this should use a pool for allocation, as it did in the
-    //engine might need some work
-    //const char *newKey = globals::STRING_POOL->allocatePersistent(key);
+    // NOTE this should use a pool for allocation, as it did in the
+    // engine might need some work
+    // const char *newKey = globals::STRING_POOL->allocatePersistent(key);
 
-    //new allocation
+    // new allocation
     const auto length = static_cast<uint32_t>(strlen(key) + 1);
-    void* memory = new char[length]; 
+    void *memory = new char[length];
     memcpy(memory, key, length);
-    const char *newKey = reinterpret_cast<char*>(memory);
+    const char *newKey = reinterpret_cast<char *>(memory);
     writeToBin(bin, newKey, value);
     setMetadata(bin, BIN_FLAGS::USED);
 
@@ -93,7 +94,7 @@ public:
     assert(meta == static_cast<uint32_t>(BIN_FLAGS::USED));
     if (result) {
       setMetadata(bin, BIN_FLAGS::DELETED);
-      //NOTE this should use a pool globals::STRING_POOL->free(m_keys[bin]);
+      // NOTE this should use a pool globals::STRING_POOL->free(m_keys[bin]);
       delete[] m_keys[bin];
       m_keys[bin] = nullptr;
       --m_usedBins;
@@ -109,8 +110,7 @@ public:
     return meta == static_cast<uint32_t>(BIN_FLAGS::USED);
   }
 
-  const char* getKeyAtBin(const uint32_t bin) const
-  {
+  const char *getKeyAtBin(const uint32_t bin) const {
     // no check done whether the bin is used or not, up to you kid
     assert(bin < m_bins);
     return m_keys[bin];
@@ -126,11 +126,12 @@ public:
   HashMap &operator=(const HashMap &) = delete;
 
   void clear() {
-    //iterating all the bins making sure to set them as free
+    // iterating all the bins making sure to set them as free
     for (int i = 0; i < m_bins; ++i) {
+      m_keys[i] = nullptr;
       setMetadata(i, BIN_FLAGS::FREE);
     }
-    //clearing the used bins counter
+    // clearing the used bins counter
     m_usedBins = 0;
   }
 
@@ -207,4 +208,4 @@ private:
   uint32_t m_bins;
   uint32_t m_usedBins = 0;
 };
-} // namespace binder
+} // namespace binder::memory

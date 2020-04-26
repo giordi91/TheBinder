@@ -12,5 +12,6 @@
 #include "basicASTPrinterTests.cpp"
 #include "parserTests.cpp"
 #include "interpreterTests.cpp"
+#include "loggerTests.cpp"
 
 
