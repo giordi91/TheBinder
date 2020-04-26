@@ -228,3 +228,13 @@ TEST_CASE_METHOD(SetupParserTestFixture, "expression error 3", "[parser]") {
   context.setErrorReportingEnabled(true);
 
 }
+
+
+TEST_CASE_METHOD(SetupParserTestFixture, "assigment", "[parser]") 
+{
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+      parse("var a = 1; a = 2;");
+  REQUIRE(stmts.size() == 2);
+  REQUIRE(context.hadError()==false);
+
+}

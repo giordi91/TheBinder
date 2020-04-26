@@ -15,7 +15,7 @@ const char *bindExecute(const char *source) {
   // increasing the size at runtime, or (3) if you want malloc to return NULL
   // (0) instead of this abort, compile with  -s ABORTING_MALLOC=0 do this so i
   // can allocate the memory i need
-  config.m_stringPoolSizeInMb = 1;
+  config.m_stringPoolSizeInMb = 10;
   binder::BinderContext context(config);
   binder::Scanner scanner(&context);
   binder::Parser parser(&context);

@@ -67,7 +67,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "basic variable ",
 
   const char *source = "var a = 12;";
   interpret(source);
-  binder::RuntimeValue* value  = interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *value = interpreter.getRuntimeVariable("a");
   REQUIRE(value != nullptr);
   REQUIRE(value->number == Approx(12.0));
 }
@@ -90,12 +90,11 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "assign and print re-assign",
   REQUIRE(strcmp(out, "2.00000") == 0);
 }
 
-
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "single unary", "[interpreter]") {
 
   const char *source = "var test = -111;";
   interpret(source);
-  binder::RuntimeValue* value  = interpreter.getRuntimeVariable("test");
+  binder::RuntimeValue *value = interpreter.getRuntimeVariable("test");
   REQUIRE(value != nullptr);
   REQUIRE(value->number == Approx(-111.0));
 }
@@ -105,10 +104,10 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "random unary", "[interpreter]") {
   for (int i = 0; i < 2000; ++i) {
     double value = randfrom(-10000.0, 10000.0);
     char source[100];
-    //TODO expand to random variable and variable legnth?
+    // TODO expand to random variable and variable legnth?
     snprintf(source, 100, "var x = -%f;\n", value);
     interpret(source);
-    binder::RuntimeValue* result = interpreter.getRuntimeVariable("x");
+    binder::RuntimeValue *result = interpreter.getRuntimeVariable("x");
     REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
     REQUIRE(result->number == Approx(-value));
     interpreter.flushMemory();
@@ -123,13 +122,12 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mult", "[interpreter]") {
     char source[150];
     snprintf(source, 150, "var ff = %f * %f;", left, right);
     interpret(source);
-    binder::RuntimeValue* result = interpreter.getRuntimeVariable("ff");
+    binder::RuntimeValue *result = interpreter.getRuntimeVariable("ff");
     REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
     REQUIRE(result->number == Approx(left * right));
     interpreter.flushMemory();
   }
 }
-
 
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mad unary",
                  "[interpreter]") {
@@ -141,7 +139,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mad unary",
     char source[200];
     snprintf(source, 200, "var fdsf = -((%f * %f) + %f);", left, right, add);
     interpret(source);
-    binder::RuntimeValue* result = interpreter.getRuntimeVariable("fdsf");
+    binder::RuntimeValue *result = interpreter.getRuntimeVariable("fdsf");
     REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
     REQUIRE(result->number == Approx(-((left * right) + add)));
     interpreter.flushMemory();
@@ -151,7 +149,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "random mad unary",
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "expression 1", "[interpreter]") {
 
   interpret("var myExpr = (-1*3.14)+(--13);");
-    binder::RuntimeValue* result = interpreter.getRuntimeVariable("myExpr");
+  binder::RuntimeValue *result = interpreter.getRuntimeVariable("myExpr");
   REQUIRE(result->type == binder::RuntimeValueType::NUMBER);
   REQUIRE(result->number == Approx(9.86));
 }
@@ -159,8 +157,8 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "expression 1", "[interpreter]") {
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "error binary runtime mul bool",
                  "[interpreter]") {
 
-  //here we could log against a specific error but error messages might change
-  //a lot so unless specific reason we just expect a gracefull error
+  // here we could log against a specific error but error messages might change
+  // a lot so unless specific reason we just expect a gracefull error
   interpret("var myExpr121 = -1 * true;");
   REQUIRE(context.hadError() == true);
 }
@@ -204,7 +202,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime add str str",
                  "[interpreter]") {
 
   interpret("var conc =  \"hello \" + \"world\";");
-  binder::RuntimeValue* result = interpreter.getRuntimeVariable("conc");
+  binder::RuntimeValue *result = interpreter.getRuntimeVariable("conc");
   REQUIRE(result != nullptr);
   REQUIRE(context.hadError() == false);
   REQUIRE(result->type == binder::RuntimeValueType::STRING);
@@ -253,3 +251,15 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "runtime == str",
   REQUIRE(context.hadError() == true);
 }
 
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "assign ", "[interpreter]") {
+
+  interpret("var a = 12; a = 1;");
+  REQUIRE(context.hadError() == false);
+
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+      parser.getStmts();
+
+  auto &m_pool = context.getStringPool();
+  const char *node = binder::printer::JSONASTPrinter(m_pool).print(stmts[0]);
+  const char *node2 = binder::printer::JSONASTPrinter(m_pool).print(stmts[1]);
+}

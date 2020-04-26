@@ -11,6 +11,18 @@ public:
       : autogen::ExprVisitor(), m_pool(pool){};
   virtual ~JSONASTPrinter() = default;
   // interface
+  void *acceptAssign(autogen::Assign *expr) override {
+
+    const char ff = binder::memory::FREE_FIRST_AFTER_OPERATION;
+    const char fj = binder::memory::FREE_JOINER_AFTER_OPERATION;
+    const char *tmp =
+        m_pool.concatenate("{ \"type\" : \"assign\",\n \"expr\" : ", ",\n",
+                           (char *)expr->value->accept(this),fj);
+
+    tmp = m_pool.concatenate(tmp,expr->name,"\"name\" : \"" ,ff);
+    tmp = m_pool.concatenate(tmp,"\"}\n",nullptr,ff);
+    return (char *)tmp;
+  };
   void *acceptBinary(autogen::Binary *expr) override {
     return parenthesize("binary", getLexemeFromToken(expr->op), expr->left,
                         expr->right);
@@ -35,8 +47,8 @@ public:
 
   void *acceptVariable(autogen::Variable *expr) override {
 
-    const char *body = m_pool.concatenate(
-        "{ \"type\" : \"var\", \"value\" :\"", "\"}", expr->name);
+    const char *body = m_pool.concatenate("{ \"type\" : \"var\", \"value\" :\"",
+                                          "\"}", expr->name);
     return (char *)body;
   }
 
@@ -106,8 +118,7 @@ public:
 
     const char *expr = (char *)stmt->initializer->accept(this);
     const char *tmp = m_pool.concatenate("{\"expr\" : ", ",\n", expr, fj);
-    return (char *)m_pool.concatenate(tmp, "\"name\" :\"var\"}\n", nullptr,
-                                      ff);
+    return (char *)m_pool.concatenate(tmp, "\"name\" :\"var\"}\n", nullptr, ff);
   };
 
 private:
