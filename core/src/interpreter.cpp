@@ -71,8 +71,12 @@ const char *RuntimeValue::debugToString(BinderContext *context) {
                                       RUNTIME_TYPE_NAMES[(int)type]);
   return pool.concatenate(temp, finalStrValue, nullptr, flags);
 }
-const char *RuntimeValue::toString(BinderContext *context) {
+const char *RuntimeValue::toString(BinderContext *context, bool trailingNewLine) {
   memory::StringPool &pool = context->getStringPool();
+  //we might want to append a new line to force a flush in the printf,
+  //done here it helps saving and extra concatenation
+  if(!trailingNewLine)
+  {
   switch (type) {
   case (RuntimeValueType::NUMBER): {
     char value[50];
@@ -94,6 +98,33 @@ const char *RuntimeValue::toString(BinderContext *context) {
   default:
     assert(0 &&
            "unhandled value in runtime type, it is INVALID, report as bug");
+  }
+  }
+  else
+  {
+  switch (type) {
+  case (RuntimeValueType::NUMBER): {
+    char value[50];
+    snprintf(value, 50, "%02.*f\n", context->getConfig().printFloatPrecision,
+             number);
+    return pool.allocate(value);
+  }
+  case (RuntimeValueType::BOOLEAN): {
+    const char *value = boolean ? "true\n" : "false\n";
+    return pool.allocate(value);
+  }
+  case (RuntimeValueType::NIL): {
+    const char *value = "nil\n";
+    return pool.allocate(value);
+  }
+  case (RuntimeValueType::STRING): {
+    return pool.concatenate("\"", "\"\n", string);
+  }
+  default:
+    assert(0 &&
+           "unhandled value in runtime type, it is INVALID, report as bug");
+  }
+
   }
   return nullptr;
 }
@@ -417,7 +448,7 @@ public:
     RuntimeValue *value = getRuntime(index);
 
     if (!m_suppressPrints) {
-      const char *str = value->toString(m_context);
+      const char *str = value->toString(m_context,true);
       m_context->print(str);
       m_context->getStringPool().free(str);
       releaseRuntime(index);

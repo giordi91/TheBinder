@@ -2,7 +2,7 @@ function initPage() {
   // adding the listener to the source input
   document.getElementById("source").addEventListener(
       "keypress", (event) => {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && event.ctrlKey ) {
           processCode();
         }
       });

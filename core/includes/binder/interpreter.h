@@ -28,7 +28,7 @@ struct RuntimeValue {
   RuntimeValueType type = RuntimeValueType::INVALID;
 
   const char *debugToString(BinderContext *context);
-  const char *toString(BinderContext *context);
+  const char *toString(BinderContext *context, bool trailingNewLine=false);
 };
 
 // NOTE possibly have an abstract class at the base as
