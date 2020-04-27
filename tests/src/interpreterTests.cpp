@@ -60,7 +60,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "print single number",
   const char *source = "print 12;";
   interpret(source);
   const char *out = getOutput();
-  REQUIRE(strcmp(out, "12.00000") == 0);
+  REQUIRE(strcmp(out, "12.00000\n") == 0);
 }
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "basic variable ",
                  "[interpreter]") {
@@ -78,7 +78,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "basic variable and print",
   const char *source = "var a = 12; print a;";
   interpret(source);
   const char *out = getOutput();
-  REQUIRE(strcmp(out, "12.00000") == 0);
+  REQUIRE(strcmp(out, "12.00000\n") == 0);
 }
 
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "assign and print re-assign",
@@ -87,7 +87,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "assign and print re-assign",
   const char *source = "var a = 1; print a = 2;";
   interpret(source);
   const char *out = getOutput();
-  REQUIRE(strcmp(out, "2.00000") == 0);
+  REQUIRE(strcmp(out, "2.00000\n") == 0);
 }
 
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "single unary", "[interpreter]") {

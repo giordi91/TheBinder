@@ -31,6 +31,7 @@ project(Tests)
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/tokenTests.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/scannerTests.cpp"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/hashMapTests.cpp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/interpreterTests.cpp"
 	)
 
 	SET_AS_HEADERS("${SUPPORTING_FILES}")
