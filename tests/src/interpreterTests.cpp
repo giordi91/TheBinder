@@ -255,11 +255,4 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "assign ", "[interpreter]") {
 
   interpret("var a = 12; a = 1;");
   REQUIRE(context.hadError() == false);
-
-  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
-      parser.getStmts();
-
-  auto &m_pool = context.getStringPool();
-  const char *node = binder::printer::JSONASTPrinter(m_pool).print(stmts[0]);
-  const char *node2 = binder::printer::JSONASTPrinter(m_pool).print(stmts[1]);
 }

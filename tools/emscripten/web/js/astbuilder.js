@@ -73,12 +73,20 @@ function processASTNode(parentNode, node) {
     valueli.innerHTML = "value: " + node.value;
     typeBody.appendChild(valueli);
   }
+  if (node.name) {
+    var nameli = document.createElement('li');
+    nameli.innerHTML = "name: " + node.name;
+    typeBody.appendChild(nameli);
+  }
 
   if (node.left) {
     processASTNode(typeBody, node.left);
   }
   if (node.right) {
     processASTNode(typeBody, node.right);
+  }
+  if (node.expr) {
+    processASTNode(typeBody, node.expr);
   }
 }
 
