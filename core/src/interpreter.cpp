@@ -262,15 +262,16 @@ public:
     // TODO after this operation we can probably deallocate the
     // right?
     assertBinaryFull(left, right);
+
+    uint32_t index;
+    RuntimeValue *returnValue =
+        getReturnValueForBinary(leftIdx, left, rightIdx, right, index);
     switch (expr->op) {
     case (TOKEN_TYPE::MINUS): {
       if (!areBothNumbers(left, right)) {
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::MINUS));
       }
-      uint32_t index;
-      RuntimeValue *returnValue =
-          getReturnValueForBinary(leftIdx, left, rightIdx, right, index);
       returnValue->number = (left->number) - (right->number);
       freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
       return toVoid(index);
@@ -280,32 +281,35 @@ public:
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::SLASH));
       }
-      left->number = (left->number) / (right->number);
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      returnValue->number = (left->number) / (right->number);
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
     case (TOKEN_TYPE::STAR): {
       if (!areBothNumbers(left, right)) {
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::STAR));
       }
-      left->number = (left->number) * (right->number);
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      returnValue->number = (left->number) * (right->number);
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
     case (TOKEN_TYPE::PLUS): {
       if (areBothNumbers(left, right)) {
-        left->number = (left->number) + (right->number);
-        return toVoid(leftIdx);
+        returnValue->number = (left->number) + (right->number);
+        freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx,
+                                    right);
+        return toVoid(index);
       } else if ((left->type == RuntimeValueType::STRING) &
                  (right->type == RuntimeValueType::STRING)) {
         // TODO figure out if it safe to free the strings
         // how to keep track of a concatenated string should i just
         // flush ad the end and not track for runtime concatenated strings?
-        left->string =
+        returnValue->string =
             m_context->getStringPool().concatenate(left->string, right->string);
-        releaseRuntime(rightIdx);
-        return toVoid(leftIdx);
+        freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx,
+                                    right);
+        return toVoid(index);
       } else {
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::PLUS));
@@ -317,9 +321,10 @@ public:
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::GREATER));
       }
-      left->number = (left->number) > (right->number);
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      returnValue->boolean = (left->number) > (right->number);
+      returnValue->type = RuntimeValueType::BOOLEAN;
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
     case (TOKEN_TYPE::GREATER_EQUAL): {
       if (!areBothNumbers(left, right)) {
@@ -327,18 +332,20 @@ public:
                     buildBinaryOperationError(m_context, left, right,
                                               TOKEN_TYPE::GREATER_EQUAL));
       }
-      left->number = (left->number) >= (right->number);
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      returnValue->boolean = (left->number) >= (right->number);
+      returnValue->type = RuntimeValueType::BOOLEAN;
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
     case (TOKEN_TYPE::LESS): {
       if (!areBothNumbers(left, right)) {
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::LESS));
       }
-      left->number = (left->number) < (right->number);
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      returnValue->boolean = (left->number) < (right->number);
+      returnValue->type = RuntimeValueType::BOOLEAN;
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
     case (TOKEN_TYPE::LESS_EQUAL): {
       if (!areBothNumbers(left, right)) {
@@ -346,9 +353,10 @@ public:
                     buildBinaryOperationError(m_context, left, right,
                                               TOKEN_TYPE::LESS_EQUAL));
       }
-      left->number = (left->number) <= (right->number);
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      returnValue->boolean = (left->number) <= (right->number);
+      returnValue->type = RuntimeValueType::BOOLEAN;
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
     case (TOKEN_TYPE::BANG_EQUAL): {
       if (!areBothNumbers(left, right)) {
@@ -356,10 +364,10 @@ public:
                     buildBinaryOperationError(m_context, left, right,
                                               TOKEN_TYPE::BANG_EQUAL));
       }
-      left->boolean = !isEqual(left, right);
-      left->type = RuntimeValueType::BOOLEAN;
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      returnValue->boolean = !isEqual(left, right);
+      returnValue->type = RuntimeValueType::BOOLEAN;
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
     case (TOKEN_TYPE::EQUAL_EQUAL): {
       if (!areBothNumbers(left, right)) {
@@ -367,10 +375,10 @@ public:
                     buildBinaryOperationError(m_context, left, right,
                                               TOKEN_TYPE::EQUAL_EQUAL));
       }
-      left->boolean = isEqual(left, right);
-      left->type = RuntimeValueType::BOOLEAN;
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      returnValue->boolean = isEqual(left, right);
+      returnValue->type = RuntimeValueType::BOOLEAN;
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
 
     default:
