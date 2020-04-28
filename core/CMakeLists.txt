@@ -21,6 +21,7 @@ project(TheBinderCore)
 	"includes/binder/memory/stringPool.h"
 	"includes/binder/memory/resizableVector.h"
 	"includes/binder/memory/stringHashMap.h"
+	"includes/binder/enviroment.h"
 
 	"src/interpreter.cpp"
 	"src/scanner.cpp"

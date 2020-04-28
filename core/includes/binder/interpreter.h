@@ -1,17 +1,18 @@
 #pragma once
-#include "binder/memory/sparseMemoryPool.h"
-#include "binder/memory/resizableVector.h"
 #include "binder/enviroment.h"
+#include "binder/memory/resizableVector.h"
+#include "binder/memory/sparseMemoryPool.h"
 
 namespace binder {
 
 namespace autogen {
 class Expr;
 class Stmt;
-}
+} // namespace autogen
 
 // used to keep track of the type of our runtime
-enum class RuntimeValueType { NUMBER = 0, STRING, NIL, BOOLEAN, INVALID };
+enum class RuntimeValueType { INVALID = 0, NUMBER, STRING, NIL, BOOLEAN };
+enum class RuntimeValueStorage { INVALID = 0, L_VALUE = 1, R_VALUE };
 
 class BinderContext;
 
@@ -26,9 +27,10 @@ struct RuntimeValue {
     bool boolean;
   };
   RuntimeValueType type = RuntimeValueType::INVALID;
+  RuntimeValueStorage storage = RuntimeValueStorage::INVALID;
 
   const char *debugToString(BinderContext *context);
-  const char *toString(BinderContext *context, bool trailingNewLine=false);
+  const char *toString(BinderContext *context, bool trailingNewLine = false);
 };
 
 // NOTE possibly have an abstract class at the base as
@@ -43,14 +45,13 @@ public:
   ~ASTInterpreter() = default;
 
   void interpret(const binder::memory::ResizableVector<autogen::Stmt *> &stmts);
-  void flushMemory() { 
-      m_pool.clear(); 
-      m_enviroment.clear();
+  void flushMemory() {
+    m_pool.clear();
+    m_enviroment.clear();
   };
-  void setSuppressPrint(bool value){m_suppressPrints = value;}
+  void setSuppressPrint(bool value) { m_suppressPrints = value; }
 
-
-  RuntimeValue *getRuntimeVariable(const char* variableName);
+  RuntimeValue *getRuntimeVariable(const char *variableName);
 
 private:
   BinderContext *m_context;

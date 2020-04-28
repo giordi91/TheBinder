@@ -24,10 +24,9 @@ public:
       return false;
   }
 
-  RuntimeValue *get(const char *variable) const {
-    RuntimeValue *value = nullptr;
-    m_values.get(variable, value);
-    return value;
+  bool get(const char *variable, RuntimeValue**outValue) const {
+    bool result = m_values.get(variable, *outValue);
+    return result;
   }
 
   void clear()

@@ -13,8 +13,12 @@ static const char *RUNTIME_TYPE_NAMES[] = {"NUMBER", "STRING", "NIL", "BOOLEAN",
 
 inline void *toVoid(uint32_t index) {
   // using same type pointer rather than void* at least i am sure
-  // alignment matches
-  uint32_t *result;
+  // alignment matches, next make sure the pointer is 0, otherwise
+  // behaviour changes based on compiler, for example msvc, in debug ,
+  // sets a not initialized pointer to 0xcccccc, but in general, good to
+  // initialize it, i can't write afterwards to the hight 32bits due
+  // to targetting WASM which currently 32bit
+  uint32_t *result = 0;
   // just making sure i can actually fit a 32 bit value in here, probably
   // overkill but better be safe than sorry
   assert(sizeof(uint32_t *) >= 4);
@@ -71,60 +75,57 @@ const char *RuntimeValue::debugToString(BinderContext *context) {
                                       RUNTIME_TYPE_NAMES[(int)type]);
   return pool.concatenate(temp, finalStrValue, nullptr, flags);
 }
-const char *RuntimeValue::toString(BinderContext *context, bool trailingNewLine) {
+const char *RuntimeValue::toString(BinderContext *context,
+                                   bool trailingNewLine) {
   memory::StringPool &pool = context->getStringPool();
-  //we might want to append a new line to force a flush in the printf,
-  //done here it helps saving and extra concatenation
-  if(!trailingNewLine)
-  {
-  switch (type) {
-  case (RuntimeValueType::NUMBER): {
-    char value[50];
-    snprintf(value, 50, "%02.*f", context->getConfig().printFloatPrecision,
-             number);
-    return pool.allocate(value);
-  }
-  case (RuntimeValueType::BOOLEAN): {
-    const char *value = boolean ? "true" : "false";
-    return pool.allocate(value);
-  }
-  case (RuntimeValueType::NIL): {
-    const char *value = "nil";
-    return pool.allocate(value);
-  }
-  case (RuntimeValueType::STRING): {
-    return pool.concatenate("\"", "\"", string);
-  }
-  default:
-    assert(0 &&
-           "unhandled value in runtime type, it is INVALID, report as bug");
-  }
-  }
-  else
-  {
-  switch (type) {
-  case (RuntimeValueType::NUMBER): {
-    char value[50];
-    snprintf(value, 50, "%02.*f\n", context->getConfig().printFloatPrecision,
-             number);
-    return pool.allocate(value);
-  }
-  case (RuntimeValueType::BOOLEAN): {
-    const char *value = boolean ? "true\n" : "false\n";
-    return pool.allocate(value);
-  }
-  case (RuntimeValueType::NIL): {
-    const char *value = "nil\n";
-    return pool.allocate(value);
-  }
-  case (RuntimeValueType::STRING): {
-    return pool.concatenate("\"", "\"\n", string);
-  }
-  default:
-    assert(0 &&
-           "unhandled value in runtime type, it is INVALID, report as bug");
-  }
-
+  // we might want to append a new line to force a flush in the printf,
+  // done here it helps saving and extra concatenation
+  if (!trailingNewLine) {
+    switch (type) {
+    case (RuntimeValueType::NUMBER): {
+      char value[50];
+      snprintf(value, 50, "%02.*f", context->getConfig().printFloatPrecision,
+               number);
+      return pool.allocate(value);
+    }
+    case (RuntimeValueType::BOOLEAN): {
+      const char *value = boolean ? "true" : "false";
+      return pool.allocate(value);
+    }
+    case (RuntimeValueType::NIL): {
+      const char *value = "nil";
+      return pool.allocate(value);
+    }
+    case (RuntimeValueType::STRING): {
+      return pool.concatenate("\"", "\"", string);
+    }
+    default:
+      assert(0 &&
+             "unhandled value in runtime type, it is INVALID, report as bug");
+    }
+  } else {
+    switch (type) {
+    case (RuntimeValueType::NUMBER): {
+      char value[50];
+      snprintf(value, 50, "%02.*f\n", context->getConfig().printFloatPrecision,
+               number);
+      return pool.allocate(value);
+    }
+    case (RuntimeValueType::BOOLEAN): {
+      const char *value = boolean ? "true\n" : "false\n";
+      return pool.allocate(value);
+    }
+    case (RuntimeValueType::NIL): {
+      const char *value = "nil\n";
+      return pool.allocate(value);
+    }
+    case (RuntimeValueType::STRING): {
+      return pool.concatenate("\"", "\"\n", string);
+    }
+    default:
+      assert(0 &&
+             "unhandled value in runtime type, it is INVALID, report as bug");
+    }
   }
   return nullptr;
 }
@@ -194,8 +195,8 @@ const char *buildBinaryOperationError(BinderContext *context,
 void assertBinaryFull(RuntimeValue *left, RuntimeValue *right) {
   assert((left->type == RuntimeValueType::NUMBER) |
          (left->type == RuntimeValueType::STRING));
-  assert((right->type == RuntimeValueType::NUMBER |
-          right->type == RuntimeValueType::STRING));
+  assert((right->type == RuntimeValueType::NUMBER) |
+         (right->type == RuntimeValueType::STRING));
 }
 
 bool isEqual(RuntimeValue *left, RuntimeValue *right) {
@@ -226,6 +227,13 @@ public:
   // interface
   void *acceptAssign(autogen::Assign *expr) override {
     auto value = (RuntimeValue *)(evaluate(expr->value));
+    RuntimeValue *runtime = getRuntime(toIndex(value));
+
+    // if we have an R_value it will get stored in the variable
+    // becoming an L_value
+    if (runtime->storage == RuntimeValueStorage::R_VALUE) {
+      runtime->storage = RuntimeValueStorage::L_VALUE;
+    }
 
     bool result = m_enviroment->assign(expr->name, value);
     if (!result) {
@@ -253,7 +261,6 @@ public:
     // TODO handle null value
     // TODO after this operation we can probably deallocate the
     // right?
-    // for now supporting only numbers
     assertBinaryFull(left, right);
     switch (expr->op) {
     case (TOKEN_TYPE::MINUS): {
@@ -261,9 +268,12 @@ public:
         throw error(m_context, buildBinaryOperationError(m_context, left, right,
                                                          TOKEN_TYPE::MINUS));
       }
-      left->number = (left->number) - (right->number);
-      releaseRuntime(rightIdx);
-      return toVoid(leftIdx);
+      uint32_t index;
+      RuntimeValue *returnValue =
+          getReturnValueForBinary(leftIdx, left, rightIdx, right, index);
+      returnValue->number = (left->number) - (right->number);
+      freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
+      return toVoid(index);
     }
     case (TOKEN_TYPE::SLASH): {
       if (!areBothNumbers(left, right)) {
@@ -377,6 +387,7 @@ public:
 
     uint32_t index = 0;
     RuntimeValue &value = m_runtimeValuePool->getFreeMemoryData(index);
+    value.storage = RuntimeValueStorage::R_VALUE;
 
     // we need to figure out what we are dealing with
     switch (expr->type) {
@@ -404,19 +415,35 @@ public:
     uint32_t rightIdx = toIndex((evaluate(expr->right)));
 
     RuntimeValue *rightValue = getRuntime(rightIdx);
+    // now we need to check the storage of the runtime
+    // if is an R_ value we can steal it and re use the storage
+    // otherwise we need to allocate
+    RuntimeValue *returnValue = rightValue;
+    if (rightValue->storage == RuntimeValueStorage::L_VALUE) {
+      // we override the right idx so that will be returned
+      // and the retuurn value will be used to set the reult of the
+      // operation
+      RuntimeValue &value = m_runtimeValuePool->getFreeMemoryData(rightIdx);
+      // by default setting as R_VALUE since this will hold the result of the r
+      // value
+      value.storage = RuntimeValueStorage::R_VALUE;
+      returnValue = &value;
+    }
 
     switch (expr->op) {
     case (TOKEN_TYPE::MINUS): {
       // TODO temporary assert until we have proper runtime errors
       assert(rightValue->type == RuntimeValueType::NUMBER);
-      rightValue->number = -rightValue->number;
+      returnValue->number = -rightValue->number;
+      returnValue->type = rightValue->type;
       break;
     }
     case (TOKEN_TYPE::BANG): {
       bool result = isTruthy(rightValue);
       // TODO what to do if i am converting a string value to bool?
       // should i dealloc it? investigate
-      rightValue->boolean = !result;
+      returnValue->boolean = !result;
+      returnValue->type = RuntimeValueType::BOOLEAN;
       break;
     }
     default: {
@@ -433,7 +460,10 @@ public:
     // is a index in the pool masked as void*
     // whoever uses this value will properly convert back
     // to index and extract the real runtime value from it
-    return m_enviroment->get(expr->name);
+    RuntimeValue *toReturn = nullptr;
+    bool result = m_enviroment->get(expr->name, &toReturn);
+    assert(result);
+    return toReturn;
   }
 
   // statements
@@ -448,7 +478,7 @@ public:
     RuntimeValue *value = getRuntime(index);
 
     if (!m_suppressPrints) {
-      const char *str = value->toString(m_context,true);
+      const char *str = value->toString(m_context, true);
       m_context->print(str);
       m_context->getStringPool().free(str);
       releaseRuntime(index);
@@ -465,6 +495,18 @@ public:
       // pointer is converted to pool index. This pointer should not be
       // dereferenced also check acceptVariable() to see usage
       value = (RuntimeValue *)evaluate(stmt->initializer);
+    }
+    // what is the storage of the variable?
+    RuntimeValue *runtime = getRuntime(toIndex(value));
+    // if we have an R_value it will get stored in the variable
+    // becoming an L_value, if is already an L vlaue we store as
+    // it is, meaning we point to the same runtime, for example
+    // var a = 1;
+    // var c = a;
+    // a = 2;
+    // c should be equal to 2, since they reference the same runtime value
+    if (runtime->storage == RuntimeValueStorage::R_VALUE) {
+      runtime->storage = RuntimeValueStorage::L_VALUE;
     }
 
     m_enviroment->define(stmt->token.m_lexeme, value);
@@ -492,6 +534,45 @@ private:
   RuntimeValue *getRuntime(uint32_t poolIdx) {
     return &(*m_runtimeValuePool)[poolIdx];
   }
+  RuntimeValue *getReturnValueForBinary(uint32_t leftIdx, RuntimeValue *left,
+                                        uint32_t rightIdx, RuntimeValue *right,
+                                        uint32_t &index) {
+    RuntimeValueStorage leftStorage = left->storage;
+    RuntimeValueStorage rightStorage = right->storage;
+
+    // if any of the two is R value we can re-use it
+    if (leftStorage == RuntimeValueStorage::R_VALUE) {
+      index = leftIdx;
+      return left;
+    }
+
+    if (rightStorage == RuntimeValueStorage::R_VALUE) {
+      index = rightIdx;
+      return right;
+    }
+    // if none of the two is an rvalue we need to allocate
+    RuntimeValue *value = &m_runtimeValuePool->getFreeMemoryData(index);
+    value->storage = RuntimeValueStorage::R_VALUE;
+    return value;
+  }
+
+  void freeBinaryValuesIfNecessary(RuntimeValue *returnValue, uint32_t leftIdx,
+                                   RuntimeValue *left, uint32_t rightIdx,
+                                   RuntimeValue *right) {
+
+    // this should never happen since if this is the case we would reuse it
+    // but just for symmetry
+    // it is fine to compare the pointers since there is the chance we are
+    // reusing values
+    if ((returnValue != left) &
+        (left->storage == RuntimeValueStorage::R_VALUE)) {
+      m_runtimeValuePool->free(leftIdx);
+    }
+    if ((returnValue != right) &
+        (right->storage == RuntimeValueStorage::R_VALUE)) {
+      m_runtimeValuePool->free(rightIdx);
+    }
+  }
 
   void releaseRuntime(uint32_t poolIdx) { m_runtimeValuePool->free(poolIdx); }
 
@@ -504,8 +585,9 @@ private:
 
 RuntimeValue *ASTInterpreter::getRuntimeVariable(const char *variableName) {
   // this is a void* encoded pool index;
-  void *runtime = m_enviroment.get(variableName);
-  assert(runtime != nullptr);
+  RuntimeValue *runtime = nullptr;
+  bool result = m_enviroment.get(variableName, &runtime);
+  assert(result);
   uint32_t index = toIndex(runtime);
   // now we can convert to the actual runtime value
   return &m_pool[index];

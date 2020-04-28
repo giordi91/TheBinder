@@ -127,7 +127,7 @@ public:
 
   void clear() {
     // iterating all the bins making sure to set them as free
-    for (int i = 0; i < m_bins; ++i) {
+    for (uint32_t i = 0; i < m_bins; ++i) {
       m_keys[i] = nullptr;
       setMetadata(i, BIN_FLAGS::FREE);
     }
