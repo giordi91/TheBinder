@@ -51,14 +51,27 @@
     </div>
 
 
-    <hr class="thickbar">
-    <label for="source" class="greentext">Write your source code here and press ctrl + enter to evaluate:</label>
-    <textarea class="emscripten" id="source" rows="16" ></textarea>
-    <label  for="output" class="greentext">code output:</label>
-    <textarea class="emscripten" id="output" rows="8"></textarea>
-    <button type="button" class="collapsible">&#x25B6; AST</button>
-    <div class="content" id="AST"></div>
-    <hr class="thickbar">
+   <hr class="thickbar">
+    <div class='container'>
+      <div class="content--lhs">
+      <div class="content--lhs--source">
+        <label for="source" class="greentext">Write your source code here and press ctrl + enter to evaluate:</label>
+        <textarea class="emscripten" id="source" rows="16" ></textarea>
+      </div>
+      <div class="content--lhs--output">
+        <label  for="output" class="greentext">code output:</label>
+        <textarea class="emscripten" id="output" rows="8"></textarea>
+      </div>
+      </div>
+      <div class="content--rhs">
+      <div class="content--rhs--ast">
+        <button type="button" class="collapsible">&#x25B6; AST</button>
+        <div class="content" id="AST"></div>
+      </div>
+      </div>
+
+    </div>
+
 
 
     <script type='text/javascript'>

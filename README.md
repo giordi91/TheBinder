@@ -43,10 +43,18 @@ cd emsdk
 
 Once inside in the repository run:
 ```bash
+# if you haven't installed the latest sdk before
+./emsdk install latest
+
 ./emsdk activate latest
+
+# for unix
+source ./emsdk_env.sh
+
+# for windows
 ./emsdk_env
 ```
 
 Now the environment should be ready to build WASM, without closing the console, move to the binder repository inside customBuild and just run build-js.bat
 
-f everything works you should find the built files inside "build/mono/js"
+if everything works you should find the built files inside "build/mono/js"
