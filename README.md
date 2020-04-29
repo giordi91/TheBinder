@@ -5,11 +5,14 @@ Develop: ![build-windows](https://github.com/giordi91/TheBinder/workflows/build-
 
 This is a scripting language written mostly as a learning project following https://craftinginterpreters.com/ book. Hopefully at one point I would like to use it in my game engine to **bind** the gameplay and backend.
 
+![alt text](docs/binder.png "binder screenshot")
+
 ## Features
+
 ### WASM compilation
 While working on the code I started messing around with Emscripten and decided that I would have a WASM path, such that I can easy share my code for people to try on the browser
 
-[ **INSERT IMAGE HERE AFTER NEW CSS REWORK**]
+
 
 ## Build
 To build there are several options, the project has been created with a monobuild in mind, as such, it should be fairly trivial to build with your own scripts.
