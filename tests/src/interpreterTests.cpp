@@ -463,6 +463,7 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary != with second r value", "
 }
 
 //=--------------------------------------------------------
+
 TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary minus with first r value", "[interpreter]") {
 
   //in this case we need to duplicate the runtime value, such that in the unary operation
@@ -604,20 +605,205 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary != with first r value", "[
 }
 
 
-/*
-TEST_CASE_METHOD(SetupInterpreterTestFixture, "multiple variable", "[interpreter]") {
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary minus with multiple variables", "[interpreter]") {
 
-  interpret("var first = 10; var second  = 17; var c = first + second;");
-  binder::RuntimeValue *first= interpreter.getRuntimeVariable("first");
-  binder::RuntimeValue *second= interpreter.getRuntimeVariable("second");
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  1 ; var c = a - b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
   binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
-
-  REQUIRE(context.hadError() == false);
-  REQUIRE(first->type == binder::RuntimeValueType::NUMBER);
-  REQUIRE(second->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(1.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
   REQUIRE(c->type == binder::RuntimeValueType::NUMBER);
-  REQUIRE(second->number== Approx(17.0f));
-  REQUIRE(c->number== Approx(27.0f));
-  REQUIRE(first->number== Approx(10.0f));
+  REQUIRE(c->number== Approx(9.0f));
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
 }
-*/
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary divide with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  2 ; var c = a / b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(2.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(c->number== Approx(5.0f));
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary add with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  2 ; var c = a + b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(2.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(c->number== Approx(12.0f));
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary + with multiple string var", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  \"hello\"; var b =  \" world\" ; var c = a + b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::STRING);
+  REQUIRE(strcmp(a->string,"hello")==0 );
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::STRING);
+  REQUIRE(strcmp(b->string," world")==0 );
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::STRING);
+  REQUIRE(strcmp(c->string,"hello world")==0 );
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary star with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  2 ; var c = a * b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(2.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(c->number== Approx(20.0f));
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary < with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  2 ; var c = a < b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(2.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::BOOLEAN);
+  REQUIRE(c->boolean== false);
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary > with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  2 ; var c = a > b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(2.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::BOOLEAN);
+  REQUIRE(c->boolean== true);
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary >= with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  2 ; var c = a >= b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(2.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::BOOLEAN);
+  REQUIRE(c->boolean== true);
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary <= with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  10 ; var c = a <= b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(10.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::BOOLEAN);
+  REQUIRE(c->boolean== true);
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary == with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  10 ; var c = a == b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(10.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::BOOLEAN);
+  REQUIRE(c->boolean== true);
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary != with multiple variables", "[interpreter]") {
+
+  //in this case we need to duplicate the runtime value, such that in the unary operation
+  //the variable a does not get modified
+  interpret("var a =  10; var b =  10 ; var c = a != b;");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  binder::RuntimeValue *c= interpreter.getRuntimeVariable("c");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(10.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+  REQUIRE(c->type == binder::RuntimeValueType::BOOLEAN);
+  REQUIRE(c->boolean== false);
+  REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
+}

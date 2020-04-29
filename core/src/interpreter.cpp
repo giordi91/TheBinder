@@ -273,6 +273,7 @@ public:
                                                          TOKEN_TYPE::MINUS));
       }
       returnValue->number = (left->number) - (right->number);
+      returnValue->type = RuntimeValueType::NUMBER;
       freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
       return toVoid(index);
     }
@@ -282,6 +283,7 @@ public:
                                                          TOKEN_TYPE::SLASH));
       }
       returnValue->number = (left->number) / (right->number);
+      returnValue->type = RuntimeValueType::NUMBER;
       freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
       return toVoid(index);
     }
@@ -291,12 +293,14 @@ public:
                                                          TOKEN_TYPE::STAR));
       }
       returnValue->number = (left->number) * (right->number);
+      returnValue->type = RuntimeValueType::NUMBER;
       freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx, right);
       return toVoid(index);
     }
     case (TOKEN_TYPE::PLUS): {
       if (areBothNumbers(left, right)) {
         returnValue->number = (left->number) + (right->number);
+      returnValue->type = RuntimeValueType::NUMBER;
         freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx,
                                     right);
         return toVoid(index);
@@ -307,6 +311,7 @@ public:
         // flush ad the end and not track for runtime concatenated strings?
         returnValue->string =
             m_context->getStringPool().concatenate(left->string, right->string);
+        returnValue->type = RuntimeValueType::STRING;
         freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx,
                                     right);
         return toVoid(index);
