@@ -48,6 +48,7 @@ jobs:
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
+        bodyFile: "customBuild/release.md"
         #debug purpose hardcoded tag
         #tag_name: 0.0.1 
         #release_name: 0.0.1
