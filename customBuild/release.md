@@ -6,3 +6,5 @@
 - Correctly handling variable L_VALUES and R_VALUES
 - Updated css (PR from https://github.com/matteo-hertel)
 - Added report bug with issue template for HTML page 
+
+
