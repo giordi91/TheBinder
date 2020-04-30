@@ -27,6 +27,10 @@ jobs:
       run: |
         cd build/bin/${{matrix.configuration}}
         ./Tests.exe
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      shell: bash
     - uses: mymindstorm/setup-emsdk@v4
     - name: Setup Emscripten toolchain
       run: |
@@ -39,7 +43,7 @@ jobs:
         .\build-js.bat
     - name: Create zip
       run: |
-        Compress-Archive -Path build/mono/js/* -DestinationPath build/mono/js/theBinder_v${GITHUB_REF/refs\/tags\//}.zip
+        Compress-Archive -Path build/mono/js/* -DestinationPath build/mono/js/theBinder_v${{ steps.get_version.outputs.VERSION }}.zip
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -62,6 +66,6 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} 
         # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: build/mono/js/theBinder_v${GITHUB_REF/refs\/tags\//}.zip
-        asset_name: theBinder_v0.0.1.zip
+        asset_path: build/mono/js/theBinder_v${{ steps.get_version.outputs.VERSION }}.zip
+        asset_name: theBinder_v${{ steps.get_version.outputs.VERSION }}.zip
         asset_content_type: application/zip
