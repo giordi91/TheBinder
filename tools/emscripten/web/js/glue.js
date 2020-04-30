@@ -37,3 +37,62 @@ function openActionTab(evt, actionName) {
       document.getElementById(actionName).style.display = "block";
       evt.currentTarget.className += " active";
 }
+
+function reportBug()
+{
+  let url = "https://github.com/giordi91/TheBinder/issues/new?labels=bug&title=New+bug+report+(+replace+with+bug+title+please+)&body="
+
+  //lets build the body
+  var body = buildBugHeader("", "DESCRIPTION"); 
+  body = addEmptySpace(body);
+  body = buildBugHeader(body, "SOURCE CODE"); 
+
+  let source = document.getElementById("source").value;
+  body = addCodeBug(body,source);
+  body = buildBugHeader(body, "OUTPUT"); 
+  
+  let output = document.getElementById("output").value;
+  body = addCodeBug(body,output);
+
+  body = buildBugHeader(body, "EXPECTED OUTPUT"); 
+  body = addEmptySpace(body);
+  body = buildBugHeader(body, "FURTHER COMMENTS"); 
+  body = addEmptySpace(body);
+
+  let completeUrl = url + body;
+  var win = window.open(completeUrl, '_blank');
+  win.focus();
+
+}
+
+function buildBugHeader(body,value)
+{
+    return body + `<----------- ${value} ----------->%0A`;
+}
+
+function addEmptySpace(body)
+{
+  return body + "%0A%0A%0A%0A%0A";
+}
+
+function addCodeBug(body, code)
+{
+    toReplace = [
+        [";","%3B"],
+        ["+","%2B"],
+        ["=","%3D"],
+        ["/","%2F"],
+        ["\n","%0A"]
+    ]
+
+    for(var i =0; i < toReplace.length;++i)
+    {
+        console.log(toReplace[i]);
+        code = code.replace(toReplace[i][0],toReplace[i][1]);
+        console.log(code);
+    }
+
+    return body + "```%0A" + code + "%0A```%0A%0A";
+
+
+}

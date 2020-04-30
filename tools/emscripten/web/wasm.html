@@ -28,7 +28,7 @@
   <script src="js/astbuilder.js"></script>
   <script src="js/glue.js"></script>
   <body>
-    <h1 class="title" >THE BINDER v0.0.1</h1>
+    <h1 class="title" >THE BINDER v0.0.2</h1>
     <hr class="thickbar">
     <p class="greentext"> This is a toy language written in c++ following the <a href="https://craftinginterpreters.com/" target="_blank">crafting interpreter book</a>, and ported to WASM . For now is quite limited but I will keep building on it. Feel free to hack around! Check the  
 <a href="https://github.com/giordi91/thebinder" target="_blank"><i class="fa fa-github" style="font-size:30px;" ></i> repository</a> out and my previous language 
@@ -36,12 +36,31 @@
     <hr class="thickbar">
     <h3 class="greentext" >What can you do</h1>
     <div class="tab">
+          <button class="tablinks" onclick="openActionTab(event, 'print')">Print</button>
           <button class="tablinks" onclick="openActionTab(event, 'expressions')">Expressions</button>
-            <button class="tablinks" onclick="openActionTab(event, 'soon')">Coming soon...</button>
+          <button class="tablinks" onclick="openActionTab(event, 'variables')">Variables</button>
+          <button class="tablinks" onclick="openActionTab(event, 'bugs')"><i class="fa fa-bug" style="font-size:20px;"></i> BUGS! <i class="fa fa-bug" style="font-size:20px;"></i></button>
+          <button class="tablinks" onclick="openActionTab(event, 'soon')">Coming soon...</button>
+    </div>
+    <div id="print" class="tabcontent">
+        <p>You print values with a print statement.</p>
+        <p>print 10;</p>
+        <p>print "hello world";</p>
     </div>
     <div id="expressions" class="tabcontent">
         <p>You can evaluate mathematical expressions like.</p>
-        <p>(-1*3.14)+(-13)</p>
+        <p>print (-1*3.14)+(-13);</p>
+        <p>remember you need to print to see the result in the output.</p>
+    </div>
+    <div id="variables" class="tabcontent">
+        <p>you can use variables.</p>
+        <p>var a = 10;</p>
+        <p>var b = 30;</p>
+        <p>print a*b;</p>
+    </div>
+    <div id="bugs" class="tabcontent">
+        <p>If you find a bug please report it by clicking this button</p>
+        <button class="button" onclick="reportBug()">REPORT BUG</button>
     </div>
 
     <div id="soon" class="tabcontent" style="display:none">
@@ -60,8 +79,10 @@
       </div>
       <div class="content--lhs--output">
         <label  for="output" class="greentext">code output:</label>
-        <textarea class="emscripten" id="output" rows="8"></textarea>
       </div>
+       <textarea class="emscripten" id="output" rows="8"></textarea>
+       <p></p>
+       <button class="button" onclick="reportBug()"><i class="fa fa-bug" style="font-size:20px;"></i> REPORT BUG <i class="fa fa-bug" style="font-size:20px;"></i></button> 
       </div>
       <div class="content--rhs">
       <div class="content--rhs--ast">

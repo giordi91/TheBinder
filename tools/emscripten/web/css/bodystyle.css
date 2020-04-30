@@ -140,3 +140,13 @@ a:visited {
   display: flex;
   flex: 1;
 }
+.button{
+  background-color: var(--secondary-bg);
+  border-color: var(--green);
+  color:var(--green);
+  }
+  button:focus{
+  background-color:var(--green);
+  border-color: white;
+  color:white
+  }
