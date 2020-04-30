@@ -300,7 +300,7 @@ public:
     case (TOKEN_TYPE::PLUS): {
       if (areBothNumbers(left, right)) {
         returnValue->number = (left->number) + (right->number);
-      returnValue->type = RuntimeValueType::NUMBER;
+        returnValue->type = RuntimeValueType::NUMBER;
         freeBinaryValuesIfNecessary(returnValue, leftIdx, left, rightIdx,
                                     right);
         return toVoid(index);
@@ -475,7 +475,13 @@ public:
     // to index and extract the real runtime value from it
     RuntimeValue *toReturn = nullptr;
     bool result = m_enviroment->get(expr->name, &toReturn);
-    assert(result);
+
+    if (!result) {
+      auto &pool = m_context->getStringPool();
+      const char *message =
+          pool.concatenate("Undefined variable: \"", "\"", expr->name);
+      error(m_context, message);
+    }
     return toReturn;
   }
 
