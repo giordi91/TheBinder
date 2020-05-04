@@ -28,6 +28,7 @@ const ASTNodeDefinition exprDefinitions[] = {
 };
 
 const ASTNodeDefinition statementsDefinitions[] = {
+    {"Block", "memory::ResizableVector<Stmt*> statements"},
     {"Expression", "Expr* expression"},
     {"Print", "Expr* expression"},
     {"Var", "Token token, Expr* initializer"},
@@ -41,7 +42,8 @@ void writeHeader(FILE *fp) {
 }
 
 void writeIncludes(FILE *fp) {
-  fprintf(fp, "#include \"binder/tokens.h\" \n\n");
+  fprintf(fp, "#include \"binder/tokens.h\"\n");
+  fprintf(fp, "#include \"binder/memory/resizableVector.h\"\n\n");
 }
 
 void WriteASTNode(FILE *fp, const char *baseClass,

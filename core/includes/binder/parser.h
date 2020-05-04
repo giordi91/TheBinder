@@ -38,6 +38,7 @@ private:
   autogen::Stmt *statement();
   autogen::Stmt *declaration();
   autogen::Stmt *printStatement();
+  autogen::Stmt *blockStatement();
   autogen::Stmt *expressionStatement();
   autogen::Stmt *varDeclaration();
 

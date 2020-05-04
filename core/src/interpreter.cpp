@@ -505,6 +505,15 @@ public:
     return nullptr;
   };
 
+  void *acceptBlock(autogen::Block *stmt) override {
+
+    auto *env = new Enviroment(m_enviroment);
+    executeBlock(stmt->statements, env);
+    delete env;
+
+    return nullptr;
+  }
+
   void *acceptVar(autogen::Var *stmt) override {
 
     RuntimeValue *value = nullptr;
@@ -594,6 +603,28 @@ private:
   }
 
   void releaseRuntime(uint32_t poolIdx) { m_runtimeValuePool->free(poolIdx); }
+
+  void executeBlock(const memory::ResizableVector<autogen::Stmt *> &stmts,
+                    Enviroment *env) {
+    Enviroment *previous = m_enviroment;
+    try {
+      m_enviroment = env;
+      uint32_t count = stmts.size();
+      for (uint32_t i = 0; i < count; ++i) {
+          stmts[i]->accept(this);
+      }
+    } 
+    //c++ does not have a "finally" so we need to patch back
+    //the current enviroment no matter what, to do that we catch,
+    //patch the enviroment and re-throw up the stack
+    catch(...){
+        m_enviroment = previous;
+        throw;
+    }
+
+    //patching enviroment on exit
+    m_enviroment = previous;
+  }
 
 private:
   BinderContext *m_context;

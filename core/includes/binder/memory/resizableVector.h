@@ -56,6 +56,12 @@ public:
   inline void pushBack(const T &value) {
     // first checking whether there is enough buffer left, if
     // not we re-allocate
+
+    if ((m_size == 0) & (m_reserved == 0)) {
+      reallocateMemoryInternal(INTERNAL_RESERVE);
+      m_reserved = INTERNAL_RESERVE;
+    }
+
     if (m_size >= m_reserved) {
       assert(m_reserved != 0);
       reallocateMemoryInternal(m_size * 2);
@@ -85,7 +91,7 @@ public:
       m_reserved = newSize * 2;
       m_size = newSize;
     } else {
-      //updating the size
+      // updating the size
       m_size = newSize;
     }
   }
@@ -134,10 +140,12 @@ private:
   }
 
   T *m_memory = nullptr;
+
 private:
   ALLOCATOR *m_allocator;
   uint32_t m_size;
   uint32_t m_reserved;
+  static const uint32_t INTERNAL_RESERVE = 8;
 }; // namespace binder
 
-} // namespace binder
+} // namespace binder::memory

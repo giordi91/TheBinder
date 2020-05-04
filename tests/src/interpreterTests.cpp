@@ -807,3 +807,29 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "binary != with multiple variables
   REQUIRE(c->boolean== false);
   REQUIRE(c->storage == binder::RuntimeValueStorage::L_VALUE);
 }
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "basic scope test", "[interpreter]") {
+
+    //we are re-declaring a in a nn inner scope it should not touch the external 
+    //scope
+  interpret("var a =  10; {var a =  12 +5 ;}");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "assign to outer scope", "[interpreter]") {
+
+  interpret("var a =  10;var b = 1; {var a =  12 +5 ; b = a;}");
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+  binder::RuntimeValue *b= interpreter.getRuntimeVariable("b");
+  REQUIRE(b->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(b->number== Approx(17.0f));
+  REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
+}
