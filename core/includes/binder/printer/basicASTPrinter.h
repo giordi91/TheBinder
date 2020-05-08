@@ -32,6 +32,9 @@ public:
     m_pool.free(name);
     return (char *)paren;
   }
+  void *acceptLogical(autogen::Logical *expr) override {
+    return parenthesize(getLexemeFromToken(expr->op), expr->left, expr->right);
+  }
 
   const char *print(autogen::Expr *expr) {
     return (const char *)expr->accept(this);

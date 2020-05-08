@@ -238,3 +238,12 @@ TEST_CASE_METHOD(SetupParserTestFixture, "assigment", "[parser]")
   REQUIRE(context.hadError()==false);
 
 }
+
+TEST_CASE_METHOD(SetupParserTestFixture, "or operator", "[parser]") 
+{
+  const binder::memory::ResizableVector<binder::autogen::Stmt *> &stmts =
+      parse("var a = 1 or 2;");
+  REQUIRE(stmts.size() == 1);
+  REQUIRE(context.hadError()==false);
+
+}

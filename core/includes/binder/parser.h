@@ -29,6 +29,8 @@ private:
   // private interface
   autogen::Expr *expression();
   autogen::Expr *assignment();
+  autogen::Expr *orExpr();
+  autogen::Expr *andExpr();
   autogen::Expr *equality();
   autogen::Expr *comparison();
   autogen::Expr *addition();
@@ -37,6 +39,7 @@ private:
   autogen::Expr *primary();
   autogen::Stmt *statement();
   autogen::Stmt *declaration();
+  autogen::Stmt *ifStatement();
   autogen::Stmt *printStatement();
   autogen::Stmt *blockStatement();
   autogen::Stmt *expressionStatement();

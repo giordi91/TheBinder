@@ -20,7 +20,8 @@ void Parser::parse(const memory::ResizableVector<Token> *tokens) {
 autogen::Expr *Parser::expression() { return assignment(); }
 
 autogen::Expr *Parser::assignment() {
-  autogen::Expr *expr = equality();
+
+  autogen::Expr *expr = orExpr();
 
   if (match(TOKEN_TYPE::EQUAL)) {
     autogen::Expr *value = assignment();
@@ -40,7 +41,55 @@ autogen::Expr *Parser::assignment() {
   return expr;
 }
 
-// equality → comparison ( ( "!=" | "==" ) comparison )* ;
+autogen::Expr *Parser:: orExpr () {
+    //kicking the recursion down to the "and" etc
+    autogen::Expr* expr = andExpr();
+
+    //similar to mul/add we have a list of possible infinite condition
+    while(match(TOKEN_TYPE::OR))    
+    {
+        Token op = previous();
+        autogen::Expr* right = andExpr();
+
+        //every time we match a new logical expression
+        //we chain it by wrapping the current one and the 
+        //right one, such that we are sort of building a linked list
+        auto* logical = new autogen::Logical();
+        logical->left= expr;
+        logical->op = op.m_type;
+        logical->right = right;
+        expr = logical;
+    }
+    return expr;
+
+}
+
+//very similar to the or function, here instead we forward
+//to equality and chain the and operations aswell
+autogen::Expr* Parser::andExpr()
+{
+    //kicking the recursion down to the "and" etc
+    autogen::Expr* expr = equality();
+
+    //similar to mul/add we have a list of possible infinite condition
+    while(match(TOKEN_TYPE::AND))    
+    {
+        Token op = previous();
+        autogen::Expr* right = equality();
+
+        //every time we match a new logical expression
+        //we chain it by wrapping the current one and the 
+        //right one, such that we are sort of building a linked list
+        auto* logical = new autogen::Logical();
+        logical->left= expr;
+        logical->op = op.m_type;
+        logical->right = right;
+        expr = logical;
+    }
+    return expr;
+
+}
+
 autogen::Expr *Parser::equality() {
   autogen::Expr *expr = this->comparison();
 
@@ -186,6 +235,9 @@ autogen::Expr *Parser::primary() {
 }
 
 autogen::Stmt *Parser::statement() {
+  if (match(TOKEN_TYPE::IF)) {
+    return ifStatement();
+  }
   if (match(TOKEN_TYPE::PRINT)) {
     return printStatement();
   }
@@ -193,6 +245,36 @@ autogen::Stmt *Parser::statement() {
     return blockStatement();
   }
   return expressionStatement();
+}
+
+autogen::Stmt *Parser::ifStatement() {
+  // we start the process of parsing by eating the opening bracket for
+  // the condition branch
+  consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after if'.");
+  // now inside the () we have an expression so we parse it
+  autogen::Expr *condition = expression();
+  // finally we expect a closing paren
+  consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after if'.");
+
+  // now that we have an expression  we need to parse the body,
+  // conveniently a statement can parse a block,and a single line expression
+  // statement meaning we can have one line or multi line if /else statement
+  autogen::Stmt *thenBranch = statement();
+
+  // now else branch is optional so we initialize it to null then we parse it if
+  // we match an else
+  autogen::Stmt *elseBranch = nullptr;
+  if (match(TOKEN_TYPE::ELSE)) {
+    elseBranch = statement();
+  }
+
+  // TODO brace init
+  auto *toReturn = new autogen::If();
+  toReturn->condition = condition;
+  toReturn->thenBranch = thenBranch;
+  toReturn->elseBranch = elseBranch;
+
+  return toReturn;
 }
 
 autogen::Stmt *Parser::declaration() {
@@ -237,17 +319,16 @@ autogen::Stmt *Parser::printStatement() {
 }
 
 autogen::Stmt *Parser::blockStatement() {
-    auto* block = new autogen::Block();
-    //here we keep chewing until we find either a right brance or 
-    //we are at the end of the file
-    while(!check(TOKEN_TYPE::RIGHT_BRACE) && !isAtEnd())
-    {
-        block->statements.pushBack(declaration());
-    }
+  auto *block = new autogen::Block();
+  // here we keep chewing until we find either a right brance or
+  // we are at the end of the file
+  while (!check(TOKEN_TYPE::RIGHT_BRACE) && !isAtEnd()) {
+    block->statements.pushBack(declaration());
+  }
 
-    //now that we are done we expect a closing curly otherwise is an error
-    consume (TOKEN_TYPE::RIGHT_BRACE, "Expected '}' after block");
-    return block;
+  // now that we are done we expect a closing curly otherwise is an error
+  consume(TOKEN_TYPE::RIGHT_BRACE, "Expected '}' after block");
+  return block;
 }
 
 autogen::Stmt *Parser::expressionStatement() {

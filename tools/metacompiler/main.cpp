@@ -23,15 +23,19 @@ const ASTNodeDefinition exprDefinitions[] = {
     {"Binary", "Expr* left,Expr* right, TOKEN_TYPE op"},
     {"Grouping", "Expr* expr, Expr* _padding1, TOKEN_TYPE _padding2"},
     {"Literal", "const char* value,Expr* _padding1, TOKEN_TYPE type"},
+    {"Logical", "Expr* left,Expr* right,TOKEN_TYPE op"},
     {"Unary", "Expr* right,Expr* _padding1, TOKEN_TYPE op"},
     {"Variable", "const char* name,Expr* _padding1, TOKEN_TYPE _padding2"},
 };
 
+//TODO find a proper allocation scheme for this, should I force size or a max sixe for 
+//all of them?
 const ASTNodeDefinition statementsDefinitions[] = {
     {"Block", "memory::ResizableVector<Stmt*> statements"},
     {"Expression", "Expr* expression"},
     {"Print", "Expr* expression"},
     {"Var", "Token token, Expr* initializer"},
+    {"If", "Expr* condition, Stmt* thenBranch, Stmt* elseBranch"},
 };
 
 void writeHeader(FILE *fp) {

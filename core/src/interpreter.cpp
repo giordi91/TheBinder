@@ -245,6 +245,34 @@ public:
     return value;
   }
 
+  void *acceptLogical(autogen::Logical *expr) override {
+
+    //lets evaulate the left expression
+    //here we get the void pointer and we also extract
+    //the corresponding runtime value out of it.
+    //isThruty actually needs to evaluate the content of the 
+    //runtime, instead, the function actually returns the void index ptr
+    void* left= evaluate(expr->left);
+    RuntimeValue *leftValue= getRuntime(toIndex(left));
+
+    if (expr->op == TOKEN_TYPE::OR) {
+      //if we have an or operator, and the left is true,
+      //we don't need to evaluate the right, we short circuit
+      if (isTruthy(leftValue))
+        return left ;
+    } else {
+      //simialry in the case of the and operator if lhs is false, there
+      //is no way for the operation to return true, so we return left, 
+      //which is not "thruty" in this case
+      if (!isTruthy(leftValue))
+        return left;
+    }
+    
+    //here we could not short circuit meaning we have to eval the right
+    //hand side
+    return evaluate(expr->right);
+  }
+
   void *acceptBinary(autogen::Binary *expr) override {
 
     // keeping as indexes until needed, in this way
@@ -492,6 +520,18 @@ public:
     releaseRuntime(index);
     return nullptr;
   };
+  void *acceptIf(autogen::If *stmt) override {
+    uint32_t index = toIndex(evaluate(stmt->condition));
+    RuntimeValue *value = getRuntime(index);
+    if (isTruthy(value)) {
+      stmt->thenBranch->accept(this);
+    } else if (stmt->elseBranch != nullptr) {
+      stmt->elseBranch->accept(this);
+    }
+
+    return nullptr;
+  };
+
   void *acceptPrint(autogen::Print *stmt) override {
     uint32_t index = toIndex(evaluate(stmt->expression));
     RuntimeValue *value = getRuntime(index);
@@ -611,18 +651,18 @@ private:
       m_enviroment = env;
       uint32_t count = stmts.size();
       for (uint32_t i = 0; i < count; ++i) {
-          stmts[i]->accept(this);
+        stmts[i]->accept(this);
       }
-    } 
-    //c++ does not have a "finally" so we need to patch back
-    //the current enviroment no matter what, to do that we catch,
-    //patch the enviroment and re-throw up the stack
-    catch(...){
-        m_enviroment = previous;
-        throw;
+    }
+    // c++ does not have a "finally" so we need to patch back
+    // the current enviroment no matter what, to do that we catch,
+    // patch the enviroment and re-throw up the stack
+    catch (...) {
+      m_enviroment = previous;
+      throw;
     }
 
-    //patching enviroment on exit
+    // patching enviroment on exit
     m_enviroment = previous;
   }
 

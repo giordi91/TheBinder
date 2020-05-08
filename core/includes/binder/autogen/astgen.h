@@ -14,18 +14,21 @@ ASSIGN,
 BINARY,
 GROUPING,
 LITERAL,
+LOGICAL,
 UNARY,
 VARIABLE,
 BLOCK,
 EXPRESSION,
 PRINT,
-VAR};
+VAR,
+IF};
 
 class Expr;
 class Assign;
 class Binary;
 class Grouping;
 class Literal;
+class Logical;
 class Unary;
 class Variable;
 
@@ -38,6 +41,7 @@ class ExprVisitor{
 	virtual void* acceptBinary(Binary* expr) = 0;
 	virtual void* acceptGrouping(Grouping* expr) = 0;
 	virtual void* acceptLiteral(Literal* expr) = 0;
+	virtual void* acceptLogical(Logical* expr) = 0;
 	virtual void* acceptUnary(Unary* expr) = 0;
 	virtual void* acceptVariable(Variable* expr) = 0;
 
@@ -107,6 +111,20 @@ public:
 	};
 };
 
+class Logical : public Expr
+{
+public:
+	Logical(): Expr(){}
+	virtual ~Logical()=default;
+	Expr* left;
+	Expr* right;
+	TOKEN_TYPE op;
+	void* accept(ExprVisitor* visitor) override
+	{ 
+ 		return visitor->acceptLogical(this);
+	};
+};
+
 class Unary : public Expr
 {
 public:
@@ -145,6 +163,7 @@ class Block;
 class Expression;
 class Print;
 class Var;
+class If;
 
 class StmtVisitor{
  public:
@@ -155,6 +174,7 @@ class StmtVisitor{
 	virtual void* acceptExpression(Expression* stmt) = 0;
 	virtual void* acceptPrint(Print* stmt) = 0;
 	virtual void* acceptVar(Var* stmt) = 0;
+	virtual void* acceptIf(If* stmt) = 0;
 
 };
 class Stmt{
@@ -215,6 +235,20 @@ public:
 	};
 };
 
+class If : public Stmt
+{
+public:
+	If(): Stmt(){}
+	virtual ~If()=default;
+	Expr* condition;
+	Stmt* thenBranch;
+	Stmt* elseBranch;
+	void* accept(StmtVisitor* visitor) override
+	{ 
+ 		return visitor->acceptIf(this);
+	};
+};
+
 //This class is only here to trigger compile time checks
 class ExprChecks{
 public:
@@ -223,12 +257,14 @@ public:
 		constexpr int BinarySize = sizeof(Binary);
 		constexpr int GroupingSize = sizeof(Grouping);
 		constexpr int LiteralSize = sizeof(Literal);
+		constexpr int LogicalSize = sizeof(Logical);
 		constexpr int UnarySize = sizeof(Unary);
 		constexpr int VariableSize = sizeof(Variable);
 		static_assert(AssignSize == BinarySize, "Size of Assign does not match size of Binary, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(BinarySize == GroupingSize, "Size of Binary does not match size of Grouping, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(GroupingSize == LiteralSize, "Size of Grouping does not match size of Literal, due to memory pools expecting same size, all AST nodes need to have same size");
-		static_assert(LiteralSize == UnarySize, "Size of Literal does not match size of Unary, due to memory pools expecting same size, all AST nodes need to have same size");
+		static_assert(LiteralSize == LogicalSize, "Size of Literal does not match size of Logical, due to memory pools expecting same size, all AST nodes need to have same size");
+		static_assert(LogicalSize == UnarySize, "Size of Logical does not match size of Unary, due to memory pools expecting same size, all AST nodes need to have same size");
 		static_assert(UnarySize == VariableSize, "Size of Unary does not match size of Variable, due to memory pools expecting same size, all AST nodes need to have same size");
 }};
 
