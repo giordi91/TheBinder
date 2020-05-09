@@ -241,6 +241,9 @@ autogen::Stmt *Parser::statement() {
   if (match(TOKEN_TYPE::PRINT)) {
     return printStatement();
   }
+  if (match(TOKEN_TYPE::WHILE)) {
+    return whileStatement();
+  }
   if (match(TOKEN_TYPE::LEFT_BRACE)) {
     return blockStatement();
   }
@@ -273,6 +276,7 @@ autogen::Stmt *Parser::ifStatement() {
   toReturn->condition = condition;
   toReturn->thenBranch = thenBranch;
   toReturn->elseBranch = elseBranch;
+  toReturn->astType = autogen::AST_TYPE::IF;
 
   return toReturn;
 }
@@ -311,10 +315,23 @@ autogen::Stmt *Parser::varDeclaration() {
 
 autogen::Stmt *Parser::printStatement() {
   autogen::Expr *value = expression();
-  consume(TOKEN_TYPE::SEMICOLON, "Expect ';' after print expression.");
+  consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after print expression.");
   auto *stmt = new autogen::Print();
   stmt->astType = autogen::AST_TYPE::PRINT;
   stmt->expression = value;
+  return stmt;
+}
+autogen::Stmt *Parser::whileStatement() {
+  consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after while.");
+  autogen::Expr *condition= expression();
+  consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after condition.");
+
+  autogen::Stmt* body = statement();
+
+  auto *stmt = new autogen::While();
+  stmt->astType = autogen::AST_TYPE::WHILE;
+  stmt->condition = condition;
+  stmt->body= body;
   return stmt;
 }
 

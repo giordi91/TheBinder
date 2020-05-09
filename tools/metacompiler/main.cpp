@@ -33,9 +33,10 @@ const ASTNodeDefinition exprDefinitions[] = {
 const ASTNodeDefinition statementsDefinitions[] = {
     {"Block", "memory::ResizableVector<Stmt*> statements"},
     {"Expression", "Expr* expression"},
+    {"If", "Expr* condition, Stmt* thenBranch, Stmt* elseBranch"},
     {"Print", "Expr* expression"},
     {"Var", "Token token, Expr* initializer"},
-    {"If", "Expr* condition, Stmt* thenBranch, Stmt* elseBranch"},
+    {"While", "Expr* condition, Stmt* body"},
 };
 
 void writeHeader(FILE *fp) {

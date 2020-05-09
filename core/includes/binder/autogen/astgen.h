@@ -19,9 +19,10 @@ UNARY,
 VARIABLE,
 BLOCK,
 EXPRESSION,
+IF,
 PRINT,
 VAR,
-IF};
+WHILE};
 
 class Expr;
 class Assign;
@@ -161,9 +162,10 @@ public:
 class Stmt;
 class Block;
 class Expression;
+class If;
 class Print;
 class Var;
-class If;
+class While;
 
 class StmtVisitor{
  public:
@@ -172,9 +174,10 @@ class StmtVisitor{
 	//interface
 	virtual void* acceptBlock(Block* stmt) = 0;
 	virtual void* acceptExpression(Expression* stmt) = 0;
+	virtual void* acceptIf(If* stmt) = 0;
 	virtual void* acceptPrint(Print* stmt) = 0;
 	virtual void* acceptVar(Var* stmt) = 0;
-	virtual void* acceptIf(If* stmt) = 0;
+	virtual void* acceptWhile(While* stmt) = 0;
 
 };
 class Stmt{
@@ -210,6 +213,20 @@ public:
 	};
 };
 
+class If : public Stmt
+{
+public:
+	If(): Stmt(){}
+	virtual ~If()=default;
+	Expr* condition;
+	Stmt* thenBranch;
+	Stmt* elseBranch;
+	void* accept(StmtVisitor* visitor) override
+	{ 
+ 		return visitor->acceptIf(this);
+	};
+};
+
 class Print : public Stmt
 {
 public:
@@ -235,17 +252,16 @@ public:
 	};
 };
 
-class If : public Stmt
+class While : public Stmt
 {
 public:
-	If(): Stmt(){}
-	virtual ~If()=default;
+	While(): Stmt(){}
+	virtual ~While()=default;
 	Expr* condition;
-	Stmt* thenBranch;
-	Stmt* elseBranch;
+	Stmt* body;
 	void* accept(StmtVisitor* visitor) override
 	{ 
- 		return visitor->acceptIf(this);
+ 		return visitor->acceptWhile(this);
 	};
 };
 

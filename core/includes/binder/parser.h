@@ -41,6 +41,7 @@ private:
   autogen::Stmt *declaration();
   autogen::Stmt *ifStatement();
   autogen::Stmt *printStatement();
+  autogen::Stmt *whileStatement();
   autogen::Stmt *blockStatement();
   autogen::Stmt *expressionStatement();
   autogen::Stmt *varDeclaration();

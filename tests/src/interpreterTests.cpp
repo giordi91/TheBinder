@@ -1095,3 +1095,22 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken else bl
   REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
 }
 
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple while statement", "[interpreter]") {
+
+  interpret("var a =0;while( a < 10){ a = a + 1;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple while statement vars", "[interpreter]") {
+
+  interpret("var a =0;var b = 15;while( a < b){ a = a + 1;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(15.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}

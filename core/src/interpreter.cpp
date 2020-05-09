@@ -428,7 +428,8 @@ public:
 
     uint32_t index = 0;
     RuntimeValue &value = m_runtimeValuePool->getFreeMemoryData(index);
-    value.storage = RuntimeValueStorage::R_VALUE;
+    //TODO here used to be R_VALUE but gave us trouble down the line
+    value.storage = RuntimeValueStorage::L_VALUE;
 
     // we need to figure out what we are dealing with
     switch (expr->type) {
@@ -516,10 +517,12 @@ public:
   // statements
   void *acceptExpression(autogen::Expression *stmt) override {
     // we eval the side effect and free the expression
-    uint32_t index = toIndex(evaluate(stmt->expression));
-    releaseRuntime(index);
+    evaluate(stmt->expression);
+    //uint32_t index = toIndex(evaluate(stmt->expression));
+    //releaseRuntime(index);
     return nullptr;
   };
+
   void *acceptIf(autogen::If *stmt) override {
     uint32_t index = toIndex(evaluate(stmt->condition));
     RuntimeValue *value = getRuntime(index);
@@ -529,6 +532,27 @@ public:
       stmt->elseBranch->accept(this);
     }
 
+    m_runtimeValuePool->free(index);
+    return nullptr;
+  };
+
+  void *acceptWhile(autogen::While *stmt) override {
+
+
+    uint32_t index = toIndex(evaluate(stmt->condition));
+    RuntimeValue *value = getRuntime(index);
+
+    while(isTruthy(value)) {
+        stmt->body->accept(this);
+
+        //we can free the previous allocated value for the condition 
+        //and re -evaluate at the end of the loop, not super pretty
+        //but is mostly to not stuff super nested stuff in the condition
+        //making it harder to debug down the line
+        //m_runtimeValuePool->free(index);
+        index = toIndex(evaluate(stmt->condition));
+        value = getRuntime(index);
+    } 
     return nullptr;
   };
 
@@ -540,7 +564,7 @@ public:
       const char *str = value->toString(m_context, true);
       m_context->print(str);
       m_context->getStringPool().free(str);
-      releaseRuntime(index);
+      //releaseRuntime(index);
     }
     return nullptr;
   };
@@ -608,6 +632,9 @@ private:
     RuntimeValueStorage leftStorage = left->storage;
     RuntimeValueStorage rightStorage = right->storage;
 
+
+    /*
+    //temporarely disabled,we always allocate a new value
     // if any of the two is R value we can re-use it
     if (leftStorage == RuntimeValueStorage::R_VALUE) {
       index = leftIdx;
@@ -618,6 +645,7 @@ private:
       index = rightIdx;
       return right;
     }
+    */
     // if none of the two is an rvalue we need to allocate
     RuntimeValue *value = &m_runtimeValuePool->getFreeMemoryData(index);
     value->storage = RuntimeValueStorage::R_VALUE;
