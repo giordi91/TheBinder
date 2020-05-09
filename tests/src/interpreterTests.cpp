@@ -833,3 +833,265 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "assign to outer scope", "[interpr
   REQUIRE(b->number== Approx(17.0f));
   REQUIRE(b->storage == binder::RuntimeValueStorage::L_VALUE);
 }
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken", "[interpreter]") {
+
+  interpret("var a =  10;if( 10 > 20) a = 20;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken", "[interpreter]") {
+
+  interpret("var a =  10;if( 10 > 5) a = 20;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken block", "[interpreter]") {
+
+  interpret("var a =  10;if( 10 > 20){ a = 20;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken block", "[interpreter]") {
+
+  interpret("var a =  10;if( 10 > 5){ a = 20;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement else, not taken", "[interpreter]") {
+
+  interpret("var a =  10;if( 10 > 20) a = 20; else a = 30;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(30.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement else, taken", "[interpreter]") {
+
+  interpret("var a =  10;if( 10 > 5) a = 20; else a = 30;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken else block", "[interpreter]") {
+
+  interpret("var a =  10;if( 10 > 20){ a = 20;} else { a = 30;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(30.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken else block", "[interpreter]") {
+
+  interpret("var a =  10;if( 10 > 5){ a = 20;} else {a = 30;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+//------------------------------
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken var 1", "[interpreter]") {
+
+  interpret("var a =  10; var b = 20;if( 10 > b) a = 20;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken var 1", "[interpreter]") {
+
+  interpret("var a =  10;var b = 5;if( 10 > b) a = 20;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken block var 1", "[interpreter]") {
+
+  interpret("var a =  10; var b = 20; if( 10 > b){ a = 20;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken block var 1 ", "[interpreter]") {
+
+  interpret("var a =  10;var b = 5;if( 10 > b){ a = 20;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement else, not taken var  1", "[interpreter]") {
+
+  interpret("var a =  10;var b = 20;if( 10 > b) a = 20; else a = 30;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(30.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement else, taken var 1 ", "[interpreter]") {
+
+  interpret("var a =  10;var b  = 5; if( 10 > b) a = 20; else a = 30;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken else block var 1", "[interpreter]") {
+
+  interpret("var a =  10;var b = 20;if( 10 > b){ a = 20;} else { a = 30;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(30.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken else block var 1", "[interpreter]") {
+
+  interpret("var a =  10;var b = 5;if( 10 > b){ a = 20;} else {a = 30;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+//------------------------- 
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken var 2", "[interpreter]") {
+
+  interpret("var a =  10; var b = 20;var c = 10;if( c > b) a = 20;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken var 2", "[interpreter]") {
+
+  interpret("var a =  10;var b = 5;var c = 10;if( c > b) a = 20;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken block var 2", "[interpreter]") {
+
+  interpret("var a =  10; var b = 20;var c = 10; if( c > b){ a = 20;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(10.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken block var 2 ", "[interpreter]") {
+
+  interpret("var a =  10;var b = 5;var c = 10;if( c > b){ a = 20;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement else, not taken var  2", "[interpreter]") {
+
+  interpret("var a =  10;var b = 20;var c = 10;if( c > b) a = 20; else a = 30;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(30.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement else, taken var 2 ", "[interpreter]") {
+
+  interpret("var a =  10;var b  = 5; var c = 10;if( c > b) a = 20; else a = 30;");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement not taken else block var 2", "[interpreter]") {
+
+  interpret("var a =  10;var b = 20;var c= 10;if( c > b){ a = 20;} else { a = 30;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(30.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple if statement taken else block var 2", "[interpreter]") {
+
+  interpret("var a =  10;var b = 5;var c = 10; if( c > b){ a = 20;} else {a = 30;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(20.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
