@@ -629,11 +629,11 @@ private:
   RuntimeValue *getReturnValueForBinary(uint32_t leftIdx, RuntimeValue *left,
                                         uint32_t rightIdx, RuntimeValue *right,
                                         uint32_t &index) {
+    /*
     RuntimeValueStorage leftStorage = left->storage;
     RuntimeValueStorage rightStorage = right->storage;
 
 
-    /*
     //temporarely disabled,we always allocate a new value
     // if any of the two is R value we can re-use it
     if (leftStorage == RuntimeValueStorage::R_VALUE) {

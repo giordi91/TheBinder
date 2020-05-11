@@ -1114,3 +1114,16 @@ TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple while statement vars", "[i
   REQUIRE(a->number== Approx(15.0f));
   REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
 }
+
+TEST_CASE_METHOD(SetupInterpreterTestFixture, "simple for loop", "[interpreter]") {
+  interpret("var a=0; for(var i=0; i < 10; i=i+1){ a = a + i;}");
+  REQUIRE(context.hadError() == false);
+  binder::RuntimeValue *a= interpreter.getRuntimeVariable("a");
+  REQUIRE(a->type == binder::RuntimeValueType::NUMBER);
+  REQUIRE(a->number== Approx(45.0f));
+  REQUIRE(a->storage == binder::RuntimeValueStorage::L_VALUE);
+}
+
+
+
+

@@ -39,6 +39,7 @@ private:
   autogen::Expr *primary();
   autogen::Stmt *statement();
   autogen::Stmt *declaration();
+  autogen::Stmt *forStatement();
   autogen::Stmt *ifStatement();
   autogen::Stmt *printStatement();
   autogen::Stmt *whileStatement();

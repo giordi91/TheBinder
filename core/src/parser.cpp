@@ -41,53 +41,48 @@ autogen::Expr *Parser::assignment() {
   return expr;
 }
 
-autogen::Expr *Parser:: orExpr () {
-    //kicking the recursion down to the "and" etc
-    autogen::Expr* expr = andExpr();
+autogen::Expr *Parser::orExpr() {
+  // kicking the recursion down to the "and" etc
+  autogen::Expr *expr = andExpr();
 
-    //similar to mul/add we have a list of possible infinite condition
-    while(match(TOKEN_TYPE::OR))    
-    {
-        Token op = previous();
-        autogen::Expr* right = andExpr();
+  // similar to mul/add we have a list of possible infinite condition
+  while (match(TOKEN_TYPE::OR)) {
+    Token op = previous();
+    autogen::Expr *right = andExpr();
 
-        //every time we match a new logical expression
-        //we chain it by wrapping the current one and the 
-        //right one, such that we are sort of building a linked list
-        auto* logical = new autogen::Logical();
-        logical->left= expr;
-        logical->op = op.m_type;
-        logical->right = right;
-        expr = logical;
-    }
-    return expr;
-
+    // every time we match a new logical expression
+    // we chain it by wrapping the current one and the
+    // right one, such that we are sort of building a linked list
+    auto *logical = new autogen::Logical();
+    logical->left = expr;
+    logical->op = op.m_type;
+    logical->right = right;
+    expr = logical;
+  }
+  return expr;
 }
 
-//very similar to the or function, here instead we forward
-//to equality and chain the and operations aswell
-autogen::Expr* Parser::andExpr()
-{
-    //kicking the recursion down to the "and" etc
-    autogen::Expr* expr = equality();
+// very similar to the or function, here instead we forward
+// to equality and chain the and operations aswell
+autogen::Expr *Parser::andExpr() {
+  // kicking the recursion down to the "and" etc
+  autogen::Expr *expr = equality();
 
-    //similar to mul/add we have a list of possible infinite condition
-    while(match(TOKEN_TYPE::AND))    
-    {
-        Token op = previous();
-        autogen::Expr* right = equality();
+  // similar to mul/add we have a list of possible infinite condition
+  while (match(TOKEN_TYPE::AND)) {
+    Token op = previous();
+    autogen::Expr *right = equality();
 
-        //every time we match a new logical expression
-        //we chain it by wrapping the current one and the 
-        //right one, such that we are sort of building a linked list
-        auto* logical = new autogen::Logical();
-        logical->left= expr;
-        logical->op = op.m_type;
-        logical->right = right;
-        expr = logical;
-    }
-    return expr;
-
+    // every time we match a new logical expression
+    // we chain it by wrapping the current one and the
+    // right one, such that we are sort of building a linked list
+    auto *logical = new autogen::Logical();
+    logical->left = expr;
+    logical->op = op.m_type;
+    logical->right = right;
+    expr = logical;
+  }
+  return expr;
 }
 
 autogen::Expr *Parser::equality() {
@@ -235,6 +230,9 @@ autogen::Expr *Parser::primary() {
 }
 
 autogen::Stmt *Parser::statement() {
+  if (match(TOKEN_TYPE::FOR)) {
+    return forStatement();
+  }
   if (match(TOKEN_TYPE::IF)) {
     return ifStatement();
   }
@@ -248,6 +246,81 @@ autogen::Stmt *Parser::statement() {
     return blockStatement();
   }
   return expressionStatement();
+}
+
+autogen::Stmt *Parser::forStatement() {
+  // first we start by consuming the opening bracket (
+  consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after for.");
+
+  // next we need to process the initializer
+  autogen::Stmt *initializer;
+  if (match(TOKEN_TYPE::SEMICOLON)) {
+    // initializer can be omitted, so if we get a ; we know that is the case
+    initializer = nullptr;
+  } else if (match(TOKEN_TYPE::VAR)) {
+    // if we have a variable we know a variable has been declared for it
+    initializer = varDeclaration();
+  } else {
+    // otherwise we have a normal expression like an assignment
+    initializer = expressionStatement();
+  }
+
+  // processing the condition
+  autogen::Expr *condition = nullptr;
+  if (!check(TOKEN_TYPE::SEMICOLON)) {
+    condition = expression();
+  }
+  consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after loop condition.");
+
+  // parse increment
+  autogen::Expr *increment = nullptr;
+  if (!check(TOKEN_TYPE::RIGHT_PAREN)) {
+    increment = expression();
+  }
+  consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after loop condition.");
+
+  // parse body
+  autogen::Stmt *body = statement();
+
+  // now we are going to assamble the for loop as a while loop, after all, the
+  // whole for loop is just sintax sugar, everything we need can be done with
+  // a while loop
+  // increment happens after the body, so lets tie them together
+  if (initializer != nullptr) {
+    auto *incrementStmt = new autogen::Expression();
+    incrementStmt->expression = increment;
+    auto *temp = new autogen::Block();
+    temp->statements.pushBack(body);
+    temp->statements.pushBack(incrementStmt);
+    body = temp;
+  }
+
+  // next we deal with the condition, if there is none we hardcode one to true
+  // and can put it into the loop
+  if (condition == nullptr) {
+    auto cnd = new autogen::Literal();
+    cnd->astType = autogen::AST_TYPE::LITERAL;
+    cnd->value = "true";
+    cnd->type = TOKEN_TYPE::BOOL_TRUE;
+    condition = cnd;
+  }
+  // now we build the while statement
+  auto* whileStmt = new autogen::While(); 
+  whileStmt->body =body;
+  whileStmt->condition=condition;
+  body = whileStmt;
+
+  //finally we have the initializer, this runs once before the loop
+  //so we chain it before the body
+  if(initializer != nullptr)
+  {
+      auto* finalStmt = new autogen::Block();
+      finalStmt->statements.pushBack(initializer);
+      finalStmt->statements.pushBack(body);
+      body = finalStmt;
+  }
+
+  return body;
 }
 
 autogen::Stmt *Parser::ifStatement() {
@@ -323,15 +396,15 @@ autogen::Stmt *Parser::printStatement() {
 }
 autogen::Stmt *Parser::whileStatement() {
   consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after while.");
-  autogen::Expr *condition= expression();
+  autogen::Expr *condition = expression();
   consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after condition.");
 
-  autogen::Stmt* body = statement();
+  autogen::Stmt *body = statement();
 
   auto *stmt = new autogen::While();
   stmt->astType = autogen::AST_TYPE::WHILE;
   stmt->condition = condition;
-  stmt->body= body;
+  stmt->body = body;
   return stmt;
 }
 
