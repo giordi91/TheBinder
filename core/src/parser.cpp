@@ -305,19 +305,18 @@ autogen::Stmt *Parser::forStatement() {
     condition = cnd;
   }
   // now we build the while statement
-  auto* whileStmt = new autogen::While(); 
-  whileStmt->body =body;
-  whileStmt->condition=condition;
+  auto *whileStmt = new autogen::While();
+  whileStmt->body = body;
+  whileStmt->condition = condition;
   body = whileStmt;
 
-  //finally we have the initializer, this runs once before the loop
-  //so we chain it before the body
-  if(initializer != nullptr)
-  {
-      auto* finalStmt = new autogen::Block();
-      finalStmt->statements.pushBack(initializer);
-      finalStmt->statements.pushBack(body);
-      body = finalStmt;
+  // finally we have the initializer, this runs once before the loop
+  // so we chain it before the body
+  if (initializer != nullptr) {
+    auto *finalStmt = new autogen::Block();
+    finalStmt->statements.pushBack(initializer);
+    finalStmt->statements.pushBack(body);
+    body = finalStmt;
   }
 
   return body;
@@ -357,6 +356,9 @@ autogen::Stmt *Parser::ifStatement() {
 autogen::Stmt *Parser::declaration() {
 
   try {
+    if (match(TOKEN_TYPE::FUN)) {
+      return function("function");
+    }
     if (match(TOKEN_TYPE::VAR)) {
       return varDeclaration();
     }
@@ -369,6 +371,51 @@ autogen::Stmt *Parser::declaration() {
     syncronize();
     return nullptr;
   }
+}
+
+autogen::Stmt *Parser::function(const char *type) {
+
+  // first we need the identifier name, meaning the function name
+  const char *errorStr =
+      m_context->getStringPool().concatenate("Expected", " name", type);
+  Token name = consume(TOKEN_TYPE::IDENTIFIER, errorStr);
+  m_context->getStringPool().free(errorStr);
+
+  // next we parse the param list
+  errorStr = m_context->getStringPool().concatenate("Expected '(' after ", " name",
+                                                 type);
+  consume(TOKEN_TYPE::LEFT_PAREN, errorStr);
+  m_context->getStringPool().free(errorStr);
+
+  //parsing the arguments
+  auto *fun = new autogen::Function();
+  memory::ResizableVector<Token> &parameters = fun->params;
+  // checking for empty args
+  if (!check(TOKEN_TYPE::RIGHT_PAREN)) {
+    do {
+      //we are imposing a limit on maximum arguments altough is not really a
+      //limitation of the language
+      if (parameters.size() >= 255) {
+        error(peek(), "Cannot have more than 255 parameters");
+      }
+
+      //chew another identifier
+      parameters.pushBack(
+          consume(TOKEN_TYPE::IDENTIFIER, "Expected parameter name."));
+
+    } while (match(TOKEN_TYPE::COMMA));
+  }
+
+  //next we expect a body, which must start with a {
+  errorStr = m_context->getStringPool().concatenate("Expected '{' before", " body",
+                                                 type);
+  consume(TOKEN_TYPE::LEFT_BRACE,errorStr); 
+  m_context->getStringPool().free(errorStr);
+
+  autogen::Stmt* body =  blockStatement();
+  fun->body = body;
+
+  return fun;
 }
 
 autogen::Stmt *Parser::varDeclaration() {

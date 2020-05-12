@@ -19,6 +19,7 @@ UNARY,
 VARIABLE,
 BLOCK,
 EXPRESSION,
+FUNCTION,
 IF,
 PRINT,
 VAR,
@@ -162,6 +163,7 @@ public:
 class Stmt;
 class Block;
 class Expression;
+class Function;
 class If;
 class Print;
 class Var;
@@ -174,6 +176,7 @@ class StmtVisitor{
 	//interface
 	virtual void* acceptBlock(Block* stmt) = 0;
 	virtual void* acceptExpression(Expression* stmt) = 0;
+	virtual void* acceptFunction(Function* stmt) = 0;
 	virtual void* acceptIf(If* stmt) = 0;
 	virtual void* acceptPrint(Print* stmt) = 0;
 	virtual void* acceptVar(Var* stmt) = 0;
@@ -210,6 +213,20 @@ public:
 	void* accept(StmtVisitor* visitor) override
 	{ 
  		return visitor->acceptExpression(this);
+	};
+};
+
+class Function : public Stmt
+{
+public:
+	Function(): Stmt(){}
+	virtual ~Function()=default;
+	Token token;
+	memory::ResizableVector<Token> params;
+	Stmt* body;
+	void* accept(StmtVisitor* visitor) override
+	{ 
+ 		return visitor->acceptFunction(this);
 	};
 };
 

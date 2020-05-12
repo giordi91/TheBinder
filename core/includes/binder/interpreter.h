@@ -8,6 +8,7 @@ namespace binder {
 namespace autogen {
 class Expr;
 class Stmt;
+class Function;
 } // namespace autogen
 
 // used to keep track of the type of our runtime
@@ -31,6 +32,27 @@ struct RuntimeValue {
 
   const char *debugToString(BinderContext *context);
   const char *toString(BinderContext *context, bool trailingNewLine = false);
+};
+
+class ASTInterpreterVisitor;
+
+class Callable {
+public:
+  virtual void *call(ASTInterpreterVisitor *interpreter,
+                     memory::ResizableVector<void *> &arguments) = 0;
+  virtual int arity()=0;
+};
+
+class BinderFunction : public Callable {
+
+public:
+  BinderFunction(autogen::Function *declaration) : m_declaration(declaration){};
+  void *call(ASTInterpreterVisitor *interpreter,
+             memory::ResizableVector<void *> &arguments) override;
+  int arity()override;
+
+private:
+  autogen::Function *m_declaration;
 };
 
 // NOTE possibly have an abstract class at the base as

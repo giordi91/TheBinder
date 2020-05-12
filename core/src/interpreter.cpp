@@ -224,6 +224,8 @@ public:
 
   void setSuppressPrint(bool value) { m_suppressPrints = value; }
 
+  Enviroment* getGlobalEnviroment(){return m_enviroment;};
+
   // interface
   void *acceptAssign(autogen::Assign *expr) override {
     auto value = (RuntimeValue *)(evaluate(expr->value));
@@ -247,29 +249,29 @@ public:
 
   void *acceptLogical(autogen::Logical *expr) override {
 
-    //lets evaulate the left expression
-    //here we get the void pointer and we also extract
-    //the corresponding runtime value out of it.
-    //isThruty actually needs to evaluate the content of the 
-    //runtime, instead, the function actually returns the void index ptr
-    void* left= evaluate(expr->left);
-    RuntimeValue *leftValue= getRuntime(toIndex(left));
+    // lets evaulate the left expression
+    // here we get the void pointer and we also extract
+    // the corresponding runtime value out of it.
+    // isThruty actually needs to evaluate the content of the
+    // runtime, instead, the function actually returns the void index ptr
+    void *left = evaluate(expr->left);
+    RuntimeValue *leftValue = getRuntime(toIndex(left));
 
     if (expr->op == TOKEN_TYPE::OR) {
-      //if we have an or operator, and the left is true,
-      //we don't need to evaluate the right, we short circuit
+      // if we have an or operator, and the left is true,
+      // we don't need to evaluate the right, we short circuit
       if (isTruthy(leftValue))
-        return left ;
+        return left;
     } else {
-      //simialry in the case of the and operator if lhs is false, there
-      //is no way for the operation to return true, so we return left, 
-      //which is not "thruty" in this case
+      // simialry in the case of the and operator if lhs is false, there
+      // is no way for the operation to return true, so we return left,
+      // which is not "thruty" in this case
       if (!isTruthy(leftValue))
         return left;
     }
-    
-    //here we could not short circuit meaning we have to eval the right
-    //hand side
+
+    // here we could not short circuit meaning we have to eval the right
+    // hand side
     return evaluate(expr->right);
   }
 
@@ -428,7 +430,7 @@ public:
 
     uint32_t index = 0;
     RuntimeValue &value = m_runtimeValuePool->getFreeMemoryData(index);
-    //TODO here used to be R_VALUE but gave us trouble down the line
+    // TODO here used to be R_VALUE but gave us trouble down the line
     value.storage = RuntimeValueStorage::L_VALUE;
 
     // we need to figure out what we are dealing with
@@ -518,8 +520,8 @@ public:
   void *acceptExpression(autogen::Expression *stmt) override {
     // we eval the side effect and free the expression
     evaluate(stmt->expression);
-    //uint32_t index = toIndex(evaluate(stmt->expression));
-    //releaseRuntime(index);
+    // uint32_t index = toIndex(evaluate(stmt->expression));
+    // releaseRuntime(index);
     return nullptr;
   };
 
@@ -538,21 +540,20 @@ public:
 
   void *acceptWhile(autogen::While *stmt) override {
 
-
     uint32_t index = toIndex(evaluate(stmt->condition));
     RuntimeValue *value = getRuntime(index);
 
-    while(isTruthy(value)) {
-        stmt->body->accept(this);
+    while (isTruthy(value)) {
+      stmt->body->accept(this);
 
-        //we can free the previous allocated value for the condition 
-        //and re -evaluate at the end of the loop, not super pretty
-        //but is mostly to not stuff super nested stuff in the condition
-        //making it harder to debug down the line
-        //m_runtimeValuePool->free(index);
-        index = toIndex(evaluate(stmt->condition));
-        value = getRuntime(index);
-    } 
+      // we can free the previous allocated value for the condition
+      // and re -evaluate at the end of the loop, not super pretty
+      // but is mostly to not stuff super nested stuff in the condition
+      // making it harder to debug down the line
+      // m_runtimeValuePool->free(index);
+      index = toIndex(evaluate(stmt->condition));
+      value = getRuntime(index);
+    }
     return nullptr;
   };
 
@@ -564,10 +565,16 @@ public:
       const char *str = value->toString(m_context, true);
       m_context->print(str);
       m_context->getStringPool().free(str);
-      //releaseRuntime(index);
+      // releaseRuntime(index);
     }
     return nullptr;
   };
+
+  void *acceptFunction(autogen::Function *stmt) override {
+     auto* fun = new BinderFunction (stmt);
+     m_enviroment->define(stmt->token.m_lexeme,fun);
+     return nullptr;
+  }
 
   void *acceptBlock(autogen::Block *stmt) override {
 
@@ -605,6 +612,28 @@ public:
 
     return nullptr;
   };
+
+  void executeBlock(const memory::ResizableVector<autogen::Stmt *> &stmts,
+                    Enviroment *env) {
+    Enviroment *previous = m_enviroment;
+    try {
+      m_enviroment = env;
+      uint32_t count = stmts.size();
+      for (uint32_t i = 0; i < count; ++i) {
+        stmts[i]->accept(this);
+      }
+    }
+    // c++ does not have a "finally" so we need to patch back
+    // the current enviroment no matter what, to do that we catch,
+    // patch the enviroment and re-throw up the stack
+    catch (...) {
+      m_enviroment = previous;
+      throw;
+    }
+
+    // patching enviroment on exit
+    m_enviroment = previous;
+  }
 
 private:
   void *evaluate(autogen::Expr *expr) {
@@ -672,27 +701,6 @@ private:
 
   void releaseRuntime(uint32_t poolIdx) { m_runtimeValuePool->free(poolIdx); }
 
-  void executeBlock(const memory::ResizableVector<autogen::Stmt *> &stmts,
-                    Enviroment *env) {
-    Enviroment *previous = m_enviroment;
-    try {
-      m_enviroment = env;
-      uint32_t count = stmts.size();
-      for (uint32_t i = 0; i < count; ++i) {
-        stmts[i]->accept(this);
-      }
-    }
-    // c++ does not have a "finally" so we need to patch back
-    // the current enviroment no matter what, to do that we catch,
-    // patch the enviroment and re-throw up the stack
-    catch (...) {
-      m_enviroment = previous;
-      throw;
-    }
-
-    // patching enviroment on exit
-    m_enviroment = previous;
-  }
 
 private:
   BinderContext *m_context;
@@ -735,6 +743,20 @@ void ASTInterpreter::interpret(
     // return &m_pool[index];
   } catch (RuntimeException e) {
   }
+}
+
+int  BinderFunction::arity(){return m_declaration->params.size();};
+
+void* BinderFunction::call(ASTInterpreterVisitor *interpreter,
+                     memory::ResizableVector<void *> &arguments)
+{
+    Enviroment* env = new Enviroment(interpreter->getGlobalEnviroment());
+    for(int i =0; i < m_declaration->params.size();++i)
+    {
+        env->define(m_declaration->params[i].m_lexeme, (RuntimeValue*)arguments[i]);
+    }
+
+    interpreter->executeBlock(((autogen::Block*)(m_declaration->body))->statements,env); 
 }
 
 } // namespace binder

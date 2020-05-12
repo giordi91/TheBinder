@@ -45,6 +45,7 @@ private:
   autogen::Stmt *whileStatement();
   autogen::Stmt *blockStatement();
   autogen::Stmt *expressionStatement();
+  autogen::Stmt *function(const char* type);
   autogen::Stmt *varDeclaration();
 
   void syncronize();

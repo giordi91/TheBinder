@@ -1,7 +1,7 @@
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 
 // this should be run from the build/mono folder
 const char *outputFile = "../../core/includes/binder/autogen/astgen.h";
@@ -28,11 +28,13 @@ const ASTNodeDefinition exprDefinitions[] = {
     {"Variable", "const char* name,Expr* _padding1, TOKEN_TYPE _padding2"},
 };
 
-//TODO find a proper allocation scheme for this, should I force size or a max sixe for 
-//all of them?
+// TODO find a proper allocation scheme for this, should I force size or a max
+// sixe for all of them?
 const ASTNodeDefinition statementsDefinitions[] = {
     {"Block", "memory::ResizableVector<Stmt*> statements"},
     {"Expression", "Expr* expression"},
+    {"Function", "Token token, memory::ResizableVector<Token> "
+                 "params,Stmt* body"},
     {"If", "Expr* condition, Stmt* thenBranch, Stmt* elseBranch"},
     {"Print", "Expr* expression"},
     {"Var", "Token token, Expr* initializer"},
@@ -190,39 +192,35 @@ void insertStaticClassSizeCheck(FILE *fp, const char *className,
   fprintf(fp, "}};\n");
 }
 
-void generateExprTypeEnum(FILE* fp, const ASTNodeDefinition *exprDefinitions, int exprCount,
-                          const ASTNodeDefinition *stmtDefinitions, int stmtCount) {
+void generateExprTypeEnum(FILE *fp, const ASTNodeDefinition *exprDefinitions,
+                          int exprCount,
+                          const ASTNodeDefinition *stmtDefinitions,
+                          int stmtCount) {
   fprintf(fp, "enum class AST_TYPE {\n");
-  for(int i= 0; i < exprCount; ++i)
-  {
-      const ASTNodeDefinition& definition = exprDefinitions[i];
-      int len = strlen(definition.className);
-      char up = 0;
+  for (int i = 0; i < exprCount; ++i) {
+    const ASTNodeDefinition &definition = exprDefinitions[i];
+    int len = strlen(definition.className);
+    char up = 0;
 
-          if(i != 0)
-          {
-              fprintf(fp, ",\n");
-          }
-      for(int c =0; c< len;++c)
-      {
-          up =toupper(definition.className[c]);
-          fputc( up,fp);
-      }
+    if (i != 0) {
+      fprintf(fp, ",\n");
+    }
+    for (int c = 0; c < len; ++c) {
+      up = toupper(definition.className[c]);
+      fputc(up, fp);
+    }
   }
 
+  for (int i = 0; i < stmtCount; ++i) {
+    const ASTNodeDefinition &definition = stmtDefinitions[i];
+    int len = strlen(definition.className);
+    char up = 0;
 
-  for(int i= 0; i < stmtCount; ++i)
-  {
-      const ASTNodeDefinition& definition = stmtDefinitions[i];
-      int len = strlen(definition.className);
-      char up = 0;
-
-      fprintf(fp, ",\n");
-      for(int c =0; c< len;++c)
-      {
-          up =toupper(definition.className[c]);
-          fputc( up,fp);
-      }
+    fprintf(fp, ",\n");
+    for (int c = 0; c < len; ++c) {
+      up = toupper(definition.className[c]);
+      fputc(up, fp);
+    }
   }
 
   fprintf(fp, "};\n\n");
