@@ -11,7 +11,6 @@ namespace vm {
 
 void disassambleChunk(const Chunk *chunk, const char *name,
                       log::Log *logger);
-int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger,
-                           char *buffer);
+int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger);
 } // namespace vm
 } // namespace binder
