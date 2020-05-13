@@ -13,5 +13,7 @@
 #include "parserTests.cpp"
 #include "interpreterTests.cpp"
 #include "loggerTests.cpp"
+#include "disassambleTests.cpp"
+
 
 

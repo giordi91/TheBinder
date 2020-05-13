@@ -757,6 +757,8 @@ void* BinderFunction::call(ASTInterpreterVisitor *interpreter,
     }
 
     interpreter->executeBlock(((autogen::Block*)(m_declaration->body))->statements,env); 
+    //TODO temporary to suppress warning, this will need to be reworked
+    return nullptr;
 }
 
 } // namespace binder

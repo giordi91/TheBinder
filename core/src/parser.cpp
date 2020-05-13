@@ -378,7 +378,9 @@ autogen::Stmt *Parser::function(const char *type) {
   // first we need the identifier name, meaning the function name
   const char *errorStr =
       m_context->getStringPool().concatenate("Expected", " name", type);
-  Token name = consume(TOKEN_TYPE::IDENTIFIER, errorStr);
+  //TODO suppressing variable name, will need it when i fix the AST
+  //Token name = consume(TOKEN_TYPE::IDENTIFIER, errorStr);
+  consume(TOKEN_TYPE::IDENTIFIER, errorStr);
   m_context->getStringPool().free(errorStr);
 
   // next we parse the param list

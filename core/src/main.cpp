@@ -5,3 +5,4 @@
 #include "context.cpp"
 #include "interpreter.cpp"
 #include "parser.cpp"
+#include "vm/debug.cpp"
