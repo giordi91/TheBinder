@@ -5,6 +5,13 @@
 
 namespace binder::vm {
 
+#define BINARY_OP(op)                                                          \
+  do {                                                                         \
+    double b = stackPop();                                                     \
+    double a = stackPop();                                                     \
+    stackPush(a op b);                                                         \
+  } while (false)
+
 void VirtualMachine::init() { resetStack(); }
 
 void VirtualMachine::stackPush(Value value) {
@@ -54,6 +61,22 @@ INTERPRET_RESULT VirtualMachine::run() {
       Value constant = readConstant();
       // temprarely we print the constant
       stackPush(constant);
+      break;
+    }
+    case OP_CODE::OP_ADD: {
+      BINARY_OP(+);
+      break;
+    }
+    case OP_CODE::OP_SUBTRACT: {
+      BINARY_OP(-);
+      break;
+    }
+    case OP_CODE::OP_MULTIPLY: {
+      BINARY_OP(*);
+      break;
+    }
+    case OP_CODE::OP_DIVIDE: {
+      BINARY_OP(/);
       break;
     }
     case OP_CODE::OP_NEGATE: {
