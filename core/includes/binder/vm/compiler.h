@@ -1,6 +1,9 @@
 #pragma once
 #include "stdio.h"
 #include "string.h"
+#include "assert.h"
+#include "common.h"
+#include "binder/vm/chunk.h"
 
 namespace binder {
 namespace log {
@@ -9,7 +12,7 @@ class Log;
 
 namespace vm {
 
-class Chunk;
+struct Chunk;
 
 enum TokenType {
   // Single-character tokens.
@@ -130,9 +133,17 @@ private:
 
 class Parser {
 
-public :
-  Parser(Scanner *scanner, log::Log* logger):m_scanner(scanner),m_logger(logger){}
+public:
+  Parser() = default;
 
+  void init(Scanner *scanner, log::Log *logger) {
+    m_scanner = scanner;
+    m_logger = logger;
+    hadError = false;
+    panicMode = false;
+    current = {};
+    previous = {};
+  }
   void advance() {
     previous = current;
 
@@ -144,20 +155,65 @@ public :
     }
   }
 
-private:
+  bool getHadError() const { return hadError; }
   void errorAtCurrent(const char *message) { errorAt(&current, message); }
+
+public:
+  Token current;
+  Token previous;
+
+private:
   void error(const char *message) { errorAt(&previous, message); }
 
   void errorAt(Token *token, const char *message);
+
 private:
   Scanner *m_scanner = nullptr;
-  log::Log* m_logger = nullptr;
-  Token current;
-  Token previous;
+  log::Log *m_logger = nullptr;
   bool hadError = false;
+  bool panicMode = false;
 };
 
-bool compile(const char *source, Chunk *chunk, log::Log *logger);
+class Compiler {
+public:
+  bool compile(const char *source, log::Log *logger);
+
+private:
+  void consume(TokenType type, const char *message) {
+    if (parser.current.type == type) {
+      parser.advance();
+    }
+    return;
+
+    parser.errorAtCurrent(message);
+  }
+
+  void emitByte(uint8_t byte) const
+  {
+      assert(m_chunk!=nullptr);
+      m_chunk->write(byte,parser.previous.line);
+  }
+  void emitByte(OP_CODE byte) const
+  {
+      assert(m_chunk!=nullptr);
+      m_chunk->write(byte,parser.previous.line);
+  }
+  void emitByte(OP_CODE byte, uint8_t byte2) const
+  {
+      emitByte(byte);
+      emitByte(byte2);
+  }
+
+  void endCompilation()
+  {
+      emitByte(OP_CODE::OP_RETURN);
+
+  }
+private:
+  Scanner scanner;
+  Parser parser;
+  Chunk* m_chunk =nullptr;
+};
 
 } // namespace vm
 } // namespace binder

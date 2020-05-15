@@ -1,6 +1,5 @@
 #include "binder/log/log.h"
 #include "binder/vm/compiler.h"
-#include "stdio.h"
 
 namespace binder::vm {
 
@@ -201,18 +200,30 @@ Token Scanner::scanToken() {
   return errorToken("Unexpected character.");
 }
 
-bool compile(const char *source, Chunk *chunk, log::Log *logger) {
-  Scanner scanner;
+bool Compiler::compile(const char *source, log::Log *logger) {
+
+  m_chunk = new Chunk;
+
+
   scanner.init(source);
   // setupping the pump
-  Parser parser(&scanner, logger);
+  parser.init(&scanner, logger);
   parser.advance();
   // expression();
-  // consume(TOKEN_EOF, "expected end of expression");
-  return true;
+  consume(TOKEN_EOF, "expected end of expression");
+  endCompilation();
+  return !parser.getHadError();
 }
 
 void Parser::errorAt(Token *token, const char *message) {
+  // if we are already in panic mode we don't want to keep returning
+  // errors until we go back to a state where we can start chewing again
+  if (panicMode) {
+    return;
+  }
+
+  panicMode = true;
+
   LOG(m_logger, "[line %d] Error", token->line);
 
   if (token->type == TOKEN_EOF) {

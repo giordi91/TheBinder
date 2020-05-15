@@ -28,7 +28,9 @@ Value VirtualMachine::stackPop() {
 INTERPRET_RESULT VirtualMachine::intepret(const char *source) {
   Chunk chunk;
 
-  if (!compile(source, &chunk, m_logger)) {
+  Compiler compiler;
+
+  if (!compiler.compile(source, m_logger)) {
     return INTERPRET_RESULT::INTERPRET_COMPILE_ERROR;
   }
 
