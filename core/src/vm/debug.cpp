@@ -69,4 +69,6 @@ int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger) {
   }
 }
 
+#undef LOG
+
 } // namespace binder::vm

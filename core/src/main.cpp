@@ -8,4 +8,5 @@
 #include "vm/value.cpp"
 #include "vm/debug.cpp"
 #include "vm/vm.cpp"
+#include "vm/compiler.cpp"
 

@@ -22,7 +22,7 @@ public:
 
   void init();
   void shutdown(){};
-  INTERPRET_RESULT intepret(const Chunk *chunk);
+  INTERPRET_RESULT intepret(const char* source);
 
 private:
   INTERPRET_RESULT run();

@@ -24,11 +24,11 @@ Value VirtualMachine::stackPop() {
   return *m_stackTop;
 }
 
-INTERPRET_RESULT VirtualMachine::intepret(const Chunk *chunk) {
-  m_chunk = chunk;
-  m_ip = chunk->m_code.data();
+INTERPRET_RESULT VirtualMachine::intepret(const char *source) {
+  //compile(source);
   return INTERPRET_RESULT::INTERPRET_OK;
 }
+
 #define DEBUG_TRACE_EXECUTION
 
 INTERPRET_RESULT VirtualMachine::run() {
@@ -59,7 +59,6 @@ INTERPRET_RESULT VirtualMachine::run() {
     }
     case OP_CODE::OP_CONSTANT: {
       Value constant = readConstant();
-      // temprarely we print the constant
       stackPush(constant);
       break;
     }

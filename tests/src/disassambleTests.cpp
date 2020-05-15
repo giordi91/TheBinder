@@ -64,7 +64,6 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "binary disassamble",
 
   binder::vm::disassambleChunk(&chunk, "test", &m_log);
   const char *buff = m_log.getBuffer();
-  printf("%s", buff);
   REQUIRE(strcmp("== test ==\n0000  123 OP_CONSTANT         0 '1.2\n0002    | "
                  "OP_CONSTANT         1 '3.4\n0004    | OP_ADD\n0005    | "
                  "OP_CONSTANT         2 '5.6\n0007    | OP_DIVIDE\n0008    | "
