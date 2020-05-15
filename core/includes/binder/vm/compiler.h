@@ -1,9 +1,10 @@
 #pragma once
+#include "assert.h"
+#include "binder/vm/chunk.h"
+#include "common.h"
 #include "stdio.h"
 #include "string.h"
-#include "assert.h"
-#include "common.h"
-#include "binder/vm/chunk.h"
+#include "debug.h"
 
 namespace binder {
 namespace log {
@@ -157,14 +158,13 @@ public:
 
   bool getHadError() const { return hadError; }
   void errorAtCurrent(const char *message) { errorAt(&current, message); }
+  void error(const char *message) { errorAt(&previous, message); }
 
 public:
   Token current;
   Token previous;
 
 private:
-  void error(const char *message) { errorAt(&previous, message); }
-
   void errorAt(Token *token, const char *message);
 
 private:
@@ -172,6 +172,22 @@ private:
   log::Log *m_logger = nullptr;
   bool hadError = false;
   bool panicMode = false;
+};
+
+enum FunctionId { NULLID, GROUPING, UNARY, BINARY, NUMBER };
+
+enum Precedence {
+  PREC_NONE,
+  PREC_ASSIGNMENT, // =
+  PREC_OR,         // or
+  PREC_AND,        // and
+  PREC_EQUALITY,   // == !=
+  PREC_COMPARISON, // < > <= >=
+  PREC_TERM,       // + -
+  PREC_FACTOR,     // * /
+  PREC_UNARY,      // ! -
+  PREC_CALL,       // . ()
+  PREC_PRIMARY
 };
 
 class Compiler {
@@ -188,31 +204,47 @@ private:
     parser.errorAtCurrent(message);
   }
 
-  void emitByte(uint8_t byte) const
-  {
-      assert(m_chunk!=nullptr);
-      m_chunk->write(byte,parser.previous.line);
+  void emitByte(uint8_t byte) const {
+    assert(m_chunk != nullptr);
+    m_chunk->write(byte, parser.previous.line);
   }
-  void emitByte(OP_CODE byte) const
-  {
-      assert(m_chunk!=nullptr);
-      m_chunk->write(byte,parser.previous.line);
+  void emitByte(OP_CODE byte) const {
+    assert(m_chunk != nullptr);
+    m_chunk->write(byte, parser.previous.line);
   }
-  void emitByte(OP_CODE byte, uint8_t byte2) const
-  {
-      emitByte(byte);
-      emitByte(byte2);
+  void emitBytes(OP_CODE byte, uint8_t byte2) const {
+    emitByte(byte);
+    emitByte(byte2);
   }
 
-  void endCompilation()
-  {
-      emitByte(OP_CODE::OP_RETURN);
+#define DEBUG_PRINT_CODE
 
+  void endCompilation(log::Log* log) {
+    emitByte(OP_CODE::OP_RETURN);
+
+#ifdef DEBUG_PRINT_CODE
+    if (!parser.getHadError()) {
+      disassambleChunk(m_chunk, "code",log);
+    }
+#endif
   }
+  // emit instructions
+  void parsePrecedence(Precedence precedence);
+
+  void number();
+  void emitConstant(Value value);
+  uint8_t makeConstant(Value value);
+  void grouping();
+  void unary();
+  void binary();
+  void expression();
+
+  void dispatchFunctionId(FunctionId id);
+
 private:
   Scanner scanner;
   Parser parser;
-  Chunk* m_chunk =nullptr;
+  Chunk *m_chunk = nullptr;
 };
 
 } // namespace vm

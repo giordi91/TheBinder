@@ -13,6 +13,8 @@ namespace binder::vm {
     stackPush(a op b);                                                         \
   } while (false)
 
+
+
 void VirtualMachine::init() { resetStack(); }
 
 void VirtualMachine::stackPush(Value value) {

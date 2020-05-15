@@ -1,5 +1,6 @@
 #include "binder/log/bufferLog.h"
 #include "binder/vm/debug.h"
+#include "binder/vm/compiler.h"
 
 #include "catch.h"
 
@@ -80,4 +81,14 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "binary disassamble",
     0008    | OP_NEGATE
     0009    | OP_RETURN
 */
+}
+
+TEST_CASE_METHOD(SetupDisassamblerTestFixture, "temp",
+                 "[disassambler]") {
+
+    const char* source = "1 + 2 * 4";
+    binder::vm::Compiler comp;
+    comp.compile(source,&m_log);
+    const char *buff = m_log.getBuffer();
+    printf("%s" ,buff);
 }
