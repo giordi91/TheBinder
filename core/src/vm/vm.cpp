@@ -2,6 +2,7 @@
 #include "binder/vm/debug.h"
 #include "binder/vm/value.h"
 #include "binder/vm/vm.h"
+#include "binder/vm/compiler.h"
 
 namespace binder::vm {
 
@@ -25,9 +26,16 @@ Value VirtualMachine::stackPop() {
 }
 
 INTERPRET_RESULT VirtualMachine::intepret(const char *source) {
-  //compile(source);
+  Chunk chunk;
+
+  if (!compile(source, &chunk, m_logger)) {
+    return INTERPRET_RESULT::INTERPRET_COMPILE_ERROR;
+  }
+
   return INTERPRET_RESULT::INTERPRET_OK;
 }
+
+
 
 #define DEBUG_TRACE_EXECUTION
 

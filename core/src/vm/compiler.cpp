@@ -97,8 +97,8 @@ TokenType Scanner::identifierType() {
   case 'e':
     return checkKeyword(1, 3, "lse", TokenType::TOKEN_ELSE);
 
-  //f is a bit more complicated because the grab branches after the f
-  //we can have multiple reserved keywords starting with f
+  // f is a bit more complicated because the grab branches after the f
+  // we can have multiple reserved keywords starting with f
   case 'f':
     if (current - start > 1) {
       switch (start[1]) {
@@ -201,23 +201,30 @@ Token Scanner::scanToken() {
   return errorToken("Unexpected character.");
 }
 
-void compile(const char *source, log::Log *logger) {
+bool compile(const char *source, Chunk *chunk, log::Log *logger) {
   Scanner scanner;
   scanner.init(source);
+  // setupping the pump
+  Parser parser(&scanner, logger);
+  parser.advance();
+  // expression();
+  // consume(TOKEN_EOF, "expected end of expression");
+  return true;
+}
 
-  int line = -1;
-  for (;;) {
-    Token token = scanner.scanToken();
-    if (token.line != line) {
-      line = token.line;
-    } else {
-      logger->print("    | ");
-    }
-    LOG(logger, "%2d '%.*s'\n", token.type, token.length, token.start);
+void Parser::errorAt(Token *token, const char *message) {
+  LOG(m_logger, "[line %d] Error", token->line);
 
-    if (token.type == TokenType::TOKEN_EOF)
-      break;
+  if (token->type == TOKEN_EOF) {
+    LOG(m_logger, " at end");
+  } else if (token->type == TOKEN_ERROR) {
+    // Nothing.
+  } else {
+    LOG(m_logger, " at '%.*s'", token->length, token->start);
   }
+
+  LOG(m_logger, ": %s\n", message);
+  hadError = true;
 }
 
 #undef LOG

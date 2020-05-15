@@ -1,4 +1,5 @@
 #pragma once
+#include "stdio.h"
 #include "string.h"
 
 namespace binder {
@@ -7,6 +8,8 @@ class Log;
 }
 
 namespace vm {
+
+class Chunk;
 
 enum TokenType {
   // Single-character tokens.
@@ -118,14 +121,43 @@ private:
     return ((c >= 'a') & (c <= 'z')) | ((c >= 'A') & (c <= 'Z')) | (c == '_');
   }
   TokenType identifierType();
-  TokenType checkKeyword(int start , int length, const char* rest , TokenType type);
+  TokenType checkKeyword(int start, int length, const char *rest,
+                         TokenType type);
   Token string();
   Token number();
   Token identifier();
-
 };
 
-void compile(const char *source, log::Log *logger);
+class Parser {
+
+public :
+  Parser(Scanner *scanner, log::Log* logger):m_scanner(scanner),m_logger(logger){}
+
+  void advance() {
+    previous = current;
+
+    for (;;) {
+      current = m_scanner->scanToken();
+      if (current.type != TokenType::TOKEN_ERROR)
+        break;
+      errorAtCurrent(current.start);
+    }
+  }
+
+private:
+  void errorAtCurrent(const char *message) { errorAt(&current, message); }
+  void error(const char *message) { errorAt(&previous, message); }
+
+  void errorAt(Token *token, const char *message);
+private:
+  Scanner *m_scanner = nullptr;
+  log::Log* m_logger = nullptr;
+  Token current;
+  Token previous;
+  bool hadError = false;
+};
+
+bool compile(const char *source, Chunk *chunk, log::Log *logger);
 
 } // namespace vm
 } // namespace binder

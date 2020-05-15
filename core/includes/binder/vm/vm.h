@@ -36,6 +36,7 @@ private:
   inline uint8_t readByte() { return *m_ip++; }
   inline Value readConstant() { return m_chunk->m_constants[readByte()]; };
 
+
 private:
   static constexpr uint32_t STACK_MAX = 256;
   Value m_stack[STACK_MAX];
