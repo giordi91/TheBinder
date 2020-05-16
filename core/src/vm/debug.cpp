@@ -51,6 +51,18 @@ int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger) {
   switch (instruction) {
   case OP_CODE::OP_CONSTANT:
     return constantInstruction("OP_CONSTANT", chunk, offset, logger);
+  case OP_CODE::OP_NIL:
+    return simpleInstruction("OP_NIL", offset, logger);
+  case OP_CODE::OP_FALSE:
+    return simpleInstruction("OP_FALSE", offset, logger);
+  case OP_CODE::OP_EQUAL:
+    return simpleInstruction("OP_EQUAL", offset, logger);
+  case OP_CODE::OP_GREATER:
+    return simpleInstruction("OP_GREATER", offset, logger);
+  case OP_CODE::OP_LESS:
+    return simpleInstruction("OP_LESS", offset, logger);
+  case OP_CODE::OP_TRUE:
+    return simpleInstruction("OP_TRUE", offset, logger);
   case OP_CODE::OP_ADD:
     return simpleInstruction("OP_ADD", offset, logger);
   case OP_CODE::OP_SUBTRACT:

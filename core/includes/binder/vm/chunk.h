@@ -7,10 +7,21 @@ namespace binder::vm {
 
 enum class OP_CODE {
   OP_CONSTANT,
+  OP_NIL,
+  //since bool need only two values it can get
+  //so is a bit of a waste story it in the constant table
+  //so we directly encode it as instruction, so if we want to push
+  //the literal instead we use a dedicated instruction
+  OP_TRUE,
+  OP_FALSE,
+  OP_EQUAL,
+  OP_GREATER,
+  OP_LESS,
   OP_ADD,
   OP_SUBTRACT,
   OP_MULTIPLY,
   OP_DIVIDE,
+  OP_NOT,
   OP_NEGATE,
   OP_RETURN,
 };

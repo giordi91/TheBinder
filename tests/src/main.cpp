@@ -16,6 +16,7 @@
 #include "vm/disassambleTests.cpp"
 #include "vm/vmCompileTests.cpp"
 #include "vm/vmScanTests.cpp"
+#include "vm/vmExecutionTests.cpp"
 
 
 

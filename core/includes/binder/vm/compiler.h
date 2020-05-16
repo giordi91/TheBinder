@@ -127,7 +127,7 @@ private:
   bool panicMode = false;
 };
 
-enum FunctionId { NULLID, GROUPING, UNARY, BINARY, NUMBER };
+enum FunctionId { NULLID, GROUPING, UNARY, BINARY, NUMBER, LITERAL };
 
 enum Precedence {
   PREC_NONE,
@@ -166,21 +166,17 @@ private:
     assert(m_chunk != nullptr);
     m_chunk->write(byte, parser.previous.line);
   }
-  void emitBytes(OP_CODE byte, uint8_t byte2) const {
+  //we are going to rely on the auto deduction of the template param 
+  //for using this, this should be used mostly for constants and OP_CODES
+  template<typename T, typename P>
+  void emitBytes(T byte, P byte2) const {
     emitByte(byte);
     emitByte(byte2);
   }
 
-#define DEBUG_PRINT_CODE
 
   void endCompilation(log::Log* log) {
     emitByte(OP_CODE::OP_RETURN);
-
-#ifdef DEBUG_PRINT_CODE
-    if (!parser.getHadError()) {
-      disassambleChunk(m_chunk, "code",log);
-    }
-#endif
   }
   // emit instructions
   void parsePrecedence(Precedence precedence);
@@ -192,6 +188,7 @@ private:
   void unary();
   void binary();
   void expression();
+  void literal();
 
   void dispatchFunctionId(FunctionId id);
 

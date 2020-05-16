@@ -87,7 +87,12 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "temp", "[disassambler]") {
 
   const char *source = "1 + 2 * 4";
   binder::vm::Compiler comp;
-  comp.compile(source, &m_log);
+  bool result= comp.compile(source, &m_log);
+  REQUIRE(result == true);
+  const binder::vm::Chunk* chunk= comp.getCompiledChunk();
+
+  binder::vm::disassambleChunk(chunk,"code",&m_log);
+
   const char *buff = m_log.getBuffer();
   REQUIRE(strcmp("== code ==\n0000    0 OP_CONSTANT         0 '1\n"
                  "0002    | OP_CONSTANT         1 '2\n"
