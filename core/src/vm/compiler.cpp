@@ -370,7 +370,13 @@ bool Compiler::compile(const char *source, log::Log *logger) {
   expression();
   consume(TOKEN_EOF, "expected end of expression");
   endCompilation(logger);
-  return !parser.getHadError();
+  bool gotError = parser.getHadError();
+  if (gotError) {
+    delete m_chunk;
+    m_chunk = nullptr;
+  }
+
+  return !gotError;
 }
 
 void Parser::errorAt(Token *token, const char *message) {

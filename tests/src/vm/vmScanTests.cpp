@@ -88,6 +88,12 @@ TEST_CASE_METHOD(SetupVmScanTestFixture, "vm scan comment", "[vm-scan]") {
   compareNextEOF();
 }
 
+TEST_CASE_METHOD(SetupVmScanTestFixture, "vm scan empty", "[vm-scan]") {
+
+  const char *source = "";
+  initScanner(source);
+  compareNextEOF();
+}
 
 TEST_CASE_METHOD(SetupVmScanTestFixture, "vm basic number scan", "[vm-scan]") {
 
