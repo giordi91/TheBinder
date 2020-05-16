@@ -50,6 +50,7 @@ enum class TOKEN_TYPE {
   VAR,
   WHILE,
 
+  TOKEN_ERROR,
   END_OF_FILE,
   COUNT
 };
@@ -59,7 +60,7 @@ static const char* TOKEN_TO_LEXEME[] = {
     ";",      "/",     "*",    "!",    "!=",     "=",      "==",  ">",
     ">=",     "<",     "<=",   "id",   "string", "number", "and", "class",
     "else",   "false", "fun",  "for",  "if",     "nil",    "or",  "print",
-    "return", "super", "this", "true", "var",    "while",  "\0"};
+    "return", "super", "this", "true", "var",    "while",  "ERROR","\0"};
 
 inline const char* getLexemeFromToken(const TOKEN_TYPE token) {
   assert(token < TOKEN_TYPE::COUNT);

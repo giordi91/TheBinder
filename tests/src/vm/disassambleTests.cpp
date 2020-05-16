@@ -29,7 +29,7 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "constant disassamble",
                  "[disassambler]") {
 
   binder::vm::Chunk chunk;
-  int constant = chunk.addConstant(1.2);
+  int constant = chunk.addConstant(binder::vm::makeNumber(1.2));
   chunk.write(binder::vm::OP_CODE::OP_CONSTANT, 0);
   chunk.write(static_cast<uint8_t>(constant), 0);
   REQUIRE(chunk.m_code.size() == 2);
@@ -45,17 +45,17 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "binary disassamble",
 
   // writing -((1.2 + 3.4) / 5.6)
   binder::vm::Chunk chunk;
-  int constant = chunk.addConstant(1.2);
+  int constant = chunk.addConstant(binder::vm::makeNumber(1.2));
   chunk.write(binder::vm::OP_CODE::OP_CONSTANT, 123);
   chunk.write(static_cast<uint8_t>(constant), 123);
 
-  constant = chunk.addConstant(3.4);
+  constant = chunk.addConstant(binder::vm::makeNumber(3.4));
   chunk.write(binder::vm::OP_CODE::OP_CONSTANT, 123);
   chunk.write(static_cast<uint8_t>(constant), 123);
 
   chunk.write(binder::vm::OP_CODE::OP_ADD, 123);
 
-  constant = chunk.addConstant(5.6);
+  constant = chunk.addConstant(binder::vm::makeNumber(5.6));
   chunk.write(binder::vm::OP_CODE::OP_CONSTANT, 123);
   chunk.write(static_cast<uint8_t>(constant), 123);
 

@@ -47,5 +47,6 @@ TEST_CASE("token to lexeme", "[token]")
 	REQUIRE(compareTokenLexeme(binder::TOKEN_TYPE::BOOL_TRUE,"true"));
 	REQUIRE(compareTokenLexeme(binder::TOKEN_TYPE::VAR,"var"));
 	REQUIRE(compareTokenLexeme(binder::TOKEN_TYPE::WHILE,"while"));
+	REQUIRE(compareTokenLexeme(binder::TOKEN_TYPE::TOKEN_ERROR,"ERROR"));
 	REQUIRE(compareTokenLexeme(binder::TOKEN_TYPE::END_OF_FILE,""));
 }

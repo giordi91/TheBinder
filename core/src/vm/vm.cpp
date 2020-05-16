@@ -1,19 +1,28 @@
 #include "binder/log/log.h"
+#include "binder/vm/compiler.h"
 #include "binder/vm/debug.h"
 #include "binder/vm/value.h"
 #include "binder/vm/vm.h"
-#include "binder/vm/compiler.h"
 
 namespace binder::vm {
+static char vmBuffer[1024];
 
-#define BINARY_OP(op)                                                          \
+#define BINARY_OP(valueType, op)                                               \
   do {                                                                         \
-    double b = stackPop();                                                     \
-    double a = stackPop();                                                     \
-    stackPush(a op b);                                                         \
+    if ((!isValueNumber(peek(0))) | (!isValueNumber(peek(1)))) {               \
+      runtimeError("Operands must be numbers.");                               \
+      return INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR;                        \
+    }                                                                          \
+    double b = valueAsNumber(stackPop());                                      \
+    double a = valueAsNumber(stackPop());                                      \
+    stackPush(valueType(a op b));                                              \
   } while (false)
 
-
+#define LOG(logger, toPrint, ...)                                              \
+  do {                                                                         \
+    sprintf(vmBuffer, (toPrint), ##__VA_ARGS__);                               \
+    m_logger->print(vmBuffer);                                                 \
+  } while (false);
 
 void VirtualMachine::init() { resetStack(); }
 
@@ -27,6 +36,13 @@ Value VirtualMachine::stackPop() {
   return *m_stackTop;
 }
 
+void VirtualMachine::runtimeError(const char *message) {
+  auto instruction = static_cast<uint32_t>(m_ip - m_chunk->m_code.data() - 1);
+  int line = m_chunk->m_lines[instruction];
+  LOG("%s\n[line %d] in script\n", message, line);
+  resetStack();
+}
+
 INTERPRET_RESULT VirtualMachine::intepret(const char *source) {
   Chunk chunk;
 
@@ -38,8 +54,6 @@ INTERPRET_RESULT VirtualMachine::intepret(const char *source) {
 
   return INTERPRET_RESULT::INTERPRET_OK;
 }
-
-
 
 #define DEBUG_TRACE_EXECUTION
 
@@ -75,27 +89,34 @@ INTERPRET_RESULT VirtualMachine::run() {
       break;
     }
     case OP_CODE::OP_ADD: {
-      BINARY_OP(+);
+      BINARY_OP(makeNumber, +);
       break;
     }
     case OP_CODE::OP_SUBTRACT: {
-      BINARY_OP(-);
+      BINARY_OP(makeNumber, -);
       break;
     }
     case OP_CODE::OP_MULTIPLY: {
-      BINARY_OP(*);
+      BINARY_OP(makeNumber, *);
       break;
     }
     case OP_CODE::OP_DIVIDE: {
-      BINARY_OP(/);
+      BINARY_OP(makeNumber, /);
       break;
     }
     case OP_CODE::OP_NEGATE: {
-      stackPush(-stackPop());
+      if (!isValueNumber(peek(0))) {
+        runtimeError("Operand must be a number.");
+        return INTERPRET_RUNTIME_ERROR;
+      }
+      double negated = -valueAsNumber(stackPop());
+      stackPush(makeNumber(negated));
       break;
     }
     }
   }
 }
+
+#undef LOG
 
 } // namespace binder::vm

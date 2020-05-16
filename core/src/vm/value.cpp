@@ -7,7 +7,7 @@ namespace binder::vm
 void printValue(Value value, log::Log *logger)
 {
     char valueBuffer[64];
-    sprintf(valueBuffer,"%g", value);
+    sprintf(valueBuffer,"%g", valueAsNumber(value));
     logger->print(valueBuffer);
 }
 

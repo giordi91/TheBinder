@@ -28,7 +28,7 @@ public:
   }
   void compareConstant(int offset, int idx, double value) {
     REQUIRE(chunk->m_code[offset] == idx);
-    REQUIRE(chunk->m_constants[idx] == Approx(value));
+    REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
   }
 
 protected:

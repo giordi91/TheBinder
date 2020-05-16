@@ -35,6 +35,10 @@ private:
   // instructions
   inline uint8_t readByte() { return *m_ip++; }
   inline Value readConstant() { return m_chunk->m_constants[readByte()]; };
+  //-1 gives us the first not freevalue and then we subtract the distance
+  //since we want to go back in the stack
+  inline Value peek(int distance){return m_stackTop[-1 - distance];}
+  void runtimeError(const char* message); 
 
 
 private:

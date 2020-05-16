@@ -4,12 +4,12 @@
 
 namespace binder::vm {
 
-static char vmBuffer[1024];
+static char compBuffer[1024];
 
 #define LOG(logger, toPrint, ...)                                              \
   do {                                                                         \
-    sprintf(vmBuffer, (toPrint), ##__VA_ARGS__);                               \
-    logger->print(vmBuffer);                                                   \
+    sprintf(compBuffer, (toPrint), ##__VA_ARGS__);                               \
+    logger->print(compBuffer);                                                   \
   } while (false);
 
 struct ParseRule {
@@ -18,51 +18,58 @@ struct ParseRule {
   Precedence precedence;
 };
 
+//this is the heart of the parser, it tells us what to do when we 
+//hit a specific token what to do for infix and prefix also what the
+//precedence level is
 ParseRule rules[] = {
-    {GROUPING, NULLID, PREC_NONE}, // TOKEN_LEFT_PAREN
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_RIGHT_PAREN
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_LEFT_BRACE
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_RIGHT_BRACE
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_COMMA
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_DOT
-    {UNARY, BINARY, PREC_TERM},    // TOKEN_MINUS
-    {NULLID, BINARY, PREC_TERM},   // TOKEN_PLUS
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_SEMICOLON
-    {NULLID, BINARY, PREC_FACTOR}, // TOKEN_SLASH
-    {NULLID, BINARY, PREC_FACTOR}, // TOKEN_STAR
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_BANG
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_BANG_EQUAL
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_EQUAL
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_EQUAL_EQUAL
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_GREATER
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_GREATER_EQUAL
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_LESS
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_LESS_EQUAL
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_IDENTIFIER
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_STRING
-    {NUMBER, NULLID, PREC_NONE},   // TOKEN_NUMBER
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_AND
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_CLASS
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_ELSE
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_FALSE
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_FOR
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_FUN
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_IF
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_NIL
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_OR
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_PRINT
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_RETURN
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_SUPER
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_THIS
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_TRUE
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_VAR
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_WHILE
+    {GROUPING, NULLID, PREC_NONE}, // LEFT_PAREN
+    {NULLID, NULLID, PREC_NONE},   // RIGHT_PAREN
+    {NULLID, NULLID, PREC_NONE},   // LEFT_BRACE
+    {NULLID, NULLID, PREC_NONE},   // RIGHT_BRACE
+    {NULLID, NULLID, PREC_NONE},   // COMMA
+    {NULLID, NULLID, PREC_NONE},   // DOT
+    {UNARY, BINARY, PREC_TERM},    // MINUS
+    {NULLID, BINARY, PREC_TERM},   // PLUS
+    {NULLID, NULLID, PREC_NONE},   // SEMICOLON
+    {NULLID, BINARY, PREC_FACTOR}, // SLASH
+    {NULLID, BINARY, PREC_FACTOR}, // STAR
+    {NULLID, NULLID, PREC_NONE},   // BANG
+    {NULLID, NULLID, PREC_NONE},   // BANG_EQUAL
+    {NULLID, NULLID, PREC_NONE},   // EQUAL
+    {NULLID, NULLID, PREC_NONE},   // EQUAL_EQUAL
+    {NULLID, NULLID, PREC_NONE},   // GREATER
+    {NULLID, NULLID, PREC_NONE},   // GREATER_EQUAL
+    {NULLID, NULLID, PREC_NONE},   // LESS
+    {NULLID, NULLID, PREC_NONE},   // LESS_EQUAL
+    {NULLID, NULLID, PREC_NONE},   // IDENTIFIER
+    {NULLID, NULLID, PREC_NONE},   // STRING
+    {NUMBER, NULLID, PREC_NONE},   // NUMBER
+    {NULLID, NULLID, PREC_NONE},   // AND
+    {NULLID, NULLID, PREC_NONE},   // CLASS
+    {NULLID, NULLID, PREC_NONE},   // ELSE
+    {NULLID, NULLID, PREC_NONE},   // BOOL_FALSE
+    {NULLID, NULLID, PREC_NONE},   // FOR
+    {NULLID, NULLID, PREC_NONE},   // FUN
+    {NULLID, NULLID, PREC_NONE},   // IF
+    {NULLID, NULLID, PREC_NONE},   // NIL
+    {NULLID, NULLID, PREC_NONE},   // OR
+    {NULLID, NULLID, PREC_NONE},   // PRINT
+    {NULLID, NULLID, PREC_NONE},   // RETURN
+    {NULLID, NULLID, PREC_NONE},   // SUPER
+    {NULLID, NULLID, PREC_NONE},   // THIS
+    {NULLID, NULLID, PREC_NONE},   // TRUE
+    {NULLID, NULLID, PREC_NONE},   // VAR
+    {NULLID, NULLID, PREC_NONE},   // WHILE
     {NULLID, NULLID, PREC_NONE},   // TOKEN_ERROR
-    {NULLID, NULLID, PREC_NONE},   // TOKEN_EOF
+    {NULLID, NULLID, PREC_NONE},   // END_OF_FILE
 };
 
-ParseRule *getRule(TokenType type) { return &rules[type]; }
+ParseRule *getRule(TOKEN_TYPE type) { return &rules[static_cast<int>(type)]; }
 
+//this function uses an id to figure out which function to dispatch,
+//we could have done it with function pointers but would have required a runtime
+//table to do the binding with the instances, this is simpler and should be the
+//same level of indirection
 void Compiler::dispatchFunctionId(FunctionId id) {
   switch (id) {
   case GROUPING:
@@ -82,7 +89,11 @@ void Compiler::dispatchFunctionId(FunctionId id) {
   }
 }
 
+//this function is going to tell us how to proceed in the parsing
+//if we should give precedence or not
 void Compiler::parsePrecedence(Precedence precedence) {
+  //here we parse the next token and we look up the correspoinding 
+  //rule, the one we are interested in is in the previous token
   parser.advance();
   FunctionId prefixRule = getRule(parser.previous.type)->prefix;
   if (prefixRule == FunctionId::NULLID) {
@@ -90,10 +101,14 @@ void Compiler::parsePrecedence(Precedence precedence) {
     return;
   }
 
+  //here we dispatch the prefix rule
   dispatchFunctionId(prefixRule);
 
+  //here we go in a loop where we keep parsing if we have a higher precedence
   while (precedence <= getRule(parser.current.type)->precedence) {
+    //get next token
     parser.advance();
+    //if there is a higher precedence we process as infix
     FunctionId infixRule = getRule(parser.previous.type)->infix;
     dispatchFunctionId(infixRule);
   }
@@ -101,7 +116,7 @@ void Compiler::parsePrecedence(Precedence precedence) {
 
 void Compiler::number() {
   double value = strtod(parser.previous.start, NULL);
-  emitConstant(value);
+  emitConstant(makeNumber(value));
 }
 
 void Compiler::emitConstant(Value value) {
@@ -119,17 +134,17 @@ uint8_t Compiler::makeConstant(Value value) {
 
 void Compiler::grouping() {
   expression();
-  consume(TokenType::TOKEN_RIGHT_PAREN, "Expected ')' after expression.");
+  consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after expression.");
 }
 
 void Compiler::unary() {
-  TokenType operatorType = parser.previous.type;
+  TOKEN_TYPE operatorType = parser.previous.type;
 
   // compiler the operand
   parsePrecedence(PREC_UNARY);
 
   switch (operatorType) {
-  case TokenType::TOKEN_MINUS: {
+  case TOKEN_TYPE::MINUS: {
     emitByte(OP_CODE::OP_NEGATE);
     break;
   }
@@ -139,7 +154,7 @@ void Compiler::unary() {
 }
 
 void Compiler::binary() {
-  TokenType operatorType = parser.previous.type;
+  TOKEN_TYPE operatorType = parser.previous.type;
 
   // compile right operand
   ParseRule *rule = getRule(operatorType);
@@ -147,16 +162,16 @@ void Compiler::binary() {
 
   // emit the operator insturction
   switch (operatorType) {
-  case TokenType::TOKEN_PLUS:
+  case TOKEN_TYPE::PLUS:
     emitByte(OP_CODE::OP_ADD);
     break;
-  case TokenType::TOKEN_MINUS:
+  case TOKEN_TYPE::MINUS:
     emitByte(OP_CODE::OP_SUBTRACT);
     break;
-  case TokenType::TOKEN_STAR:
+  case TOKEN_TYPE::STAR:
     emitByte(OP_CODE::OP_MULTIPLY);
     break;
-  case TokenType::TOKEN_SLASH:
+  case TOKEN_TYPE::SLASH:
     emitByte(OP_CODE::OP_DIVIDE);
     break;
   default:
@@ -164,6 +179,8 @@ void Compiler::binary() {
   }
 }
 
+//to parse an expression is quite simple, we just parse anything that
+//has higher precedence than assigment
 void Compiler::expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
 void Scanner::skipWhiteSpace() {
@@ -213,7 +230,7 @@ Token Scanner::string() {
 
   // eating the closing quote
   advance();
-  return makeToken(TokenType::TOKEN_STRING);
+  return makeToken(TOKEN_TYPE::STRING);
 }
 
 Token Scanner::number() {
@@ -230,28 +247,28 @@ Token Scanner::number() {
       advance();
   }
 
-  return makeToken(TokenType::TOKEN_NUMBER);
+  return makeToken(TOKEN_TYPE::NUMBER);
 }
 
-TokenType Scanner::checkKeyword(int startIdx, int length, const char *rest,
-                                TokenType type) {
+TOKEN_TYPE Scanner::checkKeyword(int startIdx, int length, const char *rest,
+                                TOKEN_TYPE type) {
   // first we check if the length is the same second we check if the memory is
   // the same
   if ((current - start) == (startIdx + length) &&
       memcmp(start + startIdx, rest, length) == 0) {
     return type;
   }
-  return TokenType::TOKEN_IDENTIFIER;
+  return TOKEN_TYPE::IDENTIFIER;
 }
 
-TokenType Scanner::identifierType() {
+TOKEN_TYPE Scanner::identifierType() {
   switch (start[0]) {
   case 'a':
-    return checkKeyword(1, 2, "nd", TokenType::TOKEN_AND);
+    return checkKeyword(1, 2, "nd", TOKEN_TYPE::AND);
   case 'c':
-    return checkKeyword(1, 4, "lass", TokenType::TOKEN_CLASS);
+    return checkKeyword(1, 4, "lass", TOKEN_TYPE::CLASS);
   case 'e':
-    return checkKeyword(1, 3, "lse", TokenType::TOKEN_ELSE);
+    return checkKeyword(1, 3, "lse", TOKEN_TYPE::ELSE);
 
   // f is a bit more complicated because the grab branches after the f
   // we can have multiple reserved keywords starting with f
@@ -259,34 +276,34 @@ TokenType Scanner::identifierType() {
     if (current - start > 1) {
       switch (start[1]) {
       case 'a':
-        return checkKeyword(2, 3, "lse", TokenType::TOKEN_FALSE);
+        return checkKeyword(2, 3, "lse", TOKEN_TYPE::BOOL_FALSE);
       case 'o':
-        return checkKeyword(2, 1, "r", TokenType::TOKEN_FOR);
+        return checkKeyword(2, 1, "r", TOKEN_TYPE::FOR);
       case 'u':
-        return checkKeyword(2, 1, "n", TokenType::TOKEN_FUN);
+        return checkKeyword(2, 1, "n", TOKEN_TYPE::FUN);
       }
     }
     break;
 
   case 'i':
-    return checkKeyword(1, 1, "f", TokenType::TOKEN_IF);
+    return checkKeyword(1, 1, "f", TOKEN_TYPE::IF);
   case 'n':
-    return checkKeyword(1, 2, "il", TokenType::TOKEN_NIL);
+    return checkKeyword(1, 2, "il", TOKEN_TYPE::NIL);
   case 'o':
-    return checkKeyword(1, 1, "r", TokenType::TOKEN_OR);
+    return checkKeyword(1, 1, "r", TOKEN_TYPE::OR);
   case 'p':
-    return checkKeyword(1, 4, "rint", TokenType::TOKEN_PRINT);
+    return checkKeyword(1, 4, "rint", TOKEN_TYPE::PRINT);
   case 'r':
-    return checkKeyword(1, 5, "eturn", TokenType::TOKEN_RETURN);
+    return checkKeyword(1, 5, "eturn", TOKEN_TYPE::RETURN);
   case 's':
-    return checkKeyword(1, 4, "uper", TokenType::TOKEN_SUPER);
+    return checkKeyword(1, 4, "uper", TOKEN_TYPE::SUPER);
   case 'v':
-    return checkKeyword(1, 2, "ar", TokenType::TOKEN_VAR);
+    return checkKeyword(1, 2, "ar", TOKEN_TYPE::VAR);
   case 'w':
-    return checkKeyword(1, 4, "hile", TokenType::TOKEN_WHILE);
+    return checkKeyword(1, 4, "hile", TOKEN_TYPE::WHILE);
   }
 
-  return TokenType::TOKEN_IDENTIFIER;
+  return TOKEN_TYPE::IDENTIFIER;
 }
 
 Token Scanner::identifier() {
@@ -303,7 +320,7 @@ Token Scanner::scanToken() {
   start = current;
 
   if (isAtEnd())
-    return makeToken(TokenType::TOKEN_EOF);
+    return makeToken(TOKEN_TYPE::END_OF_FILE);
 
   char c = advance();
 
@@ -315,41 +332,41 @@ Token Scanner::scanToken() {
   switch (c) {
   // first we check the easy since char
   case '(':
-    return makeToken(TokenType::TOKEN_LEFT_PAREN);
+    return makeToken(TOKEN_TYPE::LEFT_PAREN);
   case ')':
-    return makeToken(TokenType::TOKEN_RIGHT_PAREN);
+    return makeToken(TOKEN_TYPE::RIGHT_PAREN);
   case '{':
-    return makeToken(TokenType::TOKEN_LEFT_BRACE);
+    return makeToken(TOKEN_TYPE::LEFT_BRACE);
   case '}':
-    return makeToken(TokenType::TOKEN_RIGHT_BRACE);
+    return makeToken(TOKEN_TYPE::RIGHT_BRACE);
   case ';':
-    return makeToken(TokenType::TOKEN_SEMICOLON);
+    return makeToken(TOKEN_TYPE::SEMICOLON);
   case ',':
-    return makeToken(TokenType::TOKEN_COMMA);
+    return makeToken(TOKEN_TYPE::COMMA);
   case '.':
-    return makeToken(TokenType::TOKEN_DOT);
+    return makeToken(TOKEN_TYPE::DOT);
   case '-':
-    return makeToken(TokenType::TOKEN_MINUS);
+    return makeToken(TOKEN_TYPE::MINUS);
   case '+':
-    return makeToken(TokenType::TOKEN_PLUS);
+    return makeToken(TOKEN_TYPE::PLUS);
   case '/':
-    return makeToken(TokenType::TOKEN_SLASH);
+    return makeToken(TOKEN_TYPE::SLASH);
   case '*':
-    return makeToken(TokenType::TOKEN_STAR);
+    return makeToken(TOKEN_TYPE::STAR);
 
   // next we check double char punctuation
   case '!':
-    return makeToken(match('=') ? TokenType::TOKEN_BANG_EQUAL
-                                : TokenType::TOKEN_BANG);
+    return makeToken(match('=') ? TOKEN_TYPE::BANG_EQUAL
+                                : TOKEN_TYPE::BANG);
   case '=':
-    return makeToken(match('=') ? TokenType::TOKEN_EQUAL_EQUAL
-                                : TokenType::TOKEN_EQUAL);
+    return makeToken(match('=') ? TOKEN_TYPE::EQUAL_EQUAL
+                                : TOKEN_TYPE::EQUAL);
   case '<':
-    return makeToken(match('=') ? TokenType::TOKEN_LESS_EQUAL
-                                : TokenType::TOKEN_LESS);
+    return makeToken(match('=') ? TOKEN_TYPE::LESS_EQUAL
+                                : TOKEN_TYPE::LESS);
   case '>':
-    return makeToken(match('=') ? TokenType::TOKEN_GREATER_EQUAL
-                                : TokenType::TOKEN_GREATER);
+    return makeToken(match('=') ? TOKEN_TYPE::GREATER_EQUAL
+                                : TOKEN_TYPE::GREATER);
   // now checking strings
   case '"':
     return string();
@@ -368,7 +385,7 @@ bool Compiler::compile(const char *source, log::Log *logger) {
   parser.init(&scanner, logger);
   parser.advance();
   expression();
-  consume(TOKEN_EOF, "expected end of expression");
+  consume(TOKEN_TYPE::END_OF_FILE, "expected end of expression");
   endCompilation(logger);
   bool gotError = parser.getHadError();
   if (gotError) {
@@ -390,9 +407,9 @@ void Parser::errorAt(Token *token, const char *message) {
 
   LOG(m_logger, "[line %d] Error", token->line);
 
-  if (token->type == TOKEN_EOF) {
+  if (token->type == TOKEN_TYPE::END_OF_FILE) {
     LOG(m_logger, " at end");
-  } else if (token->type == TOKEN_ERROR) {
+  } else if (token->type == TOKEN_TYPE::TOKEN_ERROR) {
     // Nothing.
   } else {
     LOG(m_logger, " at '%.*s'", token->length, token->start);

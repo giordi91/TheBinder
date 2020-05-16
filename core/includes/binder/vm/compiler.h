@@ -1,5 +1,6 @@
 #pragma once
 #include "assert.h"
+#include "binder/tokens.h"
 #include "binder/vm/chunk.h"
 #include "common.h"
 #include "stdio.h"
@@ -15,59 +16,11 @@ namespace vm {
 
 struct Chunk;
 
-enum TokenType {
-  // Single-character tokens.
-  TOKEN_LEFT_PAREN,
-  TOKEN_RIGHT_PAREN,
-  TOKEN_LEFT_BRACE,
-  TOKEN_RIGHT_BRACE,
-  TOKEN_COMMA,
-  TOKEN_DOT,
-  TOKEN_MINUS,
-  TOKEN_PLUS,
-  TOKEN_SEMICOLON,
-  TOKEN_SLASH,
-  TOKEN_STAR,
-
-  // One or two character tokens.
-  TOKEN_BANG,
-  TOKEN_BANG_EQUAL,
-  TOKEN_EQUAL,
-  TOKEN_EQUAL_EQUAL,
-  TOKEN_GREATER,
-  TOKEN_GREATER_EQUAL,
-  TOKEN_LESS,
-  TOKEN_LESS_EQUAL,
-
-  // Literals.
-  TOKEN_IDENTIFIER,
-  TOKEN_STRING,
-  TOKEN_NUMBER,
-
-  // Keywords.
-  TOKEN_AND,
-  TOKEN_CLASS,
-  TOKEN_ELSE,
-  TOKEN_FALSE,
-  TOKEN_FOR,
-  TOKEN_FUN,
-  TOKEN_IF,
-  TOKEN_NIL,
-  TOKEN_OR,
-  TOKEN_PRINT,
-  TOKEN_RETURN,
-  TOKEN_SUPER,
-  TOKEN_THIS,
-  TOKEN_TRUE,
-  TOKEN_VAR,
-  TOKEN_WHILE,
-
-  TOKEN_ERROR,
-  TOKEN_EOF
-};
-
+//TODO we have two token representation, the one here, in the vm is the correct
+//one, the one in the interpreter needs to be changed to not use string directly
+//but pointer + len, not null terminated strings
 struct Token {
-  TokenType type;
+  TOKEN_TYPE type;
   const char *start;
   int length;
   int line;
@@ -111,11 +64,11 @@ private:
     return current[1];
   }
 
-  Token makeToken(TokenType type) const {
+  Token makeToken(TOKEN_TYPE type) const {
     return {type, start, static_cast<int>(current - start), line};
   }
   Token errorToken(const char *message) const {
-    return {TokenType::TOKEN_ERROR, message, static_cast<int>(strlen(current)),
+    return {TOKEN_TYPE::TOKEN_ERROR, message, static_cast<int>(strlen(current)),
             line};
   }
 
@@ -124,9 +77,9 @@ private:
   bool isAlpha(char c) const {
     return ((c >= 'a') & (c <= 'z')) | ((c >= 'A') & (c <= 'Z')) | (c == '_');
   }
-  TokenType identifierType();
-  TokenType checkKeyword(int start, int length, const char *rest,
-                         TokenType type);
+  TOKEN_TYPE identifierType();
+  TOKEN_TYPE checkKeyword(int start, int length, const char *rest,
+                         TOKEN_TYPE type);
   Token string();
   Token number();
   Token identifier();
@@ -150,7 +103,7 @@ public:
 
     for (;;) {
       current = m_scanner->scanToken();
-      if (current.type != TokenType::TOKEN_ERROR)
+      if (current.type != TOKEN_TYPE::TOKEN_ERROR)
         break;
       errorAtCurrent(current.start);
     }
@@ -196,7 +149,7 @@ public:
   const Chunk* getCompiledChunk()const{return m_chunk;};
 
 private:
-  void consume(TokenType type, const char *message) {
+  void consume(TOKEN_TYPE type, const char *message) {
     if (parser.current.type == type) {
       parser.advance();
     }
