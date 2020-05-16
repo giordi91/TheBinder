@@ -13,7 +13,9 @@
 #include "parserTests.cpp"
 #include "interpreterTests.cpp"
 #include "loggerTests.cpp"
-#include "disassambleTests.cpp"
+#include "vm/disassambleTests.cpp"
+#include "vm/vmCompileTests.cpp"
+#include "vm/vmScanTests.cpp"
 
 
 

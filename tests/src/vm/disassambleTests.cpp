@@ -1,8 +1,8 @@
 #include "binder/log/bufferLog.h"
-#include "binder/vm/debug.h"
 #include "binder/vm/compiler.h"
+#include "binder/vm/debug.h"
 
-#include "catch.h"
+#include "../catch.h"
 
 class SetupDisassamblerTestFixture {
 public:
@@ -83,12 +83,27 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "binary disassamble",
 */
 }
 
-TEST_CASE_METHOD(SetupDisassamblerTestFixture, "temp",
-                 "[disassambler]") {
+TEST_CASE_METHOD(SetupDisassamblerTestFixture, "temp", "[disassambler]") {
 
-    const char* source = "1 + 2 * 4";
-    binder::vm::Compiler comp;
-    comp.compile(source,&m_log);
-    const char *buff = m_log.getBuffer();
-    printf("%s" ,buff);
+  const char *source = "1 + 2 * 4";
+  binder::vm::Compiler comp;
+  comp.compile(source, &m_log);
+  const char *buff = m_log.getBuffer();
+  REQUIRE(strcmp("== code ==\n0000    0 OP_CONSTANT         0 '1\n"
+                 "0002    | OP_CONSTANT         1 '2\n"
+                 "0004    | OP_CONSTANT         2 '4\n"
+                 "0006    | OP_MULTIPLY\n"
+                 "0007    | OP_ADD\n"
+                 "0008    | OP_RETURN\n",
+                 buff) == 0);
+
+  /*
+  == code ==
+  0000    0 OP_CONSTANT         0 '1
+  0002    | OP_CONSTANT         1 '2
+  0004    | OP_CONSTANT         2 '4
+  0006    | OP_MULTIPLY
+  0007    | OP_ADD
+  0008    | OP_RETURN
+  */
 }

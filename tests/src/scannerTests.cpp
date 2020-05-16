@@ -66,6 +66,7 @@ TEST_CASE_METHOD(SetupScannerTestFixture, "scan comment", "[scan]") {
   REQUIRE(tokens[1].m_type == binder::TOKEN_TYPE::END_OF_FILE);
   REQUIRE(tokens[1].m_line == 1);
 }
+
 TEST_CASE_METHOD(SetupScannerTestFixture, "scan white spaces", "[scan]") {
 
   const binder::memory::ResizableVector<binder::Token> &tokens = scan(" ! \n{");

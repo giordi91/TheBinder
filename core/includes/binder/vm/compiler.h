@@ -193,6 +193,7 @@ enum Precedence {
 class Compiler {
 public:
   bool compile(const char *source, log::Log *logger);
+  const Chunk* getCompiledChunk()const{return m_chunk;};
 
 private:
   void consume(TokenType type, const char *message) {

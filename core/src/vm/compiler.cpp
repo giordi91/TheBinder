@@ -63,15 +63,22 @@ ParseRule rules[] = {
 
 ParseRule *getRule(TokenType type) { return &rules[type]; }
 
-void Compiler::dispatchFunctionId(FunctionId id)
-{
-  switch(id)
-  {
-      case GROUPING: grouping();break;
-      case UNARY : unary();break;
-      case BINARY: binary();break;
-      case NUMBER: number();break;
-      default: assert(false && "unsupported function id for pratt parser");
+void Compiler::dispatchFunctionId(FunctionId id) {
+  switch (id) {
+  case GROUPING:
+    grouping();
+    break;
+  case UNARY:
+    unary();
+    break;
+  case BINARY:
+    binary();
+    break;
+  case NUMBER:
+    number();
+    break;
+  default:
+    assert(false && "unsupported function id for pratt parser");
   }
 }
 
@@ -157,10 +164,7 @@ void Compiler::binary() {
   }
 }
 
-void Compiler::expression()
-{
-    parsePrecedence(PREC_ASSIGNMENT);
-}
+void Compiler::expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
 void Scanner::skipWhiteSpace() {
   // we keep chew until we find a non white space
@@ -185,7 +189,9 @@ void Scanner::skipWhiteSpace() {
         while ((peek() != '\n') & (!isAtEnd()))
           advance();
       } else {
+        return;
       }
+      break;
 
     default:
       return;
@@ -349,7 +355,7 @@ Token Scanner::scanToken() {
     return string();
   }
 
-  printf("%c\n",c);
+  printf("%c\n", c);
   return errorToken("Unexpected character.");
 }
 
