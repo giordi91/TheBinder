@@ -175,7 +175,7 @@ private:
   }
 
 
-  void endCompilation(log::Log* log) {
+  void endCompilation(log::Log* ) {
     emitByte(OP_CODE::OP_RETURN);
   }
   // emit instructions

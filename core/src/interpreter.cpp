@@ -655,9 +655,12 @@ private:
   RuntimeValue *getRuntime(uint32_t poolIdx) {
     return &(*m_runtimeValuePool)[poolIdx];
   }
-  RuntimeValue *getReturnValueForBinary(uint32_t leftIdx, RuntimeValue *left,
-                                        uint32_t rightIdx, RuntimeValue *right,
+  RuntimeValue *getReturnValueForBinary(uint32_t , RuntimeValue *,
+                                        uint32_t , RuntimeValue *,
                                         uint32_t &index) {
+  //RuntimeValue *getReturnValueForBinary(uint32_t leftIdx, RuntimeValue *left,
+  //                                      uint32_t rightIdx, RuntimeValue *right,
+  //                                      uint32_t &index) {
     /*
     RuntimeValueStorage leftStorage = left->storage;
     RuntimeValueStorage rightStorage = right->storage;
@@ -751,7 +754,7 @@ void* BinderFunction::call(ASTInterpreterVisitor *interpreter,
                      memory::ResizableVector<void *> &arguments)
 {
     Enviroment* env = new Enviroment(interpreter->getGlobalEnviroment());
-    for(int i =0; i < m_declaration->params.size();++i)
+    for(uint32_t i =0; i < m_declaration->params.size();++i)
     {
         env->define(m_declaration->params[i].m_lexeme, (RuntimeValue*)arguments[i]);
     }

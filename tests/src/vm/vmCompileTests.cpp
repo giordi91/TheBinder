@@ -22,11 +22,11 @@ public:
     compareInstruction(offset, static_cast<uint8_t>(expected));
   }
 
-  void compareInstruction(int offset, uint8_t expected) {
+  void compareInstruction(uint32_t offset, uint8_t expected) {
     REQUIRE(offset <= chunk->m_code.size());
     REQUIRE(chunk->m_code[offset] == expected);
   }
-  void compareConstant(int offset, int idx, double value) {
+  void compareConstant(uint32_t offset, int idx, double value) {
     REQUIRE(chunk->m_code[offset] == idx);
     REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
   }

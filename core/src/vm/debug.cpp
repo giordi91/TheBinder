@@ -27,7 +27,7 @@ static int constantInstruction(const char *name, const Chunk *chunk, int offset,
 void disassambleChunk(const Chunk *chunk, const char *name, log::Log *logger) {
   LOG(logger, "== %s ==\n", name);
 
-  for (int offset = 0; offset < chunk->m_code.size();) {
+  for (uint32_t offset = 0; offset < chunk->m_code.size();) {
 
     offset = disassambleInstruction(chunk, offset, logger);
   }

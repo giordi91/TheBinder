@@ -43,8 +43,6 @@ void BinderContext::runFile(const char *filePath) {
 }
 void BinderContext::print(const char *toPrint) { m_log->print(toPrint); }
 
-void BinderContext::run(const char *code) {}
-
 void BinderContext::report(const int line, const char *location,
                            const char *message) {
   char buffer[512];

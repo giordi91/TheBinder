@@ -17,7 +17,8 @@ public:
   ~BinderContext();
 
   void runFile(const char *filePath);
-  void run(const char *code);
+  //const char* code, suppressed for warning
+  void run(const char *){};
 
   void reportError(const int line, const char *message) {
     m_hadError = true;

@@ -14,6 +14,7 @@ public:
     REQUIRE(tok.type == type);
     REQUIRE(tok.length == len);
     REQUIRE(tok.start == start);
+    REQUIRE(strncmp(tok.start,expectedVal,len)==0);
   }
 
   void compareNextTokenSimple(binder::TOKEN_TYPE type) {

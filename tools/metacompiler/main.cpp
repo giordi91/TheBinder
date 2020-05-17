@@ -12,7 +12,6 @@ const char *version = "Metacompiler for \"TheBinder\" language v0.0.1\n";
 struct ASTNodeDefinition {
   const char *className;
   const char *members;
-  ;
 };
 
 // TODO here we force them to be the same size for pool allocation
@@ -43,8 +42,8 @@ const ASTNodeDefinition statementsDefinitions[] = {
 
 void writeHeader(FILE *fp) {
   fprintf(fp, "/*\n");
-  fprintf(fp, fileHeader);
-  fprintf(fp, version);
+  fprintf(fp, "%s",fileHeader);
+  fprintf(fp, "%s",version);
   fprintf(fp, "*/\n\n");
 }
 
@@ -58,13 +57,13 @@ void WriteASTNode(FILE *fp, const char *baseClass,
                   const char *returnType) {
 
   fprintf(fp, "class ");
-  fprintf(fp, definition.className);
+  fprintf(fp,"%s", definition.className);
   fprintf(fp, " : public ");
-  fprintf(fp, baseClass);
+  fprintf(fp,"%s", baseClass);
   fprintf(fp, "\n{\npublic:\n\t");
-  fprintf(fp, definition.className);
+  fprintf(fp,"%s", definition.className);
   fprintf(fp, "(): %s(){}\n\tvirtual ~", baseClass);
-  fprintf(fp, definition.className);
+  fprintf(fp,"%s", definition.className);
   fprintf(fp, "()=default;\n");
 
   // this might not be the fastest code but is by far the simpler
@@ -92,7 +91,7 @@ void WriteASTNode(FILE *fp, const char *baseClass,
           "\t%s accept(%s* visitor) override\n"
           "\t{ \n \t\treturn visitor->accept",
           returnType, visitorName);
-  fprintf(fp, definition.className);
+  fprintf(fp,"%s", definition.className);
   fprintf(fp, "(this);\n\t};\n");
 
   // closing class definition
@@ -158,9 +157,9 @@ void generateVisitorBaseClass(FILE *fp, const char *className,
   // overload would make the code a bit clearer? not sure
   for (int i = 0; i < count; ++i) {
     fprintf(fp, "\tvirtual %s accept", returnType);
-    fprintf(fp, definitions[i].className);
+    fprintf(fp,"%s", definitions[i].className);
     fprintf(fp, "(");
-    fprintf(fp, definitions[i].className);
+    fprintf(fp,"%s", definitions[i].className);
     fprintf(fp, "* %s) = 0;\n", paramName);
   }
   // closing the class
