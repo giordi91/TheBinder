@@ -5,7 +5,6 @@
 #include "binder/vm/vm.h"
 
 namespace binder::vm {
-static char vmBuffer[1024];
 
 // TODO can i refactor this? is a bit too big for my likning,
 // at the end of the day the only thing that needs the macro is (a op b)
@@ -20,11 +19,6 @@ static char vmBuffer[1024];
     stackPush(valueType(a op b));                                              \
   } while (false)
 
-#define LOG(logger, toPrint, ...)                                              \
-  do {                                                                         \
-    sprintf(vmBuffer, (toPrint), ##__VA_ARGS__);                               \
-    m_logger->print(vmBuffer);                                                 \
-  } while (false);
 
 void VirtualMachine::init() { resetStack(); }
 
@@ -41,7 +35,7 @@ Value VirtualMachine::stackPop() {
 void VirtualMachine::runtimeError(const char *message) {
   auto instruction = static_cast<uint32_t>(m_ip - m_chunk->m_code.data() - 1);
   int line = m_chunk->m_lines[instruction];
-  LOG("%s\n[line %d] in script\n", message, line);
+  log::LOG(m_logger,"%s\n[line %d] in script\n", message, line);
   resetStack();
 }
 
@@ -178,7 +172,5 @@ INTERPRET_RESULT VirtualMachine::run() {
     }
   }
 }
-
-#undef LOG
 
 } // namespace binder::vm

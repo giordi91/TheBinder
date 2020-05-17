@@ -4,13 +4,6 @@
 
 namespace binder::vm {
 
-static char compBuffer[1024];
-
-#define LOG(logger, toPrint, ...)                                              \
-  do {                                                                         \
-    sprintf(compBuffer, (toPrint), ##__VA_ARGS__);                             \
-    logger->print(compBuffer);                                                 \
-  } while (false);
 
 struct ParseRule {
   FunctionId prefix;

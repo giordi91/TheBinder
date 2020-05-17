@@ -1,6 +1,12 @@
 #pragma once
 
+#include "stdarg.h"
+#include "stdio.h"
+
 namespace binder::log{
+
+static char logBuffer[1024];
+
 //abstract interface for the Log/Printing system
 class Log {
 public:
@@ -20,4 +26,13 @@ public:
   //aswell as clearing temporary memory etc
   virtual void flush() =0;
 };
+
+inline void LOG(log::Log *logger, const char* format, ...)
+{
+    va_list args;
+    va_start (args,format);
+    vsprintf(logBuffer,format,args);
+    va_end(args);
+    logger->print(logBuffer);                                                     \
+}
 }
