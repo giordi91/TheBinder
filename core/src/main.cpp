@@ -9,4 +9,5 @@
 #include "vm/debug.cpp"
 #include "vm/vm.cpp"
 #include "vm/compiler.cpp"
+#include "vm/object.cpp"
 

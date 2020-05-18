@@ -1,6 +1,7 @@
 #include "binder/log/log.h"
 #include "binder/vm/compiler.h"
 #include "stdlib.h"
+#include "binder/vm/object.h"
 
 namespace binder::vm {
 
@@ -36,7 +37,7 @@ ParseRule rules[] = {
     {NULLID, BINARY, PREC_COMPARISON}, // LESS
     {NULLID, BINARY, PREC_COMPARISON}, // LESS_EQUAL
     {NULLID, NULLID, PREC_NONE},       // IDENTIFIER
-    {NULLID, NULLID, PREC_NONE},       // STRING
+    {STRING, NULLID, PREC_NONE},       // STRING
     {NUMBER, NULLID, PREC_NONE},       // NUMBER
     {NULLID, NULLID, PREC_NONE},       // AND
     {NULLID, NULLID, PREC_NONE},       // CLASS
@@ -80,6 +81,9 @@ void Compiler::dispatchFunctionId(FunctionId id) {
     break;
   case LITERAL:
     literal();
+    break;
+  case STRING:
+    string();
     break;
   default:
     assert(false && "unsupported function id for pratt parser");
@@ -223,6 +227,14 @@ void Compiler::literal() {
     assert(0);
     return; // unreachable
   }
+}
+
+void Compiler::string()
+{
+
+    sObjString* obj = copyString(parser.previous.start+1,parser.previous.length-2);
+    Value value = makeObject((sObj*)obj);
+    emitConstant(value);
 }
 
 void Scanner::skipWhiteSpace() {

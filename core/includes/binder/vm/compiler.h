@@ -127,7 +127,7 @@ private:
   bool panicMode = false;
 };
 
-enum FunctionId { NULLID, GROUPING, UNARY, BINARY, NUMBER, LITERAL };
+enum FunctionId { NULLID, GROUPING, UNARY, BINARY, NUMBER, LITERAL,STRING};
 
 enum Precedence {
   PREC_NONE,
@@ -189,6 +189,7 @@ private:
   void binary();
   void expression();
   void literal();
+  void string();
 
   void dispatchFunctionId(FunctionId id);
 

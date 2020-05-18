@@ -19,7 +19,6 @@ namespace binder::vm {
     stackPush(valueType(a op b));                                              \
   } while (false)
 
-
 void VirtualMachine::init() { resetStack(); }
 
 void VirtualMachine::stackPush(Value value) {
@@ -35,7 +34,7 @@ Value VirtualMachine::stackPop() {
 void VirtualMachine::runtimeError(const char *message) {
   auto instruction = static_cast<uint32_t>(m_ip - m_chunk->m_code.data() - 1);
   int line = m_chunk->m_lines[instruction];
-  log::LOG(m_logger,"%s\n[line %d] in script\n", message, line);
+  log::LOG(m_logger, "%s\n[line %d] in script\n", message, line);
   resetStack();
 }
 
@@ -56,6 +55,13 @@ bool valuesEqual(Value a, Value b) {
     return true;
   case VALUE_TYPE::VAL_NUMBER:
     return valueAsNumber(a) == valueAsNumber(b);
+  case VALUE_TYPE::VAL_OBJ: {
+    // temporary string cast, we need to check proper type
+    ObjString *aString = valueAsString(a);
+    ObjString *bString = valueAsString(b);
+    return aString->length == bString->length &&
+           memcmp(aString->chars, bString->chars, aString->length) == 0;
+  }
   default: // unreacheable
     assert(0);
     return false;
@@ -71,7 +77,7 @@ INTERPRET_RESULT VirtualMachine::interpret(const char *source) {
   }
 
   m_chunk = compiler.getCompiledChunk();
-  m_ip=m_chunk->m_code.data();
+  m_ip = m_chunk->m_code.data();
   resetStack();
   run();
 
@@ -84,7 +90,7 @@ INTERPRET_RESULT VirtualMachine::run() {
   for (;;) {
 
 #ifdef DEBUG_TRACE_EXECUTION
-    assert(m_debugLogger!=nullptr);
+    assert(m_debugLogger != nullptr);
     // show the stack  before each instruction
     // this is going to spam!
     // TODO wrap this into another ifdef so we can turn it on/off independnetly

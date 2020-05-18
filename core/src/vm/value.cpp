@@ -1,5 +1,6 @@
 #include "binder/log/log.h"
 #include "binder/vm/value.h"
+#include "binder/vm/object.h"
 
 namespace binder::vm {
 
@@ -19,6 +20,10 @@ void printValue(Value value, log::Log *logger) {
   case VALUE_TYPE::VAL_NIL: {
     sprintf(valueBuffer, "nil");
     logger->print(valueBuffer);
+    break;
+  }
+  case VALUE_TYPE::VAL_OBJ: {
+    printObject(&value,logger);
     break;
   }
   }

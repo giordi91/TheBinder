@@ -1,6 +1,7 @@
 #include "binder/log/bufferLog.h"
 #include "binder/log/consoleLog.h"
 #include "binder/vm/compiler.h"
+#include "binder/vm/object.h"
 
 #include "../catch.h"
 
@@ -29,6 +30,14 @@ public:
   void compareConstant(uint32_t offset, int idx, double value) {
     REQUIRE(chunk->m_code[offset] == idx);
     REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
+  }
+  void compareConstant(uint32_t offset, int idx, const char* toCompare) {
+    REQUIRE(chunk->m_code[offset] == idx);
+    //REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
+    binder::vm::Value value = chunk->m_constants[idx];
+    REQUIRE(binder::vm::isValueObj(value));
+    REQUIRE(binder::vm::isObjType(value, binder::vm::OBJ_TYPE::OBJ_STRING));
+    REQUIRE(strcmp(binder::vm::valueAsCString(value),toCompare)==0);
   }
 
 protected:
@@ -150,4 +159,25 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm expression error 2",
   //check for failure
   REQUIRE(chunk == nullptr);
   REQUIRE(result == false);
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic string",
+                 "[vm-parser]") {
+  const char *source = "\"hello world\"";
+  auto *chunk = compile(source, false);
+  //check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 3);
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 0, "hello world");
+  compareInstruction(2, binder::vm::OP_CODE::OP_RETURN);
+
+
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         0 'hello world
+    0002    | OP_RETURN
+  */
+
 }
