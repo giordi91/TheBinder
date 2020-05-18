@@ -1,10 +1,9 @@
 #include "binder/log/log.h"
 #include "binder/vm/compiler.h"
-#include "stdlib.h"
 #include "binder/vm/object.h"
+#include "stdlib.h"
 
 namespace binder::vm {
-
 
 struct ParseRule {
   FunctionId prefix;
@@ -170,7 +169,7 @@ void Compiler::binary() {
   case TOKEN_TYPE::BANG_EQUAL:
     // a != b is the same as !(a == b)
     // TODO we might want to optimize this with dedicated instructions
-    emitBytes(OP_CODE::OP_EQUAL,OP_CODE::OP_NOT);
+    emitBytes(OP_CODE::OP_EQUAL, OP_CODE::OP_NOT);
     break;
   case TOKEN_TYPE::EQUAL_EQUAL:
     emitByte(OP_CODE::OP_EQUAL);
@@ -181,7 +180,7 @@ void Compiler::binary() {
   case TOKEN_TYPE::GREATER_EQUAL:
     // a >= b is the same as !(a<b)
     // TODO as != we might wanty to optimize with dedicated instructions
-    emitBytes(OP_CODE::OP_LESS,OP_CODE::OP_NOT);
+    emitBytes(OP_CODE::OP_LESS, OP_CODE::OP_NOT);
     break;
   case TOKEN_TYPE::LESS:
     emitByte(OP_CODE::OP_LESS);
@@ -229,12 +228,12 @@ void Compiler::literal() {
   }
 }
 
-void Compiler::string()
-{
+void Compiler::string() {
 
-    sObjString* obj = copyString(parser.previous.start+1,parser.previous.length-2);
-    Value value = makeObject((sObj*)obj);
-    emitConstant(value);
+  sObjString *obj =
+      copyString(parser.previous.start + 1, parser.previous.length - 2);
+  Value value = makeObject((sObj *)obj);
+  emitConstant(value);
 }
 
 void Scanner::skipWhiteSpace() {
