@@ -92,5 +92,8 @@ inline char *valueAsCString(Value value) {
 }
 
 void printValue(Value value, log::Log *logger);
+
+bool valuesEqual(Value a, Value b); 
+
 } // namespace vm
 } // namespace binder
