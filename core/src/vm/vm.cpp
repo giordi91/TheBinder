@@ -3,6 +3,7 @@
 #include "binder/vm/debug.h"
 #include "binder/vm/value.h"
 #include "binder/vm/vm.h"
+#include "binder/vm/memory.h"
 
 namespace binder::vm {
 
@@ -31,6 +32,21 @@ Value VirtualMachine::stackPop() {
   return *m_stackTop;
 }
 
+void VirtualMachine::concatenate()
+{
+    ObjString*  b = valueAsString(stackPop());
+    ObjString*  a = valueAsString(stackPop());
+
+    int length = a->length + b->length;
+    char* chars =  ALLOCATE(char, length +1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length , b->chars, b->length);
+    chars[length] = '\0';
+
+    ObjString* result = takeString(chars,length);
+    stackPush(makeObject(result));
+}
+
 void VirtualMachine::runtimeError(const char *message) {
   auto instruction = static_cast<uint32_t>(m_ip - m_chunk->m_code.data() - 1);
   int line = m_chunk->m_lines[instruction];
@@ -44,7 +60,6 @@ bool isFalsey(Value value) {
   return isValueNIL(value) | isValueBool(value) && (!valueAsBool(value));
 }
 
-
 INTERPRET_RESULT VirtualMachine::interpret(const char *source) {
 
   Compiler compiler;
@@ -56,9 +71,7 @@ INTERPRET_RESULT VirtualMachine::interpret(const char *source) {
   m_chunk = compiler.getCompiledChunk();
   m_ip = m_chunk->m_code.data();
   resetStack();
-  run();
-
-  return INTERPRET_RESULT::INTERPRET_OK;
+  return run();
 }
 
 //#define DEBUG_TRACE_EXECUTION
@@ -123,7 +136,14 @@ INTERPRET_RESULT VirtualMachine::run() {
       break;
     }
     case OP_CODE::OP_ADD: {
-      BINARY_OP(makeNumber, +);
+      if (isValueString(peek(0)) & isValueString(peek(1))) {
+        concatenate();
+      } else if (isValueNumber(peek(0)) & isValueNumber(peek(1))) {
+        BINARY_OP(makeNumber, +);
+      } else {
+        runtimeError("Operands must be two numbers of two strings");
+        return INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR;
+      }
       break;
     }
     case OP_CODE::OP_SUBTRACT: {

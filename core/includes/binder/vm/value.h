@@ -57,6 +57,12 @@ inline Value makeObject(Obj*value) {
   outValue.as.obj= value;
   return outValue;
 };
+inline Value makeObject(ObjString*value) {
+  Value outValue{};
+  outValue.type = VALUE_TYPE::VAL_OBJ;
+  outValue.as.obj= (Obj*)value;
+  return outValue;
+};
 
 inline bool valueAsBool(Value value) { return value.as.boolean; }
 inline double valueAsNumber(Value value) { return value.as.number; }

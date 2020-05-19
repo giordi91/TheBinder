@@ -1,18 +1,16 @@
+#include "binder/vm/memory.h"
 #include "binder/log/log.h"
 #include "binder/vm/object.h"
 #include "binder/vm/value.h"
 
 namespace binder ::vm {
 
-//void *reallocate(void *previous, size_t oldSize, size_t newSize) {
-void *reallocate(void *previous, size_t , size_t newSize) {
-  if (newSize == 0) {
-    free(previous);
-    return NULL;
-  }
+#define ALLOCATE(type, count)                                                  \
+  (type *)reallocate(nullptr, 0, sizeof(type) * (count))
+#define ALLOCATE_OBJ(type, objectType)                                         \
+  (type *)allocateObject(sizeof(type), objectType)
 
-  return realloc(previous, newSize);
-}
+
 
 sObj *allocateObject(size_t size, OBJ_TYPE type) {
   sObj *object = (sObj *)reallocate(nullptr, 0, size);
@@ -20,16 +18,19 @@ sObj *allocateObject(size_t size, OBJ_TYPE type) {
   return object;
 }
 
-#define ALLOCATE(type, count)                                                  \
-  (type *)reallocate(nullptr, 0, sizeof(type) * (count))
-#define ALLOCATE_OBJ(type, objectType)                                         \
-  (type *)allocateObject(sizeof(type), objectType)
 
 sObjString *allocateString(char *chars, int length) {
   sObjString *string = ALLOCATE_OBJ(sObjString, OBJ_TYPE::OBJ_STRING);
   string->length = length;
   string->chars = chars;
   return string;
+}
+
+sObjString *takeString(char* chars, int length)
+{
+    //here we take ownership of the chars, they have been already copied to
+    //memory we can own
+    return allocateString(chars,length);
 }
 
 sObjString *copyString(const char *chars, int length) {

@@ -25,6 +25,7 @@ struct sObjString {
   char *chars;
 };
 
+sObjString *takeString(char* chars, int length);
 sObjString *copyString(const char *chars, int length);
 void printObject(Value *value, log::Log* logger);
 

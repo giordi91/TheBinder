@@ -181,3 +181,63 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic string",
   */
 
 }
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp",
+                 "[vm-parser]") {
+  const char *source = "\"hello world\" == \"hello world\"";
+  auto *chunk = compile(source, false);
+  //check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 6);
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 0, "hello world");
+  compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(3, 1, "hello world");
+  compareInstruction(4, binder::vm::OP_CODE::OP_EQUAL);
+  compareInstruction(5, binder::vm::OP_CODE::OP_RETURN);
+
+
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         0 'hello world
+    0002    | OP_CONSTANT         1 'hello world
+    0004    | OP_EQUAL
+    0005    | OP_RETURN
+  */
+
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp  false",
+                 "[vm-parser]") {
+  const char *source = "\"hello world\" != \"hello world\"";
+  auto *chunk = compile(source, false);
+  //check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 7);
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 0, "hello world");
+  compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(3, 1, "hello world");
+  compareInstruction(4, binder::vm::OP_CODE::OP_EQUAL);
+  compareInstruction(5, binder::vm::OP_CODE::OP_NOT);
+  compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str concatenation",
+                 "[vm-parser]") {
+  const char *source = "\"hello \" + \"world\"";
+  auto *chunk = compile(source, false);
+  //check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 6);
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 0, "hello ");
+  compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(3, 1, "world");
+  compareInstruction(4, binder::vm::OP_CODE::OP_ADD);
+  compareInstruction(5, binder::vm::OP_CODE::OP_RETURN);
+}
+

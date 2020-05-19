@@ -74,3 +74,64 @@ TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm mult", "[vm-parser]") {
   REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
   REQUIRE(compareLog("200\n")==0);
 }
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm str cmp exec", "[vm-parser]") {
+
+  const char *source = "\"hello world\" == \"hello world\"";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("true\n")==0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm str cmp exec 2", "[vm-parser]") {
+
+  const char *source = "\"hello world\" == \"hello world0\"";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("false\n")==0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm str cmp exec 3", "[vm-parser]") {
+
+  const char *source = "\"hello world\" != \"hello world0\"";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("true\n")==0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm str concatentation", "[vm-parser]") {
+
+  const char *source = "\"hello \" + \"world\"";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("hello world\n")==0);
+}
+
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm add error 1", "[vm-parser]") {
+
+  const char *source = "\"hello \" + 1.2";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm add error 2", "[vm-parser]") {
+
+  const char *source = "2  + \"hello \" ";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR);
+}
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm add error 3", "[vm-parser]") {
+
+  const char *source = "2 + 1 - \"hello \" ";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm add error 4", "[vm-parser]") {
+
+  const char *source = "\"hello \" + \"world\" *10 ";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR);
+}
+

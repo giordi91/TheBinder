@@ -38,6 +38,9 @@ private:
   void stackPush(Value value);
   Value stackPop();
 
+  //runtime operations
+  void concatenate();
+
   // instructions
   inline uint8_t readByte() { return *m_ip++; }
   inline Value readConstant() { return m_chunk->m_constants[readByte()]; };
