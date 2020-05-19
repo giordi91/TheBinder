@@ -230,8 +230,10 @@ void Compiler::literal() {
 
 void Compiler::string() {
 
-  sObjString *obj =
-      copyString(parser.previous.start + 1, parser.previous.length - 2);
+  //let us intern the string
+  int len = parser.previous.length - 2;
+  const char* interned = m_intern->intern(parser.previous.start + 1, parser.previous.length - 2);
+  sObjString *obj =allocateString(interned, len);
   Value value = makeObject((sObj *)obj);
   emitConstant(value);
 }

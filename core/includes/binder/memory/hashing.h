@@ -36,5 +36,8 @@ inline uint32_t hashString32(const char *const&value) {
   uint32_t len = static_cast<uint32_t>(strlen(value));
   return util::Hash32(value, len);
 }
+inline uint32_t hashString32(const char *const&value,const uint32_t len) {
+  return util::Hash32(value, len);
+}
 
 } // namespace binder

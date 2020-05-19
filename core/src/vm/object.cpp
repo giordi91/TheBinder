@@ -28,7 +28,7 @@ void freeObject(sObj *object) {
   switch (object->type) {
   case OBJ_TYPE::OBJ_STRING: {
     sObjString *str = (sObjString *)object;
-    FREE_ARRAY(char, str->chars, str->length + 1);
+    //string is interned, meaning won't be freed here but from the vm
     FREE(sObjString, object);
     break;
   }
@@ -40,19 +40,21 @@ void freeAllocations() {
 
     return;
   }
-
   sObj *obj = allocations;
   while (obj != nullptr) {
     sObj *next = obj->next;
     freeObject(obj);
+    obj = next;
   }
   allocations = nullptr;
 }
 
-sObjString *allocateString(char *chars, int length) {
+sObjString *allocateString(const char *chars, int length) {
   sObjString *string = ALLOCATE_OBJ(sObjString, OBJ_TYPE::OBJ_STRING);
   string->length = length;
-  string->chars = chars;
+  //TODO here we move the cast away mostly because we use the re-alloc workflow,
+  //need to clean this up
+  string->chars = (char*)chars;
   return string;
 }
 

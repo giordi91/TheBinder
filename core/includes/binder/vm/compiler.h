@@ -1,11 +1,13 @@
 #pragma once
-#include "assert.h"
+#include "common.h"
 #include "binder/tokens.h"
 #include "binder/vm/chunk.h"
-#include "common.h"
+#include "binder/vm/debug.h"
+#include "binder/memory/stringIntern.h"
+
+#include "assert.h"
 #include "stdio.h"
 #include "string.h"
-#include "debug.h"
 
 namespace binder {
 namespace log {
@@ -145,6 +147,7 @@ enum Precedence {
 
 class Compiler {
 public:
+  Compiler(memory::StringIntern* intern): m_intern(intern){}
   bool compile(const char *source, log::Log *logger);
   const Chunk* getCompiledChunk()const{return m_chunk;};
 
@@ -196,6 +199,7 @@ private:
 private:
   Scanner scanner;
   Parser parser;
+  memory::StringIntern* m_intern;
   Chunk *m_chunk = nullptr;
 };
 

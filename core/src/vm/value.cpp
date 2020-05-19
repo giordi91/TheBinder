@@ -1,6 +1,7 @@
 #include "binder/log/log.h"
 #include "binder/vm/value.h"
 #include "binder/vm/object.h"
+#include "assert.h"
 
 namespace binder::vm {
 
@@ -44,8 +45,7 @@ bool valuesEqual(Value a, Value b) {
     // temporary string cast, we need to check proper type
     ObjString *aString = valueAsString(a);
     ObjString *bString = valueAsString(b);
-    return aString->length == bString->length &&
-           memcmp(aString->chars, bString->chars, aString->length) == 0;
+    return aString->chars == bString->chars;
   }
   default: // unreacheable
     assert(0);

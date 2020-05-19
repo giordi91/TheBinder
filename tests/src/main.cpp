@@ -17,6 +17,7 @@
 #include "vm/vmCompileTests.cpp"
 #include "vm/vmScanTests.cpp"
 #include "vm/vmExecutionTests.cpp"
+#include "stringInternTests.cpp"
 
 
 

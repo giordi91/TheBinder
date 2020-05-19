@@ -46,7 +46,9 @@ void VirtualMachine::concatenate()
     memcpy(chars + a->length , b->chars, b->length);
     chars[length] = '\0';
 
-    ObjString* result = takeString(chars,length);
+    //interning the characters
+    chars = (char*)m_intern.intern(chars,length,false);
+    ObjString* result = allocateString(chars,length);
     stackPush(makeObject(result));
 }
 
@@ -65,7 +67,7 @@ bool isFalsey(Value value) {
 
 INTERPRET_RESULT VirtualMachine::interpret(const char *source) {
 
-  Compiler compiler;
+  Compiler compiler(&m_intern);
 
   if (!compiler.compile(source, m_logger)) {
     return INTERPRET_RESULT::INTERPRET_COMPILE_ERROR;

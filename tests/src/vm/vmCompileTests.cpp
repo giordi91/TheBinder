@@ -2,12 +2,13 @@
 #include "binder/log/consoleLog.h"
 #include "binder/vm/compiler.h"
 #include "binder/vm/object.h"
+#include "binder/memory/stringIntern.h"
 
 #include "../catch.h"
 
 class SetupVmParserTestFixture {
 public:
-  SetupVmParserTestFixture() {}
+  SetupVmParserTestFixture():intern(1024),compiler(&intern) {}
   ~SetupVmParserTestFixture() { binder::vm::freeAllocations(); }
   const binder::vm::Chunk *compile(const char *source, bool debug = false) {
     result = compiler.compile(source, &m_log);
@@ -44,6 +45,8 @@ public:
 protected:
   binder::log::BufferedLog m_log;
   binder::log::ConsoleLog m_debugLog;
+  binder::memory::StringIntern intern;
+
   binder::vm::Compiler compiler;
   const binder::vm::Chunk *chunk;
   bool result;

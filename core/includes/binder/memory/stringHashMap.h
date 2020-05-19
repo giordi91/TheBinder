@@ -67,7 +67,8 @@ public:
   [[nodiscard]] bool containsKey(const char *key) const {
 
     uint32_t bin = 0;
-    const bool isKeyFound = getBin(key, bin);
+    uint32_t keyLen = strlen(key);
+    const bool isKeyFound = getBin(key,keyLen, bin);
     const uint32_t meta = getMetadata(bin);
     return isKeyFound &
            (m_keys[bin] != nullptr &&
@@ -82,14 +83,22 @@ public:
 
   inline bool get(const char *key, VALUE &value) const {
     uint32_t bin = 0;
-    const bool result = getBin(key, bin);
+    uint32_t keyLen = strlen(key);
+    const bool result = getBin(key,keyLen, bin);
+    value = m_values[bin];
+    return result;
+  }
+  inline bool get(const char *key,uint32_t keyLen, VALUE &value) const {
+    uint32_t bin = 0;
+    const bool result = getBin(key, keyLen, bin);
     value = m_values[bin];
     return result;
   }
 
   inline bool remove(const char *key) {
     uint32_t bin = 0;
-    const bool result = getBin(key, bin);
+    uint32_t keyLen = strlen(key);
+    const bool result = getBin(key,keyLen, bin);
     const uint32_t meta = getMetadata(bin);
     assert(meta == static_cast<uint32_t>(BIN_FLAGS::USED));
     if (result) {
@@ -139,7 +148,11 @@ private:
   enum class BIN_FLAGS { NONE = 0, FREE = 1, DELETED = 2, USED = 3 };
 
   bool getBin(const char *key, uint32_t &bin) const {
-    const uint32_t computedHash = hashString32(key);
+    uint32_t len=  strlen(key);
+    return getBin(key,len,bin);
+  }
+  bool getBin(const char *key,uint32_t keyLen, uint32_t &bin) const {
+    const uint32_t computedHash = hashString32(key,keyLen);
     bin = computedHash % m_bins;
     const uint32_t startBin = bin;
 
@@ -148,7 +161,7 @@ private:
     while (go) {
       const uint32_t meta = getMetadata(bin);
       const bool isKeyTheSame =
-          m_keys[bin] != nullptr && strcmp(key, m_keys[bin]) == 0;
+          m_keys[bin] != nullptr && strncmp(key, m_keys[bin],keyLen) == 0;
       const bool isBinUsed = meta == static_cast<uint32_t>(BIN_FLAGS::USED);
       if (isKeyTheSame & isBinUsed) {
         break;

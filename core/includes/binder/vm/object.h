@@ -31,6 +31,7 @@ extern sObj* allocations;
 void freeAllocations();
 sObjString *takeString(char* chars, int length);
 sObjString *copyString(const char *chars, int length);
+sObjString *allocateString(const char *chars, int length); 
 void printObject(Value *value, log::Log* logger);
 
 } // namespace vm

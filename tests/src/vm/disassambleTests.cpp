@@ -1,6 +1,7 @@
 #include "binder/log/bufferLog.h"
 #include "binder/vm/compiler.h"
 #include "binder/vm/debug.h"
+#include "binder/memory/stringIntern.h"
 
 #include "../catch.h"
 
@@ -86,7 +87,9 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "binary disassamble",
 TEST_CASE_METHOD(SetupDisassamblerTestFixture, "temp", "[disassambler]") {
 
   const char *source = "1 + 2 * 4";
-  binder::vm::Compiler comp;
+
+  binder::memory::StringIntern intern(1024);
+  binder::vm::Compiler comp(&intern);
   bool result= comp.compile(source, &m_log);
   REQUIRE(result == true);
   const binder::vm::Chunk* chunk= comp.getCompiledChunk();

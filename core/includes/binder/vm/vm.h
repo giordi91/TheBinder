@@ -1,5 +1,6 @@
 #pragma once
 #include "binder/vm/chunk.h"
+#include "binder/memory/stringIntern.h"
 
 namespace binder {
 
@@ -19,10 +20,11 @@ enum INTERPRET_RESULT {
 
 class VirtualMachine {
 public:
-  VirtualMachine(log::Log *logger) : m_logger(logger) {}
+  //TODO fix initial bucket and have hash map that can resize
+  VirtualMachine(log::Log *logger) : m_logger(logger), m_intern(1024) {}
 #ifdef DEBUG_TRACE_EXECUTION
   VirtualMachine(log::Log *logger, log::Log *debugLogger)
-      : m_logger(logger), m_debugLogger(debugLogger) {}
+      : m_logger(logger), m_intern(1024), m_debugLogger(debugLogger) {}
 #endif
   ~VirtualMachine();
 
@@ -56,6 +58,8 @@ private:
   log::Log *m_logger;
   const Chunk *m_chunk;
   uint8_t *m_ip;
+  memory::StringIntern m_intern;
+
 
 #ifdef DEBUG_TRACE_EXECUTION
   log::Log *m_debugLogger = nullptr;
