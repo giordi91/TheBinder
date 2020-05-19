@@ -24,7 +24,7 @@ public:
   VirtualMachine(log::Log *logger, log::Log *debugLogger)
       : m_logger(logger), m_debugLogger(debugLogger) {}
 #endif
-  ~VirtualMachine() = default;
+  ~VirtualMachine();
 
   void init();
   void shutdown(){};

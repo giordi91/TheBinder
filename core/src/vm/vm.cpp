@@ -21,6 +21,9 @@ namespace binder::vm {
   } while (false)
 
 void VirtualMachine::init() { resetStack(); }
+VirtualMachine::~VirtualMachine(){
+    freeAllocations();
+}
 
 void VirtualMachine::stackPush(Value value) {
   *m_stackTop = value;

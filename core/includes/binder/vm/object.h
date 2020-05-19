@@ -17,6 +17,7 @@ enum class OBJ_TYPE { OBJ_STRING };
 
 struct sObj {
   OBJ_TYPE type;
+  sObj* next;
 };
 
 struct sObjString {
@@ -25,6 +26,9 @@ struct sObjString {
   char *chars;
 };
 
+extern sObj* allocations;
+
+void freeAllocations();
 sObjString *takeString(char* chars, int length);
 sObjString *copyString(const char *chars, int length);
 void printObject(Value *value, log::Log* logger);

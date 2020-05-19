@@ -1,23 +1,53 @@
-#include "binder/vm/memory.h"
 #include "binder/log/log.h"
+#include "binder/vm/memory.h"
 #include "binder/vm/object.h"
 #include "binder/vm/value.h"
 
 namespace binder ::vm {
 
-#define ALLOCATE(type, count)                                                  \
-  (type *)reallocate(nullptr, 0, sizeof(type) * (count))
+sObj *allocations = nullptr;
+
 #define ALLOCATE_OBJ(type, objectType)                                         \
-  (type *)allocateObject(sizeof(type), objectType)
-
-
+  (type *)allocateObject(sizeof(type), objectType);
 
 sObj *allocateObject(size_t size, OBJ_TYPE type) {
   sObj *object = (sObj *)reallocate(nullptr, 0, size);
+  if (allocations == nullptr) {
+    allocations = object;
+    object->next = nullptr;
+  } else {
+    object->next = allocations;
+    allocations = object;
+  }
+
   object->type = type;
   return object;
 }
 
+void freeObject(sObj *object) {
+  switch (object->type) {
+  case OBJ_TYPE::OBJ_STRING: {
+    sObjString *str = (sObjString *)object;
+    FREE_ARRAY(char, str->chars, str->length + 1);
+    FREE(sObjString, object);
+    break;
+  }
+  }
+}
+
+void freeAllocations() {
+  if (allocations == nullptr) {
+
+    return;
+  }
+
+  sObj *obj = allocations;
+  while (obj != nullptr) {
+    sObj *next = obj->next;
+    freeObject(obj);
+  }
+  allocations = nullptr;
+}
 
 sObjString *allocateString(char *chars, int length) {
   sObjString *string = ALLOCATE_OBJ(sObjString, OBJ_TYPE::OBJ_STRING);
@@ -26,11 +56,10 @@ sObjString *allocateString(char *chars, int length) {
   return string;
 }
 
-sObjString *takeString(char* chars, int length)
-{
-    //here we take ownership of the chars, they have been already copied to
-    //memory we can own
-    return allocateString(chars,length);
+sObjString *takeString(char *chars, int length) {
+  // here we take ownership of the chars, they have been already copied to
+  // memory we can own
+  return allocateString(chars, length);
 }
 
 sObjString *copyString(const char *chars, int length) {

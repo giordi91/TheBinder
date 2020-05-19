@@ -8,6 +8,7 @@
 class SetupVmParserTestFixture {
 public:
   SetupVmParserTestFixture() {}
+  ~SetupVmParserTestFixture() { binder::vm::freeAllocations(); }
   const binder::vm::Chunk *compile(const char *source, bool debug = false) {
     result = compiler.compile(source, &m_log);
 
@@ -31,13 +32,13 @@ public:
     REQUIRE(chunk->m_code[offset] == idx);
     REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
   }
-  void compareConstant(uint32_t offset, int idx, const char* toCompare) {
+  void compareConstant(uint32_t offset, int idx, const char *toCompare) {
     REQUIRE(chunk->m_code[offset] == idx);
-    //REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
+    // REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
     binder::vm::Value value = chunk->m_constants[idx];
     REQUIRE(binder::vm::isValueObj(value));
     REQUIRE(binder::vm::isObjType(value, binder::vm::OBJ_TYPE::OBJ_STRING));
-    REQUIRE(strcmp(binder::vm::valueAsCString(value),toCompare)==0);
+    REQUIRE(strcmp(binder::vm::valueAsCString(value), toCompare) == 0);
   }
 
 protected:
@@ -147,7 +148,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm expression error 1",
                  "[vm-parser]") {
   const char *source = "1 ** 1;";
   auto *chunk = compile(source, false);
-  //check for failure
+  // check for failure
   REQUIRE(chunk == nullptr);
   REQUIRE(result == false);
 }
@@ -156,16 +157,15 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm expression error 2",
                  "[vm-parser]") {
   const char *source = "(1 ** 1;";
   auto *chunk = compile(source, false);
-  //check for failure
+  // check for failure
   REQUIRE(chunk == nullptr);
   REQUIRE(result == false);
 }
 
-TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic string",
-                 "[vm-parser]") {
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic string", "[vm-parser]") {
   const char *source = "\"hello world\"";
   auto *chunk = compile(source, false);
-  //check for failure
+  // check for failure
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 3);
@@ -173,20 +173,17 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic string",
   compareConstant(1, 0, "hello world");
   compareInstruction(2, binder::vm::OP_CODE::OP_RETURN);
 
-
   /*
     == debug ==
     0000    0 OP_CONSTANT         0 'hello world
     0002    | OP_RETURN
   */
-
 }
 
-TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp",
-                 "[vm-parser]") {
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp", "[vm-parser]") {
   const char *source = "\"hello world\" == \"hello world\"";
   auto *chunk = compile(source, false);
-  //check for failure
+  // check for failure
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 6);
@@ -197,7 +194,6 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp",
   compareInstruction(4, binder::vm::OP_CODE::OP_EQUAL);
   compareInstruction(5, binder::vm::OP_CODE::OP_RETURN);
 
-
   /*
     == debug ==
     0000    0 OP_CONSTANT         0 'hello world
@@ -205,14 +201,12 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp",
     0004    | OP_EQUAL
     0005    | OP_RETURN
   */
-
 }
 
-TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp  false",
-                 "[vm-parser]") {
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp  false", "[vm-parser]") {
   const char *source = "\"hello world\" != \"hello world\"";
   auto *chunk = compile(source, false);
-  //check for failure
+  // check for failure
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 7);
@@ -229,7 +223,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str concatenation",
                  "[vm-parser]") {
   const char *source = "\"hello \" + \"world\"";
   auto *chunk = compile(source, false);
-  //check for failure
+  // check for failure
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 6);
@@ -240,4 +234,3 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str concatenation",
   compareInstruction(4, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(5, binder::vm::OP_CODE::OP_RETURN);
 }
-
