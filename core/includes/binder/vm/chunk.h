@@ -14,6 +14,7 @@ enum class OP_CODE {
   //the literal instead we use a dedicated instruction
   OP_TRUE,
   OP_FALSE,
+  OP_POP,
   OP_EQUAL,
   OP_GREATER,
   OP_LESS,
@@ -23,6 +24,7 @@ enum class OP_CODE {
   OP_DIVIDE,
   OP_NOT,
   OP_NEGATE,
+  OP_PRINT,
   OP_RETURN,
 };
 

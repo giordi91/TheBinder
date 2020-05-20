@@ -86,7 +86,7 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "binary disassamble",
 
 TEST_CASE_METHOD(SetupDisassamblerTestFixture, "temp", "[disassambler]") {
 
-  const char *source = "1 + 2 * 4";
+  const char *source = "1 + 2 * 4;";
 
   binder::memory::StringIntern intern(1024);
   binder::vm::Compiler comp(&intern);
@@ -102,7 +102,8 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "temp", "[disassambler]") {
                  "0004    | OP_CONSTANT         2 '4\n"
                  "0006    | OP_MULTIPLY\n"
                  "0007    | OP_ADD\n"
-                 "0008    | OP_RETURN\n",
+                 "0008    | OP_POP\n"
+                 "0009    | OP_RETURN\n",
                  buff) == 0);
 
   /*
@@ -112,6 +113,7 @@ TEST_CASE_METHOD(SetupDisassamblerTestFixture, "temp", "[disassambler]") {
   0004    | OP_CONSTANT         2 '4
   0006    | OP_MULTIPLY
   0007    | OP_ADD
-  0008    | OP_RETURN
+  0008    | OP_POP
+  0009    | OP_RETURN
   */
 }

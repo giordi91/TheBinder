@@ -1,9 +1,9 @@
 #include "binder/log/log.h"
 #include "binder/vm/compiler.h"
 #include "binder/vm/debug.h"
+#include "binder/vm/memory.h"
 #include "binder/vm/value.h"
 #include "binder/vm/vm.h"
-#include "binder/vm/memory.h"
 
 namespace binder::vm {
 
@@ -21,9 +21,7 @@ namespace binder::vm {
   } while (false)
 
 void VirtualMachine::init() { resetStack(); }
-VirtualMachine::~VirtualMachine(){
-    freeAllocations();
-}
+VirtualMachine::~VirtualMachine() { freeAllocations(); }
 
 void VirtualMachine::stackPush(Value value) {
   *m_stackTop = value;
@@ -35,21 +33,20 @@ Value VirtualMachine::stackPop() {
   return *m_stackTop;
 }
 
-void VirtualMachine::concatenate()
-{
-    ObjString*  b = valueAsString(stackPop());
-    ObjString*  a = valueAsString(stackPop());
+void VirtualMachine::concatenate() {
+  ObjString *b = valueAsString(stackPop());
+  ObjString *a = valueAsString(stackPop());
 
-    int length = a->length + b->length;
-    char* chars =  ALLOCATE(char, length +1);
-    memcpy(chars, a->chars, a->length);
-    memcpy(chars + a->length , b->chars, b->length);
-    chars[length] = '\0';
+  int length = a->length + b->length;
+  char *chars = ALLOCATE(char, length + 1);
+  memcpy(chars, a->chars, a->length);
+  memcpy(chars + a->length, b->chars, b->length);
+  chars[length] = '\0';
 
-    //interning the characters
-    chars = (char*)m_intern.intern(chars,length,false);
-    ObjString* result = allocateString(chars,length);
-    stackPush(makeObject(result));
+  // interning the characters
+  chars = (char *)m_intern.intern(chars, length, false);
+  ObjString *result = allocateString(chars, length);
+  stackPush(makeObject(result));
 }
 
 void VirtualMachine::runtimeError(const char *message) {
@@ -103,9 +100,12 @@ INTERPRET_RESULT VirtualMachine::run() {
 
     OP_CODE instruction;
     switch (instruction = static_cast<OP_CODE>(readByte())) {
-    case OP_CODE::OP_RETURN: {
-      printValue(stackPop(), m_logger);
+    case OP_CODE::OP_PRINT: {
+      printValue(stackPop(),m_logger);
       m_logger->print("\n");
+      break;
+    }
+    case OP_CODE::OP_RETURN: {
       return INTERPRET_RESULT::INTERPRET_OK;
     }
     case OP_CODE::OP_CONSTANT: {
@@ -123,6 +123,10 @@ INTERPRET_RESULT VirtualMachine::run() {
     }
     case OP_CODE::OP_FALSE: {
       stackPush(makeBool(false));
+      break;
+    }
+    case OP_CODE::OP_POP: {
+      stackPop();
       break;
     }
     case OP_CODE::OP_EQUAL: {

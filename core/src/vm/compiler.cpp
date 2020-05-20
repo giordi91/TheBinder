@@ -209,6 +209,28 @@ void Compiler::binary() {
 // has higher precedence than assigment
 void Compiler::expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
+void Compiler::declaration() { statement(); }
+void Compiler::statement() {
+  if (match(TOKEN_TYPE::PRINT)) {
+    printStatement();
+  } else {
+    expressionStatement();
+  }
+}
+
+void Compiler::printStatement() {
+  // printing requires an expression and a semicolon, then we print it
+  expression();
+  consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after value.");
+  emitByte(OP_CODE::OP_PRINT);
+}
+
+void Compiler::expressionStatement() {
+  expression();
+  consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after expression");
+  emitByte(OP_CODE::OP_POP);
+}
+
 void Compiler::literal() {
   // since parse precedence already consumed the token, we just need to look
   // into previous and emit the instruction
@@ -230,10 +252,11 @@ void Compiler::literal() {
 
 void Compiler::string() {
 
-  //let us intern the string
+  // let us intern the string
   int len = parser.previous.length - 2;
-  const char* interned = m_intern->intern(parser.previous.start + 1, parser.previous.length - 2);
-  sObjString *obj =allocateString(interned, len);
+  const char *interned =
+      m_intern->intern(parser.previous.start + 1, parser.previous.length - 2);
+  sObjString *obj = allocateString(interned, len);
   Value value = makeObject((sObj *)obj);
   emitConstant(value);
 }
@@ -436,8 +459,11 @@ bool Compiler::compile(const char *source, log::Log *logger) {
   // setupping the pump
   parser.init(&scanner, logger);
   parser.advance();
-  expression();
-  consume(TOKEN_TYPE::END_OF_FILE, "expected end of expression");
+
+  while (!match(TOKEN_TYPE::END_OF_FILE)) {
+    declaration();
+  }
+
   endCompilation(logger);
   bool gotError = parser.getHadError();
   if (gotError) {

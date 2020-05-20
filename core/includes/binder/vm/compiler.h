@@ -1,9 +1,9 @@
 #pragma once
-#include "common.h"
+#include "binder/memory/stringIntern.h"
 #include "binder/tokens.h"
 #include "binder/vm/chunk.h"
 #include "binder/vm/debug.h"
-#include "binder/memory/stringIntern.h"
+#include "common.h"
 
 #include "assert.h"
 #include "stdio.h"
@@ -18,9 +18,9 @@ namespace vm {
 
 struct Chunk;
 
-//TODO we have two token representation, the one here, in the vm is the correct
-//one, the one in the interpreter needs to be changed to not use string directly
-//but pointer + len, not null terminated strings
+// TODO we have two token representation, the one here, in the vm is the correct
+// one, the one in the interpreter needs to be changed to not use string
+// directly but pointer + len, not null terminated strings
 struct Token {
   TOKEN_TYPE type;
   const char *start;
@@ -81,7 +81,7 @@ private:
   }
   TOKEN_TYPE identifierType();
   TOKEN_TYPE checkKeyword(int start, int length, const char *rest,
-                         TOKEN_TYPE type);
+                          TOKEN_TYPE type);
   Token string();
   Token number();
   Token identifier();
@@ -129,7 +129,7 @@ private:
   bool panicMode = false;
 };
 
-enum FunctionId { NULLID, GROUPING, UNARY, BINARY, NUMBER, LITERAL,STRING};
+enum FunctionId { NULLID, GROUPING, UNARY, BINARY, NUMBER, LITERAL, STRING };
 
 enum Precedence {
   PREC_NONE,
@@ -147,17 +147,16 @@ enum Precedence {
 
 class Compiler {
 public:
-  Compiler(memory::StringIntern* intern): m_intern(intern){}
+  Compiler(memory::StringIntern *intern) : m_intern(intern) {}
   bool compile(const char *source, log::Log *logger);
-  const Chunk* getCompiledChunk()const{return m_chunk;};
+  const Chunk *getCompiledChunk() const { return m_chunk; };
 
 private:
   void consume(TOKEN_TYPE type, const char *message) {
     if (parser.current.type == type) {
       parser.advance();
+      return;
     }
-    return;
-
     parser.errorAtCurrent(message);
   }
 
@@ -169,18 +168,14 @@ private:
     assert(m_chunk != nullptr);
     m_chunk->write(byte, parser.previous.line);
   }
-  //we are going to rely on the auto deduction of the template param 
-  //for using this, this should be used mostly for constants and OP_CODES
-  template<typename T, typename P>
-  void emitBytes(T byte, P byte2) const {
+  // we are going to rely on the auto deduction of the template param
+  // for using this, this should be used mostly for constants and OP_CODES
+  template <typename T, typename P> void emitBytes(T byte, P byte2) const {
     emitByte(byte);
     emitByte(byte2);
   }
 
-
-  void endCompilation(log::Log* ) {
-    emitByte(OP_CODE::OP_RETURN);
-  }
+  void endCompilation(log::Log *) { emitByte(OP_CODE::OP_RETURN); }
   // emit instructions
   void parsePrecedence(Precedence precedence);
 
@@ -190,16 +185,31 @@ private:
   void grouping();
   void unary();
   void binary();
-  void expression();
   void literal();
   void string();
 
+  //statements
+  void expression();
+  void declaration();
+  void statement();
+  void printStatement();
+  void expressionStatement();
+
   void dispatchFunctionId(FunctionId id);
+
+  bool match(TOKEN_TYPE type) {
+    if (!check(type))
+      return false;
+    parser.advance();
+    return true;
+  }
+
+  bool check(TOKEN_TYPE type) const { return parser.current.type == type; }
 
 private:
   Scanner scanner;
   Parser parser;
-  memory::StringIntern* m_intern;
+  memory::StringIntern *m_intern;
   Chunk *m_chunk = nullptr;
 };
 

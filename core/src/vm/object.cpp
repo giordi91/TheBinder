@@ -27,7 +27,6 @@ sObj *allocateObject(size_t size, OBJ_TYPE type) {
 void freeObject(sObj *object) {
   switch (object->type) {
   case OBJ_TYPE::OBJ_STRING: {
-    sObjString *str = (sObjString *)object;
     //string is interned, meaning won't be freed here but from the vm
     FREE(sObjString, object);
     break;

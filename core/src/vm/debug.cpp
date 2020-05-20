@@ -50,6 +50,8 @@ int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger) {
     return simpleInstruction("OP_NIL", offset, logger);
   case OP_CODE::OP_FALSE:
     return simpleInstruction("OP_FALSE", offset, logger);
+  case OP_CODE::OP_POP:
+    return simpleInstruction("OP_POP", offset, logger);
   case OP_CODE::OP_EQUAL:
     return simpleInstruction("OP_EQUAL", offset, logger);
   case OP_CODE::OP_GREATER:
@@ -68,6 +70,8 @@ int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger) {
     return simpleInstruction("OP_DIVIDE", offset, logger);
   case OP_CODE::OP_NEGATE:
     return simpleInstruction("OP_NEGATE", offset, logger);
+  case OP_CODE::OP_PRINT:
+    return simpleInstruction("OP_PRINT", offset, logger);
   case OP_CODE::OP_RETURN:
     return simpleInstruction("OP_RETURN", offset, logger);
   default:

@@ -41,6 +41,10 @@ public:
     REQUIRE(binder::vm::isObjType(value, binder::vm::OBJ_TYPE::OBJ_STRING));
     REQUIRE(strcmp(binder::vm::valueAsCString(value), toCompare) == 0);
   }
+  void printOutput()
+  {
+      printf("%s\n",m_log.getBuffer());
+  }
 
 protected:
   binder::log::BufferedLog m_log;
@@ -52,17 +56,26 @@ protected:
   bool result;
 };
 
+//NOTE simple expression will have a pop after evaluating, a statement should
+//be stack neutral when it comes to push and pop,after a statement execution we should
+//be back at the same stack status. if for example we have a multiply we push
+//two constants, multiply which pops two and push the result, finally 
+//end of statement we pop, removing the result we pushed on the stack
+
+
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic number parse",
                  "[vm-parser]") {
 
-  const char *source = "12345.5";
+  const char *source = "12345.5;";
   auto *chunk = compile(source, false);
   // op const + constant + op return
-  REQUIRE(chunk->m_code.size() == 3);
+  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk->m_code.size() == 4);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   // should be the first constant in there
   compareConstant(1, 0, 12345.5);
-  compareInstruction(2, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(2, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
   delete chunk;
 }
 
@@ -71,7 +84,8 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic multiply", "[vm-parser]") {
   const char *source = "77 *323.2;";
   auto *chunk = compile(source, false);
   // op const + constant + op return
-  REQUIRE(chunk->m_code.size() == 6);
+  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk->m_code.size() == 7);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, 77);
 
@@ -79,7 +93,8 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic multiply", "[vm-parser]") {
   compareConstant(3, 1, 323.2);
 
   compareInstruction(4, binder::vm::OP_CODE::OP_MULTIPLY);
-  compareInstruction(5, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(5, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
   delete chunk;
 }
 
@@ -88,20 +103,23 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm unary precedence",
 
   const char *source = "-1+ 5;";
   auto *chunk = compile(source, false);
-  REQUIRE(chunk->m_code.size() == 7);
+  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk->m_code.size() == 8);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, 1);
   compareInstruction(2, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(3, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(4, 1, 5);
   compareInstruction(5, binder::vm::OP_CODE::OP_ADD);
-  compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(6, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(7, binder::vm::OP_CODE::OP_RETURN);
 }
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1", "[vm-parser]") {
   const char *source = "(144.4*3.14)+12;";
   auto *chunk = compile(source, false);
-  REQUIRE(chunk->m_code.size() == 9);
+  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk->m_code.size() == 10);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, 144.4);
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
@@ -110,14 +128,16 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1", "[vm-parser]") {
   compareInstruction(5, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(6, 2, 12);
   compareInstruction(7, binder::vm::OP_CODE::OP_ADD);
-  compareInstruction(8, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(8, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(9, binder::vm::OP_CODE::OP_RETURN);
 }
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1 no grouping",
                  "[vm-parser]") {
   const char *source = "144.4*3.14+12;";
   auto *chunk = compile(source, false);
-  REQUIRE(chunk->m_code.size() == 9);
+  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk->m_code.size() == 10);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, 144.4);
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
@@ -126,13 +146,15 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1 no grouping",
   compareInstruction(5, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(6, 2, 12);
   compareInstruction(7, binder::vm::OP_CODE::OP_ADD);
-  compareInstruction(8, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(8, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(9, binder::vm::OP_CODE::OP_RETURN);
 }
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 2", "[vm-parser]") {
   const char *source = "(-1*3.14)+(--13);";
   auto *chunk = compile(source, false);
-  REQUIRE(chunk->m_code.size() == 12);
+  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk->m_code.size() == 13);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, 1);
   compareInstruction(2, binder::vm::OP_CODE::OP_NEGATE);
@@ -144,7 +166,8 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 2", "[vm-parser]") {
   compareInstruction(8, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(9, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(10, binder::vm::OP_CODE::OP_ADD);
-  compareInstruction(11, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(11, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(12, binder::vm::OP_CODE::OP_RETURN);
 }
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm expression error 1",
@@ -166,15 +189,16 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm expression error 2",
 }
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic string", "[vm-parser]") {
-  const char *source = "\"hello world\"";
+  const char *source = "\"hello world\";";
   auto *chunk = compile(source, false);
   // check for failure
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
-  REQUIRE(chunk->m_code.size() == 3);
+  REQUIRE(chunk->m_code.size() == 4);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, "hello world");
-  compareInstruction(2, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(2, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
 
   /*
     == debug ==
@@ -184,18 +208,19 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic string", "[vm-parser]") {
 }
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp", "[vm-parser]") {
-  const char *source = "\"hello world\" == \"hello world\"";
+  const char *source = "\"hello world\" == \"hello world\";";
   auto *chunk = compile(source, false);
   // check for failure
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
-  REQUIRE(chunk->m_code.size() == 6);
+  REQUIRE(chunk->m_code.size() == 7);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, "hello world");
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(3, 1, "hello world");
   compareInstruction(4, binder::vm::OP_CODE::OP_EQUAL);
-  compareInstruction(5, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(5, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
 
   /*
     == debug ==
@@ -207,33 +232,35 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp", "[vm-parser]") {
 }
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp  false", "[vm-parser]") {
-  const char *source = "\"hello world\" != \"hello world\"";
+  const char *source = "\"hello world\" != \"hello world\";";
   auto *chunk = compile(source, false);
   // check for failure
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
-  REQUIRE(chunk->m_code.size() == 7);
+  REQUIRE(chunk->m_code.size() == 8);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, "hello world");
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(3, 1, "hello world");
   compareInstruction(4, binder::vm::OP_CODE::OP_EQUAL);
   compareInstruction(5, binder::vm::OP_CODE::OP_NOT);
-  compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(6, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(7, binder::vm::OP_CODE::OP_RETURN);
 }
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str concatenation",
                  "[vm-parser]") {
-  const char *source = "\"hello \" + \"world\"";
+  const char *source = "\"hello \" + \"world\";";
   auto *chunk = compile(source, false);
   // check for failure
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
-  REQUIRE(chunk->m_code.size() == 6);
+  REQUIRE(chunk->m_code.size() == 7);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, "hello ");
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(3, 1, "world");
   compareInstruction(4, binder::vm::OP_CODE::OP_ADD);
-  compareInstruction(5, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(5, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
 }
