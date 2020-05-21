@@ -129,7 +129,16 @@ private:
   bool panicMode = false;
 };
 
-enum FunctionId { NULLID, GROUPING, UNARY, BINARY, NUMBER, LITERAL, STRING };
+enum FunctionId {
+  NULLID,
+  GROUPING,
+  UNARY,
+  BINARY,
+  NUMBER,
+  LITERAL,
+  STRING,
+  VARIABLE
+};
 
 enum Precedence {
   PREC_NONE,
@@ -187,10 +196,16 @@ private:
   void binary();
   void literal();
   void string();
+  void variable();
+  void namedVariable(const Token& token);
 
-  //statements
+  // statements
   void expression();
   void declaration();
+  void varDeclaration();
+  uint8_t parseVariable(const char *error);
+  uint8_t identifierConstant(const Token *token);
+  void defineVariable(uint8_t globalId);
   void statement();
   void printStatement();
   void expressionStatement();

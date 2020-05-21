@@ -1,20 +1,20 @@
 #include "binder/log/bufferLog.h"
 #include "binder/log/consoleLog.h"
+#include "binder/memory/stringIntern.h"
 #include "binder/vm/compiler.h"
 #include "binder/vm/object.h"
-#include "binder/memory/stringIntern.h"
 
 #include "../catch.h"
 
 class SetupVmParserTestFixture {
 public:
-  SetupVmParserTestFixture():intern(1024),compiler(&intern) {}
+  SetupVmParserTestFixture() : intern(1024), compiler(&intern) {}
   ~SetupVmParserTestFixture() { binder::vm::freeAllocations(); }
   const binder::vm::Chunk *compile(const char *source, bool debug = false) {
     result = compiler.compile(source, &m_log);
 
     chunk = compiler.getCompiledChunk();
-    if (debug) {
+    if (debug && chunk != nullptr) {
       binder::vm::disassambleChunk(chunk, "debug", &m_debugLog);
     }
 
@@ -33,6 +33,11 @@ public:
     REQUIRE(chunk->m_code[offset] == idx);
     REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
   }
+
+  void compareConstant(uint32_t offset, int idx, bool value) {
+    REQUIRE(chunk->m_code[offset] == idx);
+    REQUIRE(chunk->m_constants[idx].as.boolean == value);
+  }
   void compareConstant(uint32_t offset, int idx, const char *toCompare) {
     REQUIRE(chunk->m_code[offset] == idx);
     // REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
@@ -41,10 +46,7 @@ public:
     REQUIRE(binder::vm::isObjType(value, binder::vm::OBJ_TYPE::OBJ_STRING));
     REQUIRE(strcmp(binder::vm::valueAsCString(value), toCompare) == 0);
   }
-  void printOutput()
-  {
-      printf("%s\n",m_log.getBuffer());
-  }
+  void printOutput() { printf("%s\n", m_log.getBuffer()); }
 
 protected:
   binder::log::BufferedLog m_log;
@@ -56,12 +58,11 @@ protected:
   bool result;
 };
 
-//NOTE simple expression will have a pop after evaluating, a statement should
-//be stack neutral when it comes to push and pop,after a statement execution we should
-//be back at the same stack status. if for example we have a multiply we push
-//two constants, multiply which pops two and push the result, finally 
-//end of statement we pop, removing the result we pushed on the stack
-
+// NOTE simple expression will have a pop after evaluating, a statement should
+// be stack neutral when it comes to push and pop,after a statement execution we
+// should be back at the same stack status. if for example we have a multiply we
+// push two constants, multiply which pops two and push the result, finally end
+// of statement we pop, removing the result we pushed on the stack
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic number parse",
                  "[vm-parser]") {
@@ -69,7 +70,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic number parse",
   const char *source = "12345.5;";
   auto *chunk = compile(source, false);
   // op const + constant + op return
-  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 4);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   // should be the first constant in there
@@ -84,10 +85,10 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic multiply", "[vm-parser]") {
   const char *source = "77 *323.2;";
   auto *chunk = compile(source, false);
   // op const + constant + op return
-  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 7);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, 77);
+  compareConstant(1, 0, 77.0);
 
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(3, 1, 323.2);
@@ -103,13 +104,13 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm unary precedence",
 
   const char *source = "-1+ 5;";
   auto *chunk = compile(source, false);
-  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 8);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, 1);
+  compareConstant(1, 0, 1.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(3, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(4, 1, 5);
+  compareConstant(4, 1, 5.0);
   compareInstruction(5, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(6, binder::vm::OP_CODE::OP_POP);
   compareInstruction(7, binder::vm::OP_CODE::OP_RETURN);
@@ -118,7 +119,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm unary precedence",
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1", "[vm-parser]") {
   const char *source = "(144.4*3.14)+12;";
   auto *chunk = compile(source, false);
-  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 10);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, 144.4);
@@ -126,7 +127,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1", "[vm-parser]") {
   compareConstant(3, 1, 3.14);
   compareInstruction(4, binder::vm::OP_CODE::OP_MULTIPLY);
   compareInstruction(5, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(6, 2, 12);
+  compareConstant(6, 2, 12.0);
   compareInstruction(7, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(8, binder::vm::OP_CODE::OP_POP);
   compareInstruction(9, binder::vm::OP_CODE::OP_RETURN);
@@ -136,7 +137,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1 no grouping",
                  "[vm-parser]") {
   const char *source = "144.4*3.14+12;";
   auto *chunk = compile(source, false);
-  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 10);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 0, 144.4);
@@ -144,7 +145,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1 no grouping",
   compareConstant(3, 1, 3.14);
   compareInstruction(4, binder::vm::OP_CODE::OP_MULTIPLY);
   compareInstruction(5, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(6, 2, 12);
+  compareConstant(6, 2, 12.0);
   compareInstruction(7, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(8, binder::vm::OP_CODE::OP_POP);
   compareInstruction(9, binder::vm::OP_CODE::OP_RETURN);
@@ -153,16 +154,16 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1 no grouping",
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 2", "[vm-parser]") {
   const char *source = "(-1*3.14)+(--13);";
   auto *chunk = compile(source, false);
-  REQUIRE(chunk!=nullptr);
+  REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 13);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, 1);
+  compareConstant(1, 0, 1.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(3, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(4, 1, 3.14);
   compareInstruction(5, binder::vm::OP_CODE::OP_MULTIPLY);
   compareInstruction(6, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(7, 2, 13);
+  compareConstant(7, 2, 13.0);
   compareInstruction(8, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(9, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(10, binder::vm::OP_CODE::OP_ADD);
@@ -263,4 +264,129 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str concatenation",
   compareInstruction(4, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(5, binder::vm::OP_CODE::OP_POP);
   compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global empty",
+                 "[vm-parser]") {
+  const char *source = "var test;";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 4);
+  // first the value of the variable is put on the stack, in this case nil
+  compareInstruction(0, binder::vm::OP_CODE::OP_NIL);
+  // then we have a global definition, which behaves as a constant,
+  // first the opcode then the uin8_t pointing to where it is stored
+  compareInstruction(1, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(2, 0, "test");
+  compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
+
+  /*
+== debug ==
+0000    0 OP_NIL
+0001    | OP_DEFINE_GLOBAL    0 'test
+0003    | OP_RETURN
+   */
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global string",
+                 "[vm-parser]") {
+  const char *source = "var myVar = \"my first var\";";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 5);
+
+  // first the value of the variable is put on the stack, in this case nil
+  // to not that the during the paring the variable name is set first on the
+  // stack hence the 1 index of "my first var"
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, "my first var");
+  // then we have a global definition, which behaves as a constant,
+  // first the opcode then the uin8_t pointing to where it is stored
+  compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(3, 0, "myVar");
+  compareInstruction(4, binder::vm::OP_CODE::OP_RETURN);
+
+  /*
+  == debug ==
+  0000    0 OP_CONSTANT         1 'my first var
+  0002    | OP_DEFINE_GLOBAL    0 'myVar
+  0004    | OP_RETURN
+  */
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global int",
+                 "[vm-parser]") {
+  const char *source = "var myVar = 10;";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 5);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 10.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(3, 0, "myVar");
+  compareInstruction(4, binder::vm::OP_CODE::OP_RETURN);
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global bool",
+                 "[vm-parser]") {
+  const char *source = "var myVar = false;";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 4);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_FALSE);
+  compareInstruction(1, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(2, 0, "myVar");
+  compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global bool 2",
+                 "[vm-parser]") {
+  const char *source = "var myVar = true;";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 4);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_TRUE);
+  compareInstruction(1, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(2, 0, "myVar");
+  compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm get global", "[vm-parser]") {
+  const char *source = "var myVar = 10;\n print myVar;";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 8);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 10.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(3, 0, "myVar");
+  compareInstruction(4, binder::vm::OP_CODE::OP_GET_GLOBAL);
+  compareConstant(5, 2, "myVar");
+  compareInstruction(6, binder::vm::OP_CODE::OP_PRINT);
+  compareInstruction(7, binder::vm::OP_CODE::OP_RETURN);
+
+  /*
+  == debug ==
+  0000    0 OP_CONSTANT         1 '10
+  0002    | OP_DEFINE_GLOBAL    0 'myVar
+  0004    1 OP_GET_GLOBAL       2 'myVar
+  0006    | OP_PRINT
+  0007    | OP_RETURN
+  */
 }

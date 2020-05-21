@@ -1,6 +1,7 @@
 #pragma once
-#include "binder/vm/chunk.h"
 #include "binder/memory/stringIntern.h"
+#include "binder/vm/chunk.h"
+#include "binder/vm/value.h"
 
 namespace binder {
 
@@ -21,10 +22,10 @@ enum INTERPRET_RESULT {
 class VirtualMachine {
 public:
   //TODO fix initial bucket and have hash map that can resize
-  VirtualMachine(log::Log *logger) : m_logger(logger), m_intern(1024) {}
+  VirtualMachine(log::Log *logger) : m_logger(logger), m_intern(1024),m_globals(1024) {}
 #ifdef DEBUG_TRACE_EXECUTION
   VirtualMachine(log::Log *logger, log::Log *debugLogger)
-      : m_logger(logger), m_intern(1024), m_debugLogger(debugLogger) {}
+      : m_logger(logger), m_intern(1024),m_globals(1024), m_debugLogger(debugLogger) {}
 #endif
   ~VirtualMachine();
 
@@ -46,6 +47,7 @@ private:
   // instructions
   inline uint8_t readByte() { return *m_ip++; }
   inline Value readConstant() { return m_chunk->m_constants[readByte()]; };
+  inline ObjString* readString () { return valueAsString(readConstant());};
   //-1 gives us the first not freevalue and then we subtract the distance
   // since we want to go back in the stack
   inline Value peek(int distance) { return m_stackTop[-1 - distance]; }
@@ -59,6 +61,7 @@ private:
   const Chunk *m_chunk;
   uint8_t *m_ip;
   memory::StringIntern m_intern;
+  memory::HashMap<const char *, Value, hashString32> m_globals;
 
 
 #ifdef DEBUG_TRACE_EXECUTION

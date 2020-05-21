@@ -35,7 +35,7 @@ ParseRule rules[] = {
     {NULLID, BINARY, PREC_COMPARISON}, // GREATER_EQUAL
     {NULLID, BINARY, PREC_COMPARISON}, // LESS
     {NULLID, BINARY, PREC_COMPARISON}, // LESS_EQUAL
-    {NULLID, NULLID, PREC_NONE},       // IDENTIFIER
+    {VARIABLE, NULLID, PREC_NONE},     // IDENTIFIER
     {STRING, NULLID, PREC_NONE},       // STRING
     {NUMBER, NULLID, PREC_NONE},       // NUMBER
     {NULLID, NULLID, PREC_NONE},       // AND
@@ -83,6 +83,9 @@ void Compiler::dispatchFunctionId(FunctionId id) {
     break;
   case STRING:
     string();
+    break;
+  case VARIABLE:
+    variable();
     break;
   default:
     assert(false && "unsupported function id for pratt parser");
@@ -209,7 +212,42 @@ void Compiler::binary() {
 // has higher precedence than assigment
 void Compiler::expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
-void Compiler::declaration() { statement(); }
+void Compiler::declaration() {
+  if (match(TOKEN_TYPE::VAR)) {
+    varDeclaration();
+  } else {
+    statement();
+  }
+}
+
+void Compiler::varDeclaration() {
+  uint8_t global = parseVariable("Expected variable name");
+
+  if (match(TOKEN_TYPE::EQUAL)) {
+    expression();
+  } else {
+    emitByte(OP_CODE::OP_NIL);
+  }
+  consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after variabled declaration.");
+  defineVariable(global);
+}
+
+uint8_t Compiler::parseVariable(const char *error) {
+  consume(TOKEN_TYPE::IDENTIFIER, error);
+  return identifierConstant(&parser.previous);
+}
+
+uint8_t Compiler::identifierConstant(const Token *token) {
+  // so here we build the constant, which is allocated as a string into an
+  // object this goes in the constant array, this will allow us to do the look
+  // up easily with an index
+  return makeConstant(makeObject(copyString(token->start, token->length)));
+}
+
+void Compiler::defineVariable(uint8_t globalId) {
+  emitBytes(OP_CODE::OP_DEFINE_GLOBAL, globalId);
+}
+
 void Compiler::statement() {
   if (match(TOKEN_TYPE::PRINT)) {
     printStatement();
@@ -259,6 +297,13 @@ void Compiler::string() {
   sObjString *obj = allocateString(interned, len);
   Value value = makeObject((sObj *)obj);
   emitConstant(value);
+}
+
+void Compiler::variable() { namedVariable(parser.previous); }
+
+void Compiler::namedVariable(const Token &token) {
+  uint8_t arg = identifierConstant(&token);
+  emitBytes(OP_CODE::OP_GET_GLOBAL, arg);
 }
 
 void Scanner::skipWhiteSpace() {
@@ -375,6 +420,16 @@ TOKEN_TYPE Scanner::identifierType() {
     return checkKeyword(1, 5, "eturn", TOKEN_TYPE::RETURN);
   case 's':
     return checkKeyword(1, 4, "uper", TOKEN_TYPE::SUPER);
+  case 't':
+    if (current - start > 1) {
+      switch (start[1]) {
+      case 'h':
+        return checkKeyword(2, 2, "is", TOKEN_TYPE::THIS);
+      case 'r':
+        return checkKeyword(2, 2, "ue", TOKEN_TYPE::BOOL_TRUE);
+      }
+    }
+    break;
   case 'v':
     return checkKeyword(1, 2, "ar", TOKEN_TYPE::VAR);
   case 'w':

@@ -52,6 +52,10 @@ int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger) {
     return simpleInstruction("OP_FALSE", offset, logger);
   case OP_CODE::OP_POP:
     return simpleInstruction("OP_POP", offset, logger);
+  case OP_CODE::OP_DEFINE_GLOBAL:
+    return constantInstruction("OP_DEFINE_GLOBAL", chunk, offset, logger);
+  case OP_CODE::OP_GET_GLOBAL:
+    return constantInstruction("OP_GET_GLOBAL", chunk, offset, logger);
   case OP_CODE::OP_EQUAL:
     return simpleInstruction("OP_EQUAL", offset, logger);
   case OP_CODE::OP_GREATER:

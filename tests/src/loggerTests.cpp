@@ -9,6 +9,7 @@
 
 #include "catch.h"
 
+
 class SetupLoggerTestFixture {
 public:
   SetupLoggerTestFixture()

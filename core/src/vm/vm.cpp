@@ -101,7 +101,7 @@ INTERPRET_RESULT VirtualMachine::run() {
     OP_CODE instruction;
     switch (instruction = static_cast<OP_CODE>(readByte())) {
     case OP_CODE::OP_PRINT: {
-      printValue(stackPop(),m_logger);
+      printValue(stackPop(), m_logger);
       m_logger->print("\n");
       break;
     }
@@ -126,6 +126,33 @@ INTERPRET_RESULT VirtualMachine::run() {
       break;
     }
     case OP_CODE::OP_POP: {
+      stackPop();
+      break;
+    }
+    case OP_CODE::OP_GET_GLOBAL: {
+      //reading the identifier from the 
+      //top of the stack
+      ObjString *name = readString();
+      Value value;
+      //look up the value
+      bool result = m_globals.get(name->chars, value);
+      if (!result) {
+        sprintf(log::tempLogBuffer1,"Undefined variable '%s'.",name->chars);
+        runtimeError(log::tempLogBuffer1);
+        return INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR;
+      }
+
+      // if everything went correctly we can push the looked 
+      // up value on the stack
+      stackPush(value);
+
+      break;
+    }
+
+    case OP_CODE::OP_DEFINE_GLOBAL: {
+
+      sObjString *name = readString();
+      m_globals.insert(name->chars, peek(0));
       stackPop();
       break;
     }
