@@ -364,6 +364,34 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global bool 2",
   compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
 }
 
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global expr 1",
+                 "[vm-parser]") {
+  const char *source = "var init1 = 1 + 2;";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 8);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 1.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(3, 2, 2.0);
+  compareInstruction(4, binder::vm::OP_CODE::OP_ADD);
+  compareInstruction(5, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(6, 0, "init1");
+  compareInstruction(7, binder::vm::OP_CODE::OP_RETURN);
+
+  /*
+== debug ==
+0000    0 OP_CONSTANT         1 '1
+0002    | OP_CONSTANT         2 '2
+0004    | OP_ADD
+0005    | OP_DEFINE_GLOBAL    0 'init1
+0007    | OP_RETURN
+*/
+}
+
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm get global", "[vm-parser]") {
   const char *source = "var myVar = 10;\n print myVar;";
   auto *chunk = compile(source, false);

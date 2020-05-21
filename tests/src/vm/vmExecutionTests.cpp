@@ -135,3 +135,42 @@ TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm add error 4", "[vm-parser]") {
   REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR);
 }
 
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm global var print", "[vm-parser]") {
+
+  const char *source = "var test = 10; print test;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("10\n")==0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm global var expr print", "[vm-parser]") {
+
+  const char *source = "var test = 10 + 5; print test;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("15\n")==0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm global var expr print 2", "[vm-parser]") {
+
+  const char *source = "var test = 10 < 5; print test;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("false\n")==0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm global var expr print 3", "[vm-parser]") {
+
+  const char *source = "var test = 0 == 0; print test;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("true\n")==0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm global var expr print 4", "[vm-parser]") {
+
+  const char *source = "var test = \"hello\"  + \" world\"; print test;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("hello world\n")==0);
+}
