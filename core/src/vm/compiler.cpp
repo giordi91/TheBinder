@@ -115,17 +115,16 @@ void Compiler::parsePrecedence(Precedence precedence) {
     parser.advance();
     // if there is a higher precedence we process as infix
     FunctionId infixRule = getRule(parser.previous.type)->infix;
-    dispatchFunctionId(infixRule,canAssign);
+    dispatchFunctionId(infixRule, canAssign);
   }
 
-  //if we can assign but nothing consumes the = means is an error
-  if(canAssign && match(TOKEN_TYPE::EQUAL))
-  {
-      parser.error("Invalid assigment target.");
+  // if we can assign but nothing consumes the = means is an error
+  if (canAssign && match(TOKEN_TYPE::EQUAL)) {
+    parser.error("Invalid assigment target.");
   }
 }
 
-void Compiler::number(bool ) {
+void Compiler::number(bool) {
   double value = strtod(parser.previous.start, NULL);
   emitConstant(makeNumber(value));
 }
@@ -143,7 +142,7 @@ uint8_t Compiler::makeConstant(Value value) {
   return static_cast<uint8_t>(constant);
 }
 
-void Compiler::grouping(bool ) {
+void Compiler::grouping(bool) {
   expression();
   consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after expression.");
 }
@@ -240,8 +239,54 @@ void Compiler::varDeclaration() {
   defineVariable(global);
 }
 
+void Compiler::addLocal(const Token &token) {
+  if (localPool.localCount == UINT8_COUNT) {
+    parser.error("Too many local variables in function.");
+    return;
+  }
+  //"allocating" a new local
+  Local &local = localPool.locals[localPool.localCount++];
+  // TODO do we need the full token here? ideally we just need the name
+  // and the rest can possibly be separated debug information?
+  local.name = token;
+  local.depth = localPool.scopeDepth;
+}
+
+void Compiler::declareVariable() {
+  // here we declare the existance of local variables,
+  // this only happens outside global scope, so we
+  // get out if we are in global scope
+  if (localPool.scopeDepth == 0)
+    return;
+  const Token &name = parser.previous;
+
+  // here we need to check if the variable has not been declared in the local
+  // scope already
+  for (int i = localPool.localCount - 1; i >= 0; i--) {
+    // keep walking back, if the scope is lower, means we are one scope above
+    // and we should stop
+    const Local &local = localPool.locals[i];
+    if ((local.depth != -1) & (local.depth < localPool.scopeDepth)) {
+      break;
+    }
+
+    if (identifierEqual(name, local.name)) {
+      parser.error("Variable with this name aready declared in this scope.");
+    }
+  }
+
+  addLocal(name);
+}
+
 uint8_t Compiler::parseVariable(const char *error) {
   consume(TOKEN_TYPE::IDENTIFIER, error);
+
+  declareVariable();
+  // so if we have a scope greater than zero it means is not
+  // a global variable, this means we can return a dummy id value
+  if (localPool.scopeDepth > 0)
+    return 0;
+
   return identifierConstant(&parser.previous);
 }
 
@@ -253,15 +298,49 @@ uint8_t Compiler::identifierConstant(const Token *token) {
 }
 
 void Compiler::defineVariable(uint8_t globalId) {
+  // if we are a local variable we don't store anything since local
+  // variables are pushed and popped on the stack at runtime
+  if (localPool.scopeDepth > 0) {
+    return;
+  }
   emitBytes(OP_CODE::OP_DEFINE_GLOBAL, globalId);
 }
 
 void Compiler::statement() {
   if (match(TOKEN_TYPE::PRINT)) {
     printStatement();
+  } else if (match(TOKEN_TYPE::LEFT_BRACE)) {
+    beginScope();
+    block();
+    endScope();
   } else {
     expressionStatement();
   }
+}
+
+void Compiler::beginScope() { localPool.scopeDepth++; }
+void Compiler::endScope() {
+  localPool.scopeDepth--;
+
+  // we need to clean up the scope
+  // we already reduced the scope depth, so everything that 
+  // has higher scope needs to be popped
+  while ((localPool.localCount > 0) &
+         (localPool.locals[localPool.localCount - 1].depth >
+             localPool.scopeDepth)) {
+    //TODO optimization here, we can have a POPN to pop all variables in 
+    //one go without popping then one at the time
+    emitByte(OP_CODE::OP_POP);
+    localPool.localCount--;
+  }
+}
+
+void Compiler::block() {
+  while ((!check(TOKEN_TYPE::RIGHT_BRACE)) &
+         (!check(TOKEN_TYPE::END_OF_FILE))) {
+    declaration();
+  }
+  consume(TOKEN_TYPE::RIGHT_BRACE, "Expected '}' after block.");
 }
 
 void Compiler::printStatement() {
@@ -307,22 +386,21 @@ void Compiler::string(bool) {
   emitConstant(value);
 }
 
-void Compiler::variable(bool canAssign) { namedVariable(parser.previous,canAssign); }
+void Compiler::variable(bool canAssign) {
+  namedVariable(parser.previous, canAssign);
+}
 
 void Compiler::namedVariable(const Token &token, bool canAssign) {
   uint8_t arg = identifierConstant(&token);
 
-  //here we are dealing with a variable, we need to see
-  //if we have a an equal after it, if that is the case
-  //it means we want to set  such variable not get it
-  if(canAssign & match(TOKEN_TYPE::EQUAL))
-  {
-      expression();
-      emitBytes(OP_CODE::OP_SET_GLOBAL, arg);
-  }
-  else
-  {
-      emitBytes(OP_CODE::OP_GET_GLOBAL, arg);
+  // here we are dealing with a variable, we need to see
+  // if we have a an equal after it, if that is the case
+  // it means we want to set  such variable not get it
+  if (canAssign & match(TOKEN_TYPE::EQUAL)) {
+    expression();
+    emitBytes(OP_CODE::OP_SET_GLOBAL, arg);
+  } else {
+    emitBytes(OP_CODE::OP_GET_GLOBAL, arg);
   }
 }
 

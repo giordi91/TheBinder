@@ -154,6 +154,19 @@ enum Precedence {
   PREC_PRIMARY
 };
 
+struct Local {
+  Token name;
+  int depth;
+};
+
+#define UINT8_COUNT (UINT8_MAX + 1)
+
+struct LocalPool {
+  Local locals[UINT8_COUNT];
+  int localCount = 0;
+  int scopeDepth = 0;
+};
+
 class Compiler {
 public:
   Compiler(memory::StringIntern *intern) : m_intern(intern) {}
@@ -197,7 +210,7 @@ private:
   void literal(bool canAssign);
   void string(bool canAssign);
   void variable(bool canAssign);
-  void namedVariable(const Token& token, bool canAssign);
+  void namedVariable(const Token &token, bool canAssign);
 
   // statements
   void expression();
@@ -206,11 +219,28 @@ private:
   uint8_t parseVariable(const char *error);
   uint8_t identifierConstant(const Token *token);
   void defineVariable(uint8_t globalId);
+  void declareVariable();
+  void addLocal(const Token& name);
   void statement();
   void printStatement();
   void expressionStatement();
 
-  void dispatchFunctionId(FunctionId id,bool canAssign);
+  //block
+  void beginScope();
+  void block();
+  void endScope();
+
+  //identifiers
+  bool identifierEqual(const Token& a, const Token& b)const
+  {
+      //first we check the len, and if it is the same then we can
+      //check the actual memory
+      if(a.length != b.length) return false;
+      return memcmp(a.start, b.start, a.length) ==0;
+  }
+
+
+  void dispatchFunctionId(FunctionId id, bool canAssign);
 
   bool match(TOKEN_TYPE type) {
     if (!check(type))
@@ -224,6 +254,7 @@ private:
 private:
   Scanner scanner;
   Parser parser;
+  LocalPool localPool;
   memory::StringIntern *m_intern;
   Chunk *m_chunk = nullptr;
 };
