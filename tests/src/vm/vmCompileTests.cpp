@@ -418,3 +418,43 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm get global", "[vm-parser]") {
   0007    | OP_RETURN
   */
 }
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile assigment edge case",
+                 "[vm-parser]") {
+
+  const char *source = "var breakfast = \"beignets\";\n var beverage = \"cafe "
+                       "au lait\";\nbreakfast = \"beignets with \" + beverage;";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 17);
+
+  //defining the first global variable
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, "beignets");
+  compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(3, 0, "breakfast");
+  
+  //defining the second global variable
+  compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(5, 3, "cafe au lait");
+  compareInstruction(6, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(7, 2, "beverage");
+
+  //now that wehave the twovariables we need to perform the assigment
+  //which is between first a constant
+  compareInstruction(8, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(9, 5, "beignets with ");
+
+  //then the global variable  which we pop on the stack now
+  compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
+  compareConstant(11, 6, "beverage");
+
+  //doing the addition
+  compareInstruction(12, binder::vm::OP_CODE::OP_ADD);
+  compareInstruction(13, binder::vm::OP_CODE::OP_SET_GLOBAL);
+  compareConstant(14, 4, "breakfast");
+  compareInstruction(15, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(16, binder::vm::OP_CODE::OP_RETURN);
+}

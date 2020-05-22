@@ -188,16 +188,16 @@ private:
   // emit instructions
   void parsePrecedence(Precedence precedence);
 
-  void number();
+  void number(bool canAssign);
   void emitConstant(Value value);
   uint8_t makeConstant(Value value);
-  void grouping();
-  void unary();
-  void binary();
-  void literal();
-  void string();
-  void variable();
-  void namedVariable(const Token& token);
+  void grouping(bool canAssign);
+  void unary(bool canAssign);
+  void binary(bool canAssign);
+  void literal(bool canAssign);
+  void string(bool canAssign);
+  void variable(bool canAssign);
+  void namedVariable(const Token& token, bool canAssign);
 
   // statements
   void expression();
@@ -210,7 +210,7 @@ private:
   void printStatement();
   void expressionStatement();
 
-  void dispatchFunctionId(FunctionId id);
+  void dispatchFunctionId(FunctionId id,bool canAssign);
 
   bool match(TOKEN_TYPE type) {
     if (!check(type))

@@ -64,28 +64,28 @@ ParseRule *getRule(TOKEN_TYPE type) { return &rules[static_cast<int>(type)]; }
 // we could have done it with function pointers but would have required a
 // runtime table to do the binding with the instances, this is simpler and
 // should be the same level of indirection
-void Compiler::dispatchFunctionId(FunctionId id) {
+void Compiler::dispatchFunctionId(FunctionId id, bool canAssign) {
   switch (id) {
   case GROUPING:
-    grouping();
+    grouping(canAssign);
     break;
   case UNARY:
-    unary();
+    unary(canAssign);
     break;
   case BINARY:
-    binary();
+    binary(canAssign);
     break;
   case NUMBER:
-    number();
+    number(canAssign);
     break;
   case LITERAL:
-    literal();
+    literal(canAssign);
     break;
   case STRING:
-    string();
+    string(canAssign);
     break;
   case VARIABLE:
-    variable();
+    variable(canAssign);
     break;
   default:
     assert(false && "unsupported function id for pratt parser");
@@ -104,8 +104,10 @@ void Compiler::parsePrecedence(Precedence precedence) {
     return;
   }
 
+  bool canAssign = precedence <= PREC_ASSIGNMENT;
+
   // here we dispatch the prefix rule
-  dispatchFunctionId(prefixRule);
+  dispatchFunctionId(prefixRule, canAssign);
 
   // here we go in a loop where we keep parsing if we have a higher precedence
   while (precedence <= getRule(parser.current.type)->precedence) {
@@ -113,11 +115,17 @@ void Compiler::parsePrecedence(Precedence precedence) {
     parser.advance();
     // if there is a higher precedence we process as infix
     FunctionId infixRule = getRule(parser.previous.type)->infix;
-    dispatchFunctionId(infixRule);
+    dispatchFunctionId(infixRule,canAssign);
+  }
+
+  //if we can assign but nothing consumes the = means is an error
+  if(canAssign && match(TOKEN_TYPE::EQUAL))
+  {
+      parser.error("Invalid assigment target.");
   }
 }
 
-void Compiler::number() {
+void Compiler::number(bool ) {
   double value = strtod(parser.previous.start, NULL);
   emitConstant(makeNumber(value));
 }
@@ -135,12 +143,12 @@ uint8_t Compiler::makeConstant(Value value) {
   return static_cast<uint8_t>(constant);
 }
 
-void Compiler::grouping() {
+void Compiler::grouping(bool ) {
   expression();
   consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after expression.");
 }
 
-void Compiler::unary() {
+void Compiler::unary(bool) {
   TOKEN_TYPE operatorType = parser.previous.type;
 
   // compiler the operand
@@ -160,7 +168,7 @@ void Compiler::unary() {
   }
 }
 
-void Compiler::binary() {
+void Compiler::binary(bool) {
   TOKEN_TYPE operatorType = parser.previous.type;
 
   // compile right operand
@@ -269,7 +277,7 @@ void Compiler::expressionStatement() {
   emitByte(OP_CODE::OP_POP);
 }
 
-void Compiler::literal() {
+void Compiler::literal(bool) {
   // since parse precedence already consumed the token, we just need to look
   // into previous and emit the instruction
   switch (parser.previous.type) {
@@ -288,7 +296,7 @@ void Compiler::literal() {
   }
 }
 
-void Compiler::string() {
+void Compiler::string(bool) {
 
   // let us intern the string
   int len = parser.previous.length - 2;
@@ -299,11 +307,23 @@ void Compiler::string() {
   emitConstant(value);
 }
 
-void Compiler::variable() { namedVariable(parser.previous); }
+void Compiler::variable(bool canAssign) { namedVariable(parser.previous,canAssign); }
 
-void Compiler::namedVariable(const Token &token) {
+void Compiler::namedVariable(const Token &token, bool canAssign) {
   uint8_t arg = identifierConstant(&token);
-  emitBytes(OP_CODE::OP_GET_GLOBAL, arg);
+
+  //here we are dealing with a variable, we need to see
+  //if we have a an equal after it, if that is the case
+  //it means we want to set  such variable not get it
+  if(canAssign & match(TOKEN_TYPE::EQUAL))
+  {
+      expression();
+      emitBytes(OP_CODE::OP_SET_GLOBAL, arg);
+  }
+  else
+  {
+      emitBytes(OP_CODE::OP_GET_GLOBAL, arg);
+  }
 }
 
 void Scanner::skipWhiteSpace() {

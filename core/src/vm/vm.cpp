@@ -130,19 +130,19 @@ INTERPRET_RESULT VirtualMachine::run() {
       break;
     }
     case OP_CODE::OP_GET_GLOBAL: {
-      //reading the identifier from the 
-      //top of the stack
+      // reading the identifier from the
+      // top of the stack
       ObjString *name = readString();
       Value value;
-      //look up the value
+      // look up the value
       bool result = m_globals.get(name->chars, value);
       if (!result) {
-        sprintf(log::tempLogBuffer1,"Undefined variable '%s'.",name->chars);
+        sprintf(log::tempLogBuffer1, "Undefined variable '%s'.", name->chars);
         runtimeError(log::tempLogBuffer1);
         return INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR;
       }
 
-      // if everything went correctly we can push the looked 
+      // if everything went correctly we can push the looked
       // up value on the stack
       stackPush(value);
 
@@ -154,6 +154,24 @@ INTERPRET_RESULT VirtualMachine::run() {
       sObjString *name = readString();
       m_globals.insert(name->chars, peek(0));
       stackPop();
+      break;
+    }
+    case OP_CODE::OP_SET_GLOBAL: {
+      // reading the identifier from the
+      // top of the stack
+      ObjString *name = readString();
+      // look up the value
+      bool result = m_globals.containsKey(name->chars);
+      if (!result) {
+        sprintf(log::tempLogBuffer1, "Undefined variable '%s'.", name->chars);
+        runtimeError(log::tempLogBuffer1);
+        return INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR;
+      } else {
+        //if the value already exists, meaning the variable has been declared
+        //already we insert it
+        m_globals.insert(name->chars, peek(0));
+      }
+
       break;
     }
     case OP_CODE::OP_EQUAL: {
