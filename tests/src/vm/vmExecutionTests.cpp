@@ -187,3 +187,23 @@ TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec assigment edge case",
   REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
   REQUIRE(compareLog("beignets with cafe au lait\n") == 0);
 }
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec basic scope",
+                 "[vm-parser]") {
+
+  const char *source = "var a = 12;\n {\n var b = 20; print b; \n} print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("20\n12\n") == 0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec shadowing scope",
+                 "[vm-parser]") {
+
+  //testing that shadowing does not mess up the result
+  const char *source = "var a = 12;\n {\n var a = 20; print a; \n} print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  printOutput();
+  REQUIRE(compareLog("20\n12\n") == 0);
+}

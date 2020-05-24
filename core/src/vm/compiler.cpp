@@ -240,33 +240,33 @@ void Compiler::varDeclaration() {
 }
 
 void Compiler::addLocal(const Token &token) {
-  if (localPool.localCount == UINT8_COUNT) {
+  if (m_localPool.localCount == UINT8_COUNT) {
     parser.error("Too many local variables in function.");
     return;
   }
   //"allocating" a new local
-  Local &local = localPool.locals[localPool.localCount++];
+  Local &local = m_localPool.locals[m_localPool.localCount++];
   // TODO do we need the full token here? ideally we just need the name
   // and the rest can possibly be separated debug information?
   local.name = token;
-  local.depth = localPool.scopeDepth;
+  local.depth= -1;
 }
 
 void Compiler::declareVariable() {
   // here we declare the existance of local variables,
   // this only happens outside global scope, so we
   // get out if we are in global scope
-  if (localPool.scopeDepth == 0)
+  if (m_localPool.scopeDepth == 0)
     return;
   const Token &name = parser.previous;
 
   // here we need to check if the variable has not been declared in the local
   // scope already
-  for (int i = localPool.localCount - 1; i >= 0; i--) {
+  for (int i = m_localPool.localCount - 1; i >= 0; i--) {
     // keep walking back, if the scope is lower, means we are one scope above
     // and we should stop
-    const Local &local = localPool.locals[i];
-    if ((local.depth != -1) & (local.depth < localPool.scopeDepth)) {
+    const Local &local = m_localPool.locals[i];
+    if ((local.depth != -1) & (local.depth < m_localPool.scopeDepth)) {
       break;
     }
 
@@ -284,7 +284,7 @@ uint8_t Compiler::parseVariable(const char *error) {
   declareVariable();
   // so if we have a scope greater than zero it means is not
   // a global variable, this means we can return a dummy id value
-  if (localPool.scopeDepth > 0)
+  if (m_localPool.scopeDepth > 0)
     return 0;
 
   return identifierConstant(&parser.previous);
@@ -296,11 +296,16 @@ uint8_t Compiler::identifierConstant(const Token *token) {
   // up easily with an index
   return makeConstant(makeObject(copyString(token->start, token->length)));
 }
+void Compiler::markInitialized()
+{
+    m_localPool.locals[m_localPool.localCount -1].depth = m_localPool.scopeDepth;
+}
 
 void Compiler::defineVariable(uint8_t globalId) {
   // if we are a local variable we don't store anything since local
   // variables are pushed and popped on the stack at runtime
-  if (localPool.scopeDepth > 0) {
+  if (m_localPool.scopeDepth > 0) {
+    markInitialized();
     return;
   }
   emitBytes(OP_CODE::OP_DEFINE_GLOBAL, globalId);
@@ -318,20 +323,20 @@ void Compiler::statement() {
   }
 }
 
-void Compiler::beginScope() { localPool.scopeDepth++; }
+void Compiler::beginScope() { m_localPool.scopeDepth++; }
 void Compiler::endScope() {
-  localPool.scopeDepth--;
+  m_localPool.scopeDepth--;
 
   // we need to clean up the scope
-  // we already reduced the scope depth, so everything that 
+  // we already reduced the scope depth, so everything that
   // has higher scope needs to be popped
-  while ((localPool.localCount > 0) &
-         (localPool.locals[localPool.localCount - 1].depth >
-             localPool.scopeDepth)) {
-    //TODO optimization here, we can have a POPN to pop all variables in 
-    //one go without popping then one at the time
+  while ((m_localPool.localCount > 0) &
+         (m_localPool.locals[m_localPool.localCount - 1].depth >
+          m_localPool.scopeDepth)) {
+    // TODO optimization here, we can have a POPN to pop all variables in
+    // one go without popping then one at the time
     emitByte(OP_CODE::OP_POP);
-    localPool.localCount--;
+    m_localPool.localCount--;
   }
 }
 
@@ -391,17 +396,47 @@ void Compiler::variable(bool canAssign) {
 }
 
 void Compiler::namedVariable(const Token &token, bool canAssign) {
-  uint8_t arg = identifierConstant(&token);
+  OP_CODE getOp;
+  OP_CODE setOp;
+
+  // we first try to resolve the variable locally
+  // if we dont find one we resolve it globally
+  int arg = resolveLocal(token);
+  if (arg != -1) {
+    getOp = OP_CODE::OP_GET_LOCAL;
+    setOp = OP_CODE::OP_SET_LOCAL;
+  } else {
+    arg = identifierConstant(&token);
+    getOp = OP_CODE::OP_GET_GLOBAL;
+    setOp = OP_CODE::OP_SET_GLOBAL;
+  }
 
   // here we are dealing with a variable, we need to see
   // if we have a an equal after it, if that is the case
   // it means we want to set  such variable not get it
   if (canAssign & match(TOKEN_TYPE::EQUAL)) {
     expression();
-    emitBytes(OP_CODE::OP_SET_GLOBAL, arg);
+    emitBytes(setOp, arg);
   } else {
-    emitBytes(OP_CODE::OP_GET_GLOBAL, arg);
+    emitBytes(getOp, arg);
   }
+}
+
+int Compiler::resolveLocal(const Token &name) {
+  //local resolution is fairly straight forward, we walk back
+  //until we find a matching variable or we are on a lower level scope
+  //aka parent scope
+  for (int i = m_localPool.localCount -1; i >= 0; --i) {
+    const Local &local = m_localPool.locals[i];
+    if (identifierEqual(name, local.name)) {
+      if(local.depth == -1)
+      {
+        parser.error("Cannot read local variable in its own initializer");
+      }
+      return i;
+    }
+  }
+  return -1;
 }
 
 void Scanner::skipWhiteSpace() {

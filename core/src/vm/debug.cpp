@@ -18,6 +18,13 @@ static int constantInstruction(const char *name, const Chunk *chunk, int offset,
   log::LOG(logger, "\n");
   return offset + 2;
 }
+static int byteInstruction(const char *name, const Chunk *chunk, int offset,
+                               log::Log *logger) {
+  uint8_t slot = chunk->m_code[offset + 1];
+  log::LOG(logger, "%-16s %4d\n", name, slot);
+  return offset + 2;
+}
+
 
 void disassambleChunk(const Chunk *chunk, const char *name, log::Log *logger) {
   log::LOG(logger, "== %s ==\n", name);
@@ -54,6 +61,10 @@ int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger) {
     return simpleInstruction("OP_POP", offset, logger);
   case OP_CODE::OP_DEFINE_GLOBAL:
     return constantInstruction("OP_DEFINE_GLOBAL", chunk, offset, logger);
+  case OP_CODE::OP_GET_LOCAL:
+    return byteInstruction("OP_GET_LOCAL", chunk, offset, logger);
+  case OP_CODE::OP_SET_LOCAL:
+    return byteInstruction("OP_SET_LOCAL", chunk, offset, logger);
   case OP_CODE::OP_GET_GLOBAL:
     return constantInstruction("OP_GET_GLOBAL", chunk, offset, logger);
   case OP_CODE::OP_SET_GLOBAL:

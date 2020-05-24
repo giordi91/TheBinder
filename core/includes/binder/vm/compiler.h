@@ -211,6 +211,7 @@ private:
   void string(bool canAssign);
   void variable(bool canAssign);
   void namedVariable(const Token &token, bool canAssign);
+  int resolveLocal(const Token& name);
 
   // statements
   void expression();
@@ -219,6 +220,7 @@ private:
   uint8_t parseVariable(const char *error);
   uint8_t identifierConstant(const Token *token);
   void defineVariable(uint8_t globalId);
+  void markInitialized();
   void declareVariable();
   void addLocal(const Token& name);
   void statement();
@@ -254,7 +256,7 @@ private:
 private:
   Scanner scanner;
   Parser parser;
-  LocalPool localPool;
+  LocalPool m_localPool;
   memory::StringIntern *m_intern;
   Chunk *m_chunk = nullptr;
 };

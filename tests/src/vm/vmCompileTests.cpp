@@ -38,6 +38,7 @@ public:
     REQUIRE(chunk->m_code[offset] == idx);
     REQUIRE(chunk->m_constants[idx].as.boolean == value);
   }
+
   void compareConstant(uint32_t offset, int idx, const char *toCompare) {
     REQUIRE(chunk->m_code[offset] == idx);
     // REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
@@ -430,31 +431,118 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile assigment edge case",
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 17);
 
-  //defining the first global variable
+  // defining the first global variable
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 1, "beignets");
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
   compareConstant(3, 0, "breakfast");
-  
-  //defining the second global variable
+
+  // defining the second global variable
   compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(5, 3, "cafe au lait");
   compareInstruction(6, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
   compareConstant(7, 2, "beverage");
 
-  //now that wehave the twovariables we need to perform the assigment
-  //which is between first a constant
+  // now that wehave the twovariables we need to perform the assigment
+  // which is between first a constant
   compareInstruction(8, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(9, 5, "beignets with ");
 
-  //then the global variable  which we pop on the stack now
+  // then the global variable  which we pop on the stack now
   compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
   compareConstant(11, 6, "beverage");
 
-  //doing the addition
+  // doing the addition
   compareInstruction(12, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(13, binder::vm::OP_CODE::OP_SET_GLOBAL);
   compareConstant(14, 4, "breakfast");
   compareInstruction(15, binder::vm::OP_CODE::OP_POP);
   compareInstruction(16, binder::vm::OP_CODE::OP_RETURN);
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile basic scope",
+                 "[vm-parser]") {
+
+  const char *source = "var a = 12;\n {\n var b = 20;\n print b; \n} print a;";
+  auto *chunk = compile(source, false);
+  // check for failure
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 14);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 12.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(3, 0, "a");
+  compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(5, 2, 20.0);
+  compareInstruction(6, binder::vm::OP_CODE::OP_GET_LOCAL);
+  //comparing the get local slot
+  compareInstruction(7, 0);
+  compareInstruction(8, binder::vm::OP_CODE::OP_PRINT);
+  //we are getting out of scope, so we pop
+  compareInstruction(9, binder::vm::OP_CODE::OP_POP);
+
+  // then the global variable  
+  compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
+  compareConstant(11, 3, "a");
+  compareInstruction(12, binder::vm::OP_CODE::OP_PRINT);
+  compareInstruction(13, binder::vm::OP_CODE::OP_RETURN);
+  
+  /*
+  == debug ==
+  0000    0 OP_CONSTANT         1 '12
+  0002    | OP_DEFINE_GLOBAL    0 'a
+  0004    2 OP_CONSTANT         2 '20
+  0006    3 OP_GET_LOCAL        0
+  0008    | OP_PRINT
+  0009    4 OP_POP
+  0010    | OP_GET_GLOBAL       3 'a
+  0012    | OP_PRINT
+  0013    | OP_RETURN
+  */
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile shadowing scope",
+                 "[vm-parser]") {
+
+  //this test generates the same code as before, which is what we are testing
+  //shadowing should not affect outer scope 
+  const char *source = "var a = 12;\n {\n var a = 20;\n print a; \n} print a;";
+  auto *chunk = compile(source, false);
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 14);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 12.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(3, 0, "a");
+  compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(5, 2, 20.0);
+  compareInstruction(6, binder::vm::OP_CODE::OP_GET_LOCAL);
+  //comparing the get local slot
+  compareInstruction(7, 0);
+  compareInstruction(8, binder::vm::OP_CODE::OP_PRINT);
+  //we are getting out of scope, so we pop
+  compareInstruction(9, binder::vm::OP_CODE::OP_POP);
+
+  // then the global variable  
+  compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
+  compareConstant(11, 3, "a");
+  compareInstruction(12, binder::vm::OP_CODE::OP_PRINT);
+  compareInstruction(13, binder::vm::OP_CODE::OP_RETURN);
+
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         1 '12
+    0002    | OP_DEFINE_GLOBAL    0 'a
+    0004    2 OP_CONSTANT         2 '20
+    0006    3 OP_GET_LOCAL        0
+    0008    | OP_PRINT
+    0009    4 OP_POP
+    0010    | OP_GET_GLOBAL       3 'a
+    0012    | OP_PRINT
+    0013    | OP_RETURN
+  */
 }
