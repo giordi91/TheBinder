@@ -47,6 +47,12 @@ public:
     REQUIRE(binder::vm::isObjType(value, binder::vm::OBJ_TYPE::OBJ_STRING));
     REQUIRE(strcmp(binder::vm::valueAsCString(value), toCompare) == 0);
   }
+  void compareJumpOffset(uint32_t offset, uint16_t expectedJump) {
+      auto jump = static_cast<uint16_t>(chunk->m_code[offset] << 8);
+      jump |= chunk->m_code[offset + 1];
+      REQUIRE(jump == expectedJump);
+  }
+
   void printOutput() { printf("%s\n", m_log.getBuffer()); }
 
 protected:
@@ -544,5 +550,44 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile shadowing scope",
     0010    | OP_GET_GLOBAL       3 'a
     0012    | OP_PRINT
     0013    | OP_RETURN
+  */
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if",
+                 "[vm-parser]") {
+  const char *source = "var a = 5;\n if(a > 3){\n print 10; \n}";
+  auto *chunk = compile(source, false);
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 16);
+
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 5.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(3, 0, "a");
+  compareInstruction(4, binder::vm::OP_CODE::OP_GET_GLOBAL);
+  compareConstant(5, 2, "a");
+  compareInstruction(6, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(7, 3, 3.0);
+  compareInstruction(8, binder::vm::OP_CODE::OP_GREATER);
+  compareInstruction(9, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
+  compareJumpOffset(10, 3);
+  compareInstruction(12, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(13, 4, 10.0);
+  compareInstruction(14, binder::vm::OP_CODE::OP_PRINT);
+  compareInstruction(15, binder::vm::OP_CODE::OP_RETURN);
+
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         1 '5
+    0002    | OP_DEFINE_GLOBAL    0 'a
+    0004    1 OP_GET_GLOBAL       2 'a
+    0006    | OP_CONSTANT         3 '3
+    0008    | OP_GREATER
+    0009    | OP_JUMP_IF_FALSE    9 -> 15
+    0012    2 OP_CONSTANT         4 '10
+    0014    | OP_PRINT
+    0015    3 OP_RETURN
   */
 }

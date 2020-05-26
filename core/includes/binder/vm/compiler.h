@@ -190,6 +190,39 @@ private:
     assert(m_chunk != nullptr);
     m_chunk->write(byte, parser.previous.line);
   }
+
+  int emitJump(OP_CODE instruction)
+  {
+      //first we emit our normal jump
+      emitByte(instruction);
+      //then we write 16bit for the offset as placeholder
+      emitByte(0xff);
+      emitByte(0xff);
+      //finally we return where in the code the jump is, aka
+      //the current size minus two, the two place holder instructions
+      return m_chunk->m_code.size()-2;
+  }
+
+  void patchJump( int offset)
+  {
+      //the offset value is where in the stack the origina jump was at
+      //so subratcing the current size gives out the delta between 
+      //jump and current position, the only thing to do is to offset by
+      //two bytes, which is the offset itself, since the offset will be
+      //eaten by the instruction
+      int jump = m_chunk->m_code.size() - offset -2;
+
+      if(jump > UINT16_MAX)
+      {
+          parser.error("Too much code to jump over in jump instruction");
+      }
+      //finally we write th\ne high part of the jump into thefirst byte
+      m_chunk->m_code[offset] = (jump >> 8) & 0xff;
+      //and the lower part in the second one
+      m_chunk->m_code[offset+1] = jump  & 0xff;
+  }
+
+
   // we are going to rely on the auto deduction of the template param
   // for using this, this should be used mostly for constants and OP_CODES
   template <typename T, typename P> void emitBytes(T byte, P byte2) const {
@@ -226,6 +259,7 @@ private:
   void statement();
   void printStatement();
   void expressionStatement();
+  void ifStatement();
 
   //block
   void beginScope();

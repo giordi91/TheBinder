@@ -1,10 +1,9 @@
 #include "binder/log/log.h"
 #include "binder/vm/debug.h"
-#include "stdio.h"
 #include "stdarg.h"
+#include "stdio.h"
 
 namespace binder::vm {
-
 
 static int simpleInstruction(const char *name, int offset, log::Log *logger) {
   log::LOG(logger, "%s\n", name);
@@ -19,12 +18,18 @@ static int constantInstruction(const char *name, const Chunk *chunk, int offset,
   return offset + 2;
 }
 static int byteInstruction(const char *name, const Chunk *chunk, int offset,
-                               log::Log *logger) {
+                           log::Log *logger) {
   uint8_t slot = chunk->m_code[offset + 1];
   log::LOG(logger, "%-16s %4d\n", name, slot);
   return offset + 2;
 }
-
+static int jumpInstruction(const char *name, int sign, const Chunk *chunk,
+                           int offset, log::Log *logger) {
+  auto jump = static_cast<uint16_t>(chunk->m_code[offset + 1] << 8);
+  jump |= chunk->m_code[offset + 2];
+  log::LOG(logger, "%-16s %4d -> %d\n", name, offset, offset + 3 + sign * jump);
+  return offset + 3;
+}
 
 void disassambleChunk(const Chunk *chunk, const char *name, log::Log *logger) {
   log::LOG(logger, "== %s ==\n", name);
@@ -89,6 +94,8 @@ int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger) {
     return simpleInstruction("OP_NEGATE", offset, logger);
   case OP_CODE::OP_PRINT:
     return simpleInstruction("OP_PRINT", offset, logger);
+  case OP_CODE::OP_JUMP_IF_FALSE:
+    return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset, logger);
   case OP_CODE::OP_RETURN:
     return simpleInstruction("OP_RETURN", offset, logger);
   default:

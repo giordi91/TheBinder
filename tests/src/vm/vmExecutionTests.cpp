@@ -204,6 +204,5 @@ TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec shadowing scope",
   const char *source = "var a = 12;\n {\n var a = 20; print a; \n} print a;";
   binder::vm::INTERPRET_RESULT result = interpret(source);
   REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
-  printOutput();
   REQUIRE(compareLog("20\n12\n") == 0);
 }

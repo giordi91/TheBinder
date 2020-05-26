@@ -249,7 +249,7 @@ void Compiler::addLocal(const Token &token) {
   // TODO do we need the full token here? ideally we just need the name
   // and the rest can possibly be separated debug information?
   local.name = token;
-  local.depth= -1;
+  local.depth = -1;
 }
 
 void Compiler::declareVariable() {
@@ -296,9 +296,8 @@ uint8_t Compiler::identifierConstant(const Token *token) {
   // up easily with an index
   return makeConstant(makeObject(copyString(token->start, token->length)));
 }
-void Compiler::markInitialized()
-{
-    m_localPool.locals[m_localPool.localCount -1].depth = m_localPool.scopeDepth;
+void Compiler::markInitialized() {
+  m_localPool.locals[m_localPool.localCount - 1].depth = m_localPool.scopeDepth;
 }
 
 void Compiler::defineVariable(uint8_t globalId) {
@@ -314,6 +313,8 @@ void Compiler::defineVariable(uint8_t globalId) {
 void Compiler::statement() {
   if (match(TOKEN_TYPE::PRINT)) {
     printStatement();
+  } else if (match(TOKEN_TYPE::IF)) {
+    ifStatement();
   } else if (match(TOKEN_TYPE::LEFT_BRACE)) {
     beginScope();
     block();
@@ -359,6 +360,24 @@ void Compiler::expressionStatement() {
   expression();
   consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after expression");
   emitByte(OP_CODE::OP_POP);
+}
+
+
+void Compiler::ifStatement() {
+    //first we take care of processing the expression
+    consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after 'if'.");
+    expression();
+    consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after 'if'.");
+
+    //after the expression we should have the result on the stack
+    //so we can emit our jump
+    int thenJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
+    //process the statment
+    statement();
+
+    //finally we know where to jump and we can patch back the value
+    patchJump(thenJump);
+
 }
 
 void Compiler::literal(bool) {
@@ -423,14 +442,13 @@ void Compiler::namedVariable(const Token &token, bool canAssign) {
 }
 
 int Compiler::resolveLocal(const Token &name) {
-  //local resolution is fairly straight forward, we walk back
-  //until we find a matching variable or we are on a lower level scope
-  //aka parent scope
-  for (int i = m_localPool.localCount -1; i >= 0; --i) {
+  // local resolution is fairly straight forward, we walk back
+  // until we find a matching variable or we are on a lower level scope
+  // aka parent scope
+  for (int i = m_localPool.localCount - 1; i >= 0; --i) {
     const Local &local = m_localPool.locals[i];
     if (identifierEqual(name, local.name)) {
-      if(local.depth == -1)
-      {
+      if (local.depth == -1) {
         parser.error("Cannot read local variable in its own initializer");
       }
       return i;

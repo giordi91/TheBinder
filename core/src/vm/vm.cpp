@@ -105,6 +105,14 @@ INTERPRET_RESULT VirtualMachine::run() {
       m_logger->print("\n");
       break;
     }
+    case OP_CODE::OP_JUMP_IF_FALSE: {
+      uint16_t offset = readShort();
+      if (isFalsey(peek(0))) {
+        //let us perform the jump
+        m_ip += offset;
+      }
+      break;
+    }
     case OP_CODE::OP_RETURN: {
       return INTERPRET_RESULT::INTERPRET_OK;
     }

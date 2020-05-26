@@ -47,6 +47,10 @@ private:
   // instructions
   inline uint8_t readByte() { return *m_ip++; }
   inline Value readConstant() { return m_chunk->m_constants[readByte()]; };
+  inline uint16_t readShort() { 
+      m_ip +=2;
+      return static_cast<uint16_t>(m_ip[-2] <<8 | m_ip[-1]);
+  };
   inline ObjString* readString () { return valueAsString(readConstant());};
   //-1 gives us the first not freevalue and then we subtract the distance
   // since we want to go back in the stack
