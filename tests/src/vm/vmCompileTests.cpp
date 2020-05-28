@@ -48,9 +48,9 @@ public:
     REQUIRE(strcmp(binder::vm::valueAsCString(value), toCompare) == 0);
   }
   void compareJumpOffset(uint32_t offset, uint16_t expectedJump) {
-      auto jump = static_cast<uint16_t>(chunk->m_code[offset] << 8);
-      jump |= chunk->m_code[offset + 1];
-      REQUIRE(jump == expectedJump);
+    auto jump = static_cast<uint16_t>(chunk->m_code[offset] << 8);
+    jump |= chunk->m_code[offset + 1];
+    REQUIRE(jump == expectedJump);
   }
 
   void printOutput() { printf("%s\n", m_log.getBuffer()); }
@@ -483,18 +483,18 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile basic scope",
   compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(5, 2, 20.0);
   compareInstruction(6, binder::vm::OP_CODE::OP_GET_LOCAL);
-  //comparing the get local slot
+  // comparing the get local slot
   compareInstruction(7, 0);
   compareInstruction(8, binder::vm::OP_CODE::OP_PRINT);
-  //we are getting out of scope, so we pop
+  // we are getting out of scope, so we pop
   compareInstruction(9, binder::vm::OP_CODE::OP_POP);
 
-  // then the global variable  
+  // then the global variable
   compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
   compareConstant(11, 3, "a");
   compareInstruction(12, binder::vm::OP_CODE::OP_PRINT);
   compareInstruction(13, binder::vm::OP_CODE::OP_RETURN);
-  
+
   /*
   == debug ==
   0000    0 OP_CONSTANT         1 '12
@@ -512,8 +512,8 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile basic scope",
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile shadowing scope",
                  "[vm-parser]") {
 
-  //this test generates the same code as before, which is what we are testing
-  //shadowing should not affect outer scope 
+  // this test generates the same code as before, which is what we are testing
+  // shadowing should not affect outer scope
   const char *source = "var a = 12;\n {\n var a = 20;\n print a; \n} print a;";
   auto *chunk = compile(source, false);
   REQUIRE(chunk != nullptr);
@@ -527,13 +527,13 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile shadowing scope",
   compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(5, 2, 20.0);
   compareInstruction(6, binder::vm::OP_CODE::OP_GET_LOCAL);
-  //comparing the get local slot
+  // comparing the get local slot
   compareInstruction(7, 0);
   compareInstruction(8, binder::vm::OP_CODE::OP_PRINT);
-  //we are getting out of scope, so we pop
+  // we are getting out of scope, so we pop
   compareInstruction(9, binder::vm::OP_CODE::OP_POP);
 
-  // then the global variable  
+  // then the global variable
   compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
   compareConstant(11, 3, "a");
   compareInstruction(12, binder::vm::OP_CODE::OP_PRINT);
@@ -559,8 +559,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if",
   auto *chunk = compile(source, false);
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
-  REQUIRE(chunk->m_code.size() == 16);
-
+  REQUIRE(chunk->m_code.size() == 21);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 1, 5.0);
@@ -572,11 +571,14 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if",
   compareConstant(7, 3, 3.0);
   compareInstruction(8, binder::vm::OP_CODE::OP_GREATER);
   compareInstruction(9, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
-  compareJumpOffset(10, 3);
-  compareInstruction(12, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(13, 4, 10.0);
-  compareInstruction(14, binder::vm::OP_CODE::OP_PRINT);
-  compareInstruction(15, binder::vm::OP_CODE::OP_RETURN);
+  compareJumpOffset(10, 7);
+  compareInstruction(12, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(13, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(14, 4, 10.0);
+  compareInstruction(15, binder::vm::OP_CODE::OP_PRINT);
+  compareInstruction(16, binder::vm::OP_CODE::OP_JUMP);
+  compareJumpOffset(17, 1);
+  compareInstruction(20, binder::vm::OP_CODE::OP_RETURN);
 
   /*
     == debug ==
@@ -585,9 +587,62 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if",
     0004    1 OP_GET_GLOBAL       2 'a
     0006    | OP_CONSTANT         3 '3
     0008    | OP_GREATER
-    0009    | OP_JUMP_IF_FALSE    9 -> 15
-    0012    2 OP_CONSTANT         4 '10
-    0014    | OP_PRINT
-    0015    3 OP_RETURN
+    0009    | OP_JUMP_IF_FALSE    9 -> 19
+    0012    | OP_POP
+    0013    2 OP_CONSTANT         4 '10
+    0015    | OP_PRINT
+    0016    3 OP_JUMP            16 -> 20
+    0019    | OP_POP
+    0020    | OP_RETURN
   */
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if else",
+                 "[vm-parser]") {
+  const char *source = "var a = 5;\n if(a > 3){\n print 10; \n} else{\n print 20;\n}";
+  auto *chunk = compile(source, false);
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  return;
+  REQUIRE(chunk->m_code.size() == 23);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 5.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(3, 0, "a");
+  compareInstruction(4, binder::vm::OP_CODE::OP_GET_GLOBAL);
+  compareConstant(5, 2, "a");
+  compareInstruction(6, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(7, 3, 3.0);
+  compareInstruction(8, binder::vm::OP_CODE::OP_GREATER);
+  compareInstruction(9, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
+  compareJumpOffset(10, 7);
+  compareInstruction(12, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(13, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(14, 4, 10.0);
+  compareInstruction(15, binder::vm::OP_CODE::OP_PRINT);
+  compareInstruction(16, binder::vm::OP_CODE::OP_JUMP);
+  compareJumpOffset(17, 4);
+  compareInstruction(19, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(20, 5, 20.0);
+  compareInstruction(21, binder::vm::OP_CODE::OP_PRINT);
+  compareInstruction(22, binder::vm::OP_CODE::OP_RETURN);
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         1 '5
+    0002    | OP_DEFINE_GLOBAL    0 'a
+    0004    1 OP_GET_GLOBAL       2 'a
+    0006    | OP_CONSTANT         3 '3
+    0008    | OP_GREATER
+    0009    | OP_JUMP_IF_FALSE    9 -> 19
+    0012    | OP_POP
+    0013    2 OP_CONSTANT         4 '10
+    0015    | OP_PRINT
+    0016    3 OP_JUMP            16 -> 23
+    0019    | OP_POP
+    0020    4 OP_CONSTANT         5 '20
+    0022    | OP_PRINT
+    0023    5 OP_RETURN
+  */
+
 }

@@ -38,7 +38,7 @@ ParseRule rules[] = {
     {VARIABLE, NULLID, PREC_NONE},     // IDENTIFIER
     {STRING, NULLID, PREC_NONE},       // STRING
     {NUMBER, NULLID, PREC_NONE},       // NUMBER
-    {NULLID, NULLID, PREC_NONE},       // AND
+    {NULLID, ANDID, PREC_AND},         // AND
     {NULLID, NULLID, PREC_NONE},       // CLASS
     {NULLID, NULLID, PREC_NONE},       // ELSE
     {LITERAL, NULLID, PREC_NONE},      // BOOL_FALSE
@@ -86,6 +86,12 @@ void Compiler::dispatchFunctionId(FunctionId id, bool canAssign) {
     break;
   case VARIABLE:
     variable(canAssign);
+    break;
+  case ANDID:
+    parseAnd(canAssign);
+    break;
+  case ORID:
+    parseOr(canAssign);
     break;
   default:
     assert(false && "unsupported function id for pratt parser");
@@ -362,21 +368,37 @@ void Compiler::expressionStatement() {
   emitByte(OP_CODE::OP_POP);
 }
 
-
 void Compiler::ifStatement() {
-    //first we take care of processing the expression
-    consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after 'if'.");
-    expression();
-    consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after 'if'.");
+  // first we take care of processing the expression
+  consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after 'if'.");
+  expression();
+  consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after 'if'.");
 
-    //after the expression we should have the result on the stack
-    //so we can emit our jump
-    int thenJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
-    //process the statment
+  // after the expression we should have the result on the stack
+  // so we can emit our jump
+  int thenJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
+  //need to remove the condition value from the stack 
+  emitByte(OP_CODE::OP_POP);
+  // process the statment
+  statement();
+
+  //after evaluating the statement we need an unconditional jump to skip the else
+  //branch
+  int elseJump = emitJump(OP_CODE::OP_JUMP);
+
+  // finally we know where to jump and we can patch back the value, this is where
+  //the possible else branch begins
+  patchJump(thenJump);
+  //we get here if we skipped the then branch
+  //need to remove the condition value from the stack 
+  emitByte(OP_CODE::OP_POP);
+
+  if (match(TOKEN_TYPE::ELSE)) {
     statement();
-
-    //finally we know where to jump and we can patch back the value
-    patchJump(thenJump);
+  }
+  //as of now we have a jump no matter what which in case of missing else would be an 
+  //empty jump
+  patchJump(elseJump);
 
 }
 
@@ -412,6 +434,50 @@ void Compiler::string(bool) {
 
 void Compiler::variable(bool canAssign) {
   namedVariable(parser.previous, canAssign);
+}
+void Compiler::parseAnd(bool canAssign) {
+  // here we first emit a jump, that is because if the
+  // left hand side is false we short circuit, hence the ump
+  int endJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
+
+  // we emit a pop, the reason for this is, if we know the left hand side being
+  // positive, hence not taking the jump, we don't need that value anymore,
+  // the result value will be the right hand side which will be on top of the
+  // stack
+  emitByte(OP_CODE::OP_POP);
+  // parse ther rest of the right hand side
+  parsePrecedence(PREC_AND);
+
+  // finally we patch the jump
+  patchJump(endJump);
+}
+void Compiler::parseOr(bool canAssign) {
+  // here we are using more instructions but we can see how we can remap the
+  // values to what we want, so we can implement the or instruction with just
+  // the instructions we have and not add new ones
+
+  // first we evaluate the left hand side, which would be already on the stack
+  // if the or is false we simply skip the right hand side branch.
+  // So the first jump if taken lets us skip the following jump that would let
+  // us skip the right hand side. Bit confusing but makes sense. looks like this
+
+  /*
+   *             left hand side  //eval left side
+   *        --   jump if false  //if false we go to eval right hand side
+   *      --|--- jump //if true we skip past RHS, LHS is on the top of stack
+   *      | |->  pop
+   *      |      right hand side
+   *      |->    continue...
+   */
+
+  int elseJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
+  int endJump = emitJump(OP_CODE::OP_JUMP);
+
+  patchJump(elseJump);
+  emitByte(OP_CODE::OP_POP);
+
+  parsePrecedence(PREC_OR);
+  patchJump(endJump);
 }
 
 void Compiler::namedVariable(const Token &token, bool canAssign) {

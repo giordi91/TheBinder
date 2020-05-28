@@ -131,6 +131,8 @@ private:
 
 enum FunctionId {
   NULLID,
+  ANDID,
+  ORID,
   GROUPING,
   UNARY,
   BINARY,
@@ -243,6 +245,8 @@ private:
   void literal(bool canAssign);
   void string(bool canAssign);
   void variable(bool canAssign);
+  void parseAnd(bool canAssign);
+  void parseOr(bool canAssign);
   void namedVariable(const Token &token, bool canAssign);
   int resolveLocal(const Token& name);
 
@@ -260,6 +264,7 @@ private:
   void printStatement();
   void expressionStatement();
   void ifStatement();
+
 
   //block
   void beginScope();

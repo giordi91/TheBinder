@@ -105,10 +105,16 @@ INTERPRET_RESULT VirtualMachine::run() {
       m_logger->print("\n");
       break;
     }
+    case OP_CODE::OP_JUMP: {
+      // unconditional jump
+      uint16_t offset = readShort();
+      m_ip += offset;
+      break;
+    }
     case OP_CODE::OP_JUMP_IF_FALSE: {
       uint16_t offset = readShort();
       if (isFalsey(peek(0))) {
-        //let us perform the jump
+        // let us perform the jump
         m_ip += offset;
       }
       break;
@@ -138,17 +144,17 @@ INTERPRET_RESULT VirtualMachine::run() {
       break;
     }
     case OP_CODE::OP_SET_LOCAL: {
-      //here we expect the value on top of the stack
-      //so we read it and assign it to the corresponiding stack slot
+      // here we expect the value on top of the stack
+      // so we read it and assign it to the corresponiding stack slot
       uint8_t slot = readByte();
       m_stack[slot] = peek(0);
       break;
     }
     case OP_CODE::OP_GET_LOCAL: {
-      //hear on top of the stack we have the slot where the variable
-      //we want is, so we just read it from it and pop it on top of the stack
-      //this is how the stack based machine dances, register machine avoid this 
-      //by loading and referring registers
+      // hear on top of the stack we have the slot where the variable
+      // we want is, so we just read it from it and pop it on top of the stack
+      // this is how the stack based machine dances, register machine avoid this
+      // by loading and referring registers
       uint8_t slot = readByte();
       stackPush(m_stack[slot]);
       break;
@@ -191,8 +197,8 @@ INTERPRET_RESULT VirtualMachine::run() {
         runtimeError(log::tempLogBuffer1);
         return INTERPRET_RESULT::INTERPRET_RUNTIME_ERROR;
       } else {
-        //if the value already exists, meaning the variable has been declared
-        //already we insert it
+        // if the value already exists, meaning the variable has been declared
+        // already we insert it
         m_globals.insert(name->chars, peek(0));
       }
 
@@ -252,6 +258,6 @@ INTERPRET_RESULT VirtualMachine::run() {
     }
     }
   }
-}
+} // namespace binder::vm
 
 } // namespace binder::vm

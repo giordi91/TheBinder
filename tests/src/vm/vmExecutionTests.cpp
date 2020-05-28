@@ -206,3 +206,21 @@ TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec shadowing scope",
   REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
   REQUIRE(compareLog("20\n12\n") == 0);
 }
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple if else, then taken",
+                 "[vm-parser]") {
+  const char *source = "var a = 5;\n if(a > 3){\n print 10; \n} else{\n print 20;\n}";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("10\n") == 0);
+
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple if else, else taken",
+                 "[vm-parser]") {
+  const char *source = "var a = 5;\n if(a < 3){\n print 10; \n} else{\n print 20;\n}";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("20\n") == 0);
+
+}
