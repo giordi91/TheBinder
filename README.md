@@ -58,6 +58,23 @@ source ./emsdk_env.sh
 ./emsdk_env
 ```
 
-Now the environment should be ready to build WASM, without closing the console, move to the binder repository inside customBuild and just run build-js.bat
+Now the environment should be ready to build WASM, to verify it run
+
+```bash
+em++ --version
+```
+
+it should return the version of Emscripten
+
+finally to build the js app, cd back in TheBinder repository and run
+
+```bash
+cd customBuild
+# for unix
+./build-js.sh
+
+# for windows
+build-js.bat
+```
 
 if everything works you should find the built files inside "build/mono/js"
