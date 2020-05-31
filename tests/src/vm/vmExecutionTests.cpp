@@ -224,3 +224,69 @@ TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple if else, else taken"
   REQUIRE(compareLog("20\n") == 0);
 
 }
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple and",
+                 "[vm-parser]") {
+  const char *source = "var a = 3 > 1 and 5 > 3;print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("true\n") == 0);
+
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple and 2",
+                 "[vm-parser]") {
+  const char *source = "var a = 3 < 1 and 5 > 3;print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("false\n") == 0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple and 3",
+                 "[vm-parser]") {
+  const char *source = "var a = 3 > 1 and 5 < 3;print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("false\n") == 0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple and 4",
+                 "[vm-parser]") {
+  const char *source = "var a = 3 < 1 and 5 < 3;print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("false\n") == 0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple or",
+                 "[vm-parser]") {
+  const char *source = "var a = 3 > 1 or 5 > 3;print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("true\n") == 0);
+
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple or 2",
+                 "[vm-parser]") {
+  const char *source = "var a = 3 < 1 or 5 > 3;print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("true\n") == 0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple or 3",
+                 "[vm-parser]") {
+  const char *source = "var a = 3 > 1 or 5 < 3;print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("true\n") == 0);
+}
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple or 4",
+                 "[vm-parser]") {
+  const char *source = "var a = 3 < 1 or 5 < 3;print a;";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("false\n") == 0);
+}

@@ -98,6 +98,8 @@ int disassambleInstruction(const Chunk *chunk, int offset, log::Log *logger) {
     return jumpInstruction("OP_JUMP", 1, chunk, offset, logger);
   case OP_CODE::OP_JUMP_IF_FALSE:
     return jumpInstruction("OP_JUMP_IF_FALSE", 1, chunk, offset, logger);
+  case OP_CODE::OP_LOOP:
+    return jumpInstruction("OP_LOOP", -1, chunk, offset, logger);
   case OP_CODE::OP_RETURN:
     return simpleInstruction("OP_RETURN", offset, logger);
   default:

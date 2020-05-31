@@ -599,12 +599,12 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if",
 
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if else",
                  "[vm-parser]") {
-  const char *source = "var a = 5;\n if(a > 3){\n print 10; \n} else{\n print 20;\n}";
+  const char *source =
+      "var a = 5;\n if(a > 3){\n print 10; \n} else{\n print 20;\n}";
   auto *chunk = compile(source, false);
   REQUIRE(chunk != nullptr);
   REQUIRE(result == true);
-  return;
-  REQUIRE(chunk->m_code.size() == 23);
+  REQUIRE(chunk->m_code.size() == 24);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   compareConstant(1, 1, 5.0);
@@ -623,10 +623,10 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if else",
   compareInstruction(15, binder::vm::OP_CODE::OP_PRINT);
   compareInstruction(16, binder::vm::OP_CODE::OP_JUMP);
   compareJumpOffset(17, 4);
-  compareInstruction(19, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(20, 5, 20.0);
-  compareInstruction(21, binder::vm::OP_CODE::OP_PRINT);
-  compareInstruction(22, binder::vm::OP_CODE::OP_RETURN);
+  compareInstruction(20, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(21, 5, 20.0);
+  compareInstruction(22, binder::vm::OP_CODE::OP_PRINT);
+  compareInstruction(23, binder::vm::OP_CODE::OP_RETURN);
   /*
     == debug ==
     0000    0 OP_CONSTANT         1 '5
@@ -644,5 +644,93 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if else",
     0022    | OP_PRINT
     0023    5 OP_RETURN
   */
+}
 
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple and",
+                 "[vm-parser]") {
+
+  const char *source = "var a = 3 > 1 and 5 > 3;";
+  auto *chunk = compile(source, false);
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+
+  REQUIRE(chunk->m_code.size() == 17);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 3.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(3, 2, 1.0);
+  compareInstruction(4, binder::vm::OP_CODE::OP_GREATER);
+  compareInstruction(5, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
+  compareJumpOffset(6, 6);
+  compareInstruction(8, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(9, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(10, 3, 5.0);
+  compareInstruction(11, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(12, 4, 3.0);
+  compareInstruction(13, binder::vm::OP_CODE::OP_GREATER);
+  compareInstruction(14, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(15, 0, "a");
+  compareInstruction(16, binder::vm::OP_CODE::OP_RETURN);
+
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         1 '3
+    0002    | OP_CONSTANT         2 '1
+    0004    | OP_GREATER
+    0005    | OP_JUMP_IF_FALSE    5 -> 14
+    0008    | OP_POP
+    0009    | OP_CONSTANT         3 '5
+    0011    | OP_CONSTANT         4 '3
+    0013    | OP_GREATER
+    0014    | OP_DEFINE_GLOBAL    0 'a
+    0016    | OP_RETURN
+  */
+}
+
+
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple or",
+                 "[vm-parser]") {
+
+  const char *source = "var a = 3 < 1 or 5 > 3;";
+  auto *chunk = compile(source, false);
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+
+  REQUIRE(chunk->m_code.size() == 20);
+
+  compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(1, 1, 3.0);
+  compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(3, 2, 1.0);
+  compareInstruction(4, binder::vm::OP_CODE::OP_LESS);
+  compareInstruction(5, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
+  compareJumpOffset(6, 3);
+  compareInstruction(8, binder::vm::OP_CODE::OP_JUMP);
+  compareJumpOffset(9, 6);
+  compareInstruction(11, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(12, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(13, 3, 5.0);
+  compareInstruction(14, binder::vm::OP_CODE::OP_CONSTANT);
+  compareConstant(15, 4, 3.0);
+  compareInstruction(16, binder::vm::OP_CODE::OP_GREATER);
+  compareInstruction(17, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+  compareConstant(18, 0, "a");
+  compareInstruction(19, binder::vm::OP_CODE::OP_RETURN);
+
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         1 '3
+    0002    | OP_CONSTANT         2 '1
+    0004    | OP_LESS
+    0005    | OP_JUMP_IF_FALSE    5 -> 11
+    0008    | OP_JUMP             8 -> 17
+    0011    | OP_POP
+    0012    | OP_CONSTANT         3 '5
+    0014    | OP_CONSTANT         4 '3
+    0016    | OP_GREATER
+    0017    | OP_DEFINE_GLOBAL    0 'a
+    0019    | OP_RETURN
+  */
 }

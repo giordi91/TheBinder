@@ -224,6 +224,18 @@ private:
       m_chunk->m_code[offset+1] = jump  & 0xff;
   }
 
+  void emitLoop(int loopStart)
+  {
+      emitByte(OP_CODE::OP_LOOP);
+
+      //the plus 2 comes from the jump operand (offset) which we need to jump over too 
+      int offset = m_chunk->m_code.size() - loopStart + 2;
+      if(offset > UINT16_MAX) parser.error("Loop body too larget.");
+
+      emitByte((offset >>8) & 0xff);
+      emitByte(offset & 0xff);
+  }
+
 
   // we are going to rely on the auto deduction of the template param
   // for using this, this should be used mostly for constants and OP_CODES
@@ -264,6 +276,7 @@ private:
   void printStatement();
   void expressionStatement();
   void ifStatement();
+  void whileStatement();
 
 
   //block

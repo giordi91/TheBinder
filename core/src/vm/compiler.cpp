@@ -46,7 +46,7 @@ ParseRule rules[] = {
     {NULLID, NULLID, PREC_NONE},       // FUN
     {NULLID, NULLID, PREC_NONE},       // IF
     {LITERAL, NULLID, PREC_NONE},      // NIL
-    {NULLID, NULLID, PREC_NONE},       // OR
+    {NULLID, ORID, PREC_OR},           // OR
     {NULLID, NULLID, PREC_NONE},       // PRINT
     {NULLID, NULLID, PREC_NONE},       // RETURN
     {NULLID, NULLID, PREC_NONE},       // SUPER
@@ -321,6 +321,8 @@ void Compiler::statement() {
     printStatement();
   } else if (match(TOKEN_TYPE::IF)) {
     ifStatement();
+  } else if (match(TOKEN_TYPE::WHILE)) {
+    whileStatement();
   } else if (match(TOKEN_TYPE::LEFT_BRACE)) {
     beginScope();
     block();
@@ -377,29 +379,57 @@ void Compiler::ifStatement() {
   // after the expression we should have the result on the stack
   // so we can emit our jump
   int thenJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
-  //need to remove the condition value from the stack 
+  // need to remove the condition value from the stack
   emitByte(OP_CODE::OP_POP);
   // process the statment
   statement();
 
-  //after evaluating the statement we need an unconditional jump to skip the else
-  //branch
+  // after evaluating the statement we need an unconditional jump to skip the
+  // else branch
   int elseJump = emitJump(OP_CODE::OP_JUMP);
 
-  // finally we know where to jump and we can patch back the value, this is where
-  //the possible else branch begins
+  // finally we know where to jump and we can patch back the value, this is
+  // where
+  // the possible else branch begins
   patchJump(thenJump);
-  //we get here if we skipped the then branch
-  //need to remove the condition value from the stack 
+  // we get here if we skipped the then branch
+  // need to remove the condition value from the stack
   emitByte(OP_CODE::OP_POP);
 
   if (match(TOKEN_TYPE::ELSE)) {
     statement();
   }
-  //as of now we have a jump no matter what which in case of missing else would be an 
-  //empty jump
+  // as of now we have a jump no matter what which in case of missing else would
+  // be an empty jump
   patchJump(elseJump);
+}
 
+void Compiler::whileStatement() {
+
+  // setting a marker for the loop
+  int loopStart = m_chunk->m_code.size();
+
+  // as usual we parse the condition, which will deposit a bool
+  // value on the stack
+  consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after 'while' .");
+  expression();
+  consume(TOKEN_TYPE::LEFT_PAREN, "Expected ')' after 'while condition' .");
+
+  // we jump out if the condition is false
+  int exitJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
+  // cleaning up the stack
+  emitByte(OP_CODE::OP_POP);
+  // here we parse the statements
+  statement();
+
+  // doing the loop, this makes us jump all the way before the condition.
+  // this is critical since we can re-eval the condition and figure out if we
+  // need to exit
+  emitLoop(loopStart);
+
+  // finally we exit and cleanup the stack
+  patchJump(exitJump);
+  emitByte(OP_CODE::OP_POP);
 }
 
 void Compiler::literal(bool) {
@@ -435,7 +465,7 @@ void Compiler::string(bool) {
 void Compiler::variable(bool canAssign) {
   namedVariable(parser.previous, canAssign);
 }
-void Compiler::parseAnd(bool canAssign) {
+void Compiler::parseAnd(bool) {
   // here we first emit a jump, that is because if the
   // left hand side is false we short circuit, hence the ump
   int endJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
@@ -451,7 +481,7 @@ void Compiler::parseAnd(bool canAssign) {
   // finally we patch the jump
   patchJump(endJump);
 }
-void Compiler::parseOr(bool canAssign) {
+void Compiler::parseOr(bool) {
   // here we are using more instructions but we can see how we can remap the
   // values to what we want, so we can implement the or instruction with just
   // the instructions we have and not add new ones
@@ -470,10 +500,14 @@ void Compiler::parseOr(bool canAssign) {
    *      |->    continue...
    */
 
+  // if false we evaluate the right operand
   int elseJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
+  // ifwe fall through we skip and leave the op on the stack being our resoult
   int endJump = emitJump(OP_CODE::OP_JUMP);
 
   patchJump(elseJump);
+  // here instead we evaluate the right statement, first we get rid of the LHS
+  // form the stack
   emitByte(OP_CODE::OP_POP);
 
   parsePrecedence(PREC_OR);

@@ -119,6 +119,11 @@ INTERPRET_RESULT VirtualMachine::run() {
       }
       break;
     }
+    case OP_CODE::OP_LOOP: {
+        uint16_t offset = readShort();
+        m_ip -= offset;
+        break;
+    }
     case OP_CODE::OP_RETURN: {
       return INTERPRET_RESULT::INTERPRET_OK;
     }
