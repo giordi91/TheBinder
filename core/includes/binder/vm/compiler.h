@@ -2,11 +2,9 @@
 #include "binder/memory/stringIntern.h"
 #include "binder/tokens.h"
 #include "binder/vm/chunk.h"
-#include "binder/vm/debug.h"
-#include "common.h"
 
+// not using c{header-name} mostly for size concern
 #include "assert.h"
-#include "stdio.h"
 #include "string.h"
 
 namespace binder {
@@ -41,32 +39,30 @@ struct Scanner {
 
   Token scanToken();
 
-private:
-  bool isAtEnd() const { return *current == '\0'; }
+ private:
+  [[nodiscard]] bool isAtEnd() const { return *current == '\0'; }
   char advance() {
     current++;
     return current[-1];
   }
-  bool match(char expected) {
-    // TODO we can probably make this branchless
-    if (isAtEnd())
-      return false;
-    if (*current != expected)
-      return false;
+  bool match(const char expected) {
+    // TODO we can probably make this branch-less
+    if (isAtEnd()) return false;
+    if (*current != expected) return false;
     current++;
     return true;
   }
 
-  char peek() const { return *current; }
-  char peekNext() const {
+  [[nodiscard]] char peek() const { return *current; }
+
+  [[nodiscard]] char peekNext() const {
     // TODO compile probably optimizes this already but might
-    // be worth to make branchless
-    if (isAtEnd())
-      return '\0';
+    // be worth to make branch-less
+    if (isAtEnd()) return '\0';
     return current[1];
   }
 
-  Token makeToken(TOKEN_TYPE type) const {
+  Token makeToken(const TOKEN_TYPE type) const {
     return {type, start, static_cast<int>(current - start), line};
   }
   Token errorToken(const char *message) const {
@@ -75,21 +71,21 @@ private:
   }
 
   void skipWhiteSpace();
-  bool isDigit(char c) const { return (c >= '0') & (c <= '9'); }
-  bool isAlpha(char c) const {
+  static bool isDigit(const char c) { return (c >= '0') & (c <= '9'); }
+
+  static bool isAlpha(const char c) {
     return ((c >= 'a') & (c <= 'z')) | ((c >= 'A') & (c <= 'Z')) | (c == '_');
   }
-  TOKEN_TYPE identifierType();
+  TOKEN_TYPE identifierType() const;
   TOKEN_TYPE checkKeyword(int start, int length, const char *rest,
-                          TOKEN_TYPE type);
+                          TOKEN_TYPE type) const;
   Token string();
   Token number();
   Token identifier();
 };
 
 class Parser {
-
-public:
+ public:
   Parser() = default;
 
   void init(Scanner *scanner, log::Log *logger) {
@@ -105,31 +101,30 @@ public:
 
     for (;;) {
       current = m_scanner->scanToken();
-      if (current.type != TOKEN_TYPE::TOKEN_ERROR)
-        break;
+      if (current.type != TOKEN_TYPE::TOKEN_ERROR) break;
       errorAtCurrent(current.start);
     }
   }
 
-  bool getHadError() const { return hadError; }
+  [[nodiscard]] bool getHadError() const { return hadError; }
   void errorAtCurrent(const char *message) { errorAt(&current, message); }
   void error(const char *message) { errorAt(&previous, message); }
 
-public:
+ public:
   Token current;
   Token previous;
 
-private:
+ private:
   void errorAt(Token *token, const char *message);
 
-private:
+ private:
   Scanner *m_scanner = nullptr;
   log::Log *m_logger = nullptr;
   bool hadError = false;
   bool panicMode = false;
 };
 
-enum FunctionId {
+enum FUNCTION_ID {
   NULLID,
   ANDID,
   ORID,
@@ -142,17 +137,17 @@ enum FunctionId {
   VARIABLE
 };
 
-enum Precedence {
+enum PRECEDENCE {
   PREC_NONE,
-  PREC_ASSIGNMENT, // =
-  PREC_OR,         // or
-  PREC_AND,        // and
-  PREC_EQUALITY,   // == !=
-  PREC_COMPARISON, // < > <= >=
-  PREC_TERM,       // + -
-  PREC_FACTOR,     // * /
-  PREC_UNARY,      // ! -
-  PREC_CALL,       // . ()
+  PREC_ASSIGNMENT,  // =
+  PREC_OR,          // or
+  PREC_AND,         // and
+  PREC_EQUALITY,    // == !=
+  PREC_COMPARISON,  // < > <= >=
+  PREC_TERM,        // + -
+  PREC_FACTOR,      // * /
+  PREC_UNARY,       // ! -
+  PREC_CALL,        // . ()
   PREC_PRIMARY
 };
 
@@ -170,13 +165,13 @@ struct LocalPool {
 };
 
 class Compiler {
-public:
-  Compiler(memory::StringIntern *intern) : m_intern(intern) {}
+ public:
+  explicit Compiler(memory::StringIntern *intern) : m_intern(intern) {}
   bool compile(const char *source, log::Log *logger);
-  const Chunk *getCompiledChunk() const { return m_chunk; };
+  [[nodiscard]] const Chunk *getCompiledChunk() const { return m_chunk; };
 
-private:
-  void consume(TOKEN_TYPE type, const char *message) {
+ private:
+  void consume(const TOKEN_TYPE type, const char *message) {
     if (parser.current.type == type) {
       parser.advance();
       return;
@@ -184,69 +179,42 @@ private:
     parser.errorAtCurrent(message);
   }
 
-  void emitByte(uint8_t byte) const {
+  void emitByte(const uint8_t byte) const {
+    assert(m_chunk != nullptr);
+    m_chunk->write(byte, static_cast<const uint16_t>(parser.previous.line));
+  }
+  void emitByte(const OP_CODE byte) const {
     assert(m_chunk != nullptr);
     m_chunk->write(byte, parser.previous.line);
   }
-  void emitByte(OP_CODE byte) const {
-    assert(m_chunk != nullptr);
-    m_chunk->write(byte, parser.previous.line);
+
+  [[nodiscard]] int emitJump(const OP_CODE instruction) const;
+
+  void patchJump(const int offset);
+
+  void emitLoop(const int loopStart) {
+    emitByte(OP_CODE::OP_LOOP);
+
+    // the plus 2 comes from the jump operand (offset) which we need to jump
+    // over too
+    int offset = static_cast<int>(m_chunk->m_code.size() - loopStart + 2);
+    if (offset > UINT16_MAX) parser.error("Loop body too large:.");
+
+    emitByte((offset >> 8) & 0xff);
+    emitByte(offset & 0xff);
   }
-
-  int emitJump(OP_CODE instruction)
-  {
-      //first we emit our normal jump
-      emitByte(instruction);
-      //then we write 16bit for the offset as placeholder
-      emitByte(0xff);
-      emitByte(0xff);
-      //finally we return where in the code the jump is, aka
-      //the current size minus two, the two place holder instructions
-      return m_chunk->m_code.size()-2;
-  }
-
-  void patchJump( int offset)
-  {
-      //the offset value is where in the stack the origina jump was at
-      //so subratcing the current size gives out the delta between 
-      //jump and current position, the only thing to do is to offset by
-      //two bytes, which is the offset itself, since the offset will be
-      //eaten by the instruction
-      int jump = m_chunk->m_code.size() - offset -2;
-
-      if(jump > UINT16_MAX)
-      {
-          parser.error("Too much code to jump over in jump instruction");
-      }
-      //finally we write th\ne high part of the jump into thefirst byte
-      m_chunk->m_code[offset] = (jump >> 8) & 0xff;
-      //and the lower part in the second one
-      m_chunk->m_code[offset+1] = jump  & 0xff;
-  }
-
-  void emitLoop(int loopStart)
-  {
-      emitByte(OP_CODE::OP_LOOP);
-
-      //the plus 2 comes from the jump operand (offset) which we need to jump over too 
-      int offset = m_chunk->m_code.size() - loopStart + 2;
-      if(offset > UINT16_MAX) parser.error("Loop body too larget.");
-
-      emitByte((offset >>8) & 0xff);
-      emitByte(offset & 0xff);
-  }
-
 
   // we are going to rely on the auto deduction of the template param
   // for using this, this should be used mostly for constants and OP_CODES
-  template <typename T, typename P> void emitBytes(T byte, P byte2) const {
+  template <typename T, typename P>
+  void emitBytes(T byte, P byte2) const {
     emitByte(byte);
     emitByte(byte2);
   }
 
-  void endCompilation(log::Log *) { emitByte(OP_CODE::OP_RETURN); }
+  void endCompilation(log::Log *) const { emitByte(OP_CODE::OP_RETURN); }
   // emit instructions
-  void parsePrecedence(Precedence precedence);
+  void parsePrecedence(PRECEDENCE precedence);
 
   void number(bool canAssign);
   void emitConstant(Value value);
@@ -254,13 +222,13 @@ private:
   void grouping(bool canAssign);
   void unary(bool canAssign);
   void binary(bool canAssign);
-  void literal(bool canAssign);
+  void literal(bool canAssign) const;
   void string(bool canAssign);
   void variable(bool canAssign);
   void parseAnd(bool canAssign);
   void parseOr(bool canAssign);
   void namedVariable(const Token &token, bool canAssign);
-  int resolveLocal(const Token& name);
+  int resolveLocal(const Token &name);
 
   // statements
   void expression();
@@ -271,7 +239,7 @@ private:
   void defineVariable(uint8_t globalId);
   void markInitialized();
   void declareVariable();
-  void addLocal(const Token& name);
+  void addLocal(const Token &token);
   void statement();
   void printStatement();
   void expressionStatement();
@@ -279,34 +247,32 @@ private:
   void whileStatement();
   void forStatement();
 
-
-  //block
+  // block
   void beginScope();
   void block();
   void endScope();
 
-  //identifiers
-  bool identifierEqual(const Token& a, const Token& b)const
-  {
-      //first we check the len, and if it is the same then we can
-      //check the actual memory
-      if(a.length != b.length) return false;
-      return memcmp(a.start, b.start, a.length) ==0;
+  // identifiers
+  static bool identifierEqual(const Token &a, const Token &b) {
+    // first we check the len, and if it is the same then we can
+    // check the actual memory
+    if (a.length != b.length) return false;
+    return memcmp(a.start, b.start, a.length) == 0;
   }
 
+  void dispatchFunctionId(FUNCTION_ID id, bool canAssign);
 
-  void dispatchFunctionId(FunctionId id, bool canAssign);
-
-  bool match(TOKEN_TYPE type) {
-    if (!check(type))
-      return false;
+  bool match(const TOKEN_TYPE type) {
+    if (!check(type)) return false;
     parser.advance();
     return true;
   }
 
-  bool check(TOKEN_TYPE type) const { return parser.current.type == type; }
+  bool check(const TOKEN_TYPE type) const {
+    return parser.current.type == type;
+  }
 
-private:
+ private:
   Scanner scanner;
   Parser parser;
   LocalPool m_localPool;
@@ -314,5 +280,5 @@ private:
   Chunk *m_chunk = nullptr;
 };
 
-} // namespace vm
-} // namespace binder
+}  // namespace vm
+}  // namespace binder

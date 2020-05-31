@@ -1,21 +1,22 @@
 #include "binder/log/log.h"
 #include "binder/vm/compiler.h"
 #include "binder/vm/object.h"
+
 #include "stdlib.h"
 
 namespace binder::vm {
 
 struct ParseRule {
-  FunctionId prefix;
-  FunctionId infix;
-  Precedence precedence;
+  FUNCTION_ID prefix;
+  FUNCTION_ID infix;
+  PRECEDENCE precedence;
 };
 
 // Pratt parser
 // this is the heart of the parser, it tells us what to do when we
 // hit a specific token what to do for infix and prefix also what the
 // precedence level is
-ParseRule rules[] = {
+const ParseRule RULES[] = {
     {GROUPING, NULLID, PREC_NONE},     // LEFT_PAREN
     {NULLID, NULLID, PREC_NONE},       // RIGHT_PAREN
     {NULLID, NULLID, PREC_NONE},       // LEFT_BRACE
@@ -58,13 +59,13 @@ ParseRule rules[] = {
     {NULLID, NULLID, PREC_NONE},       // END_OF_FILE
 };
 
-ParseRule *getRule(TOKEN_TYPE type) { return &rules[static_cast<int>(type)]; }
+const ParseRule *getRule(TOKEN_TYPE type) { return &RULES[static_cast<int>(type)]; }
 
 // this function uses an id to figure out which function to dispatch,
 // we could have done it with function pointers but would have required a
 // runtime table to do the binding with the instances, this is simpler and
 // should be the same level of indirection
-void Compiler::dispatchFunctionId(FunctionId id, bool canAssign) {
+void Compiler::dispatchFunctionId(const FUNCTION_ID id, const bool canAssign) {
   switch (id) {
   case GROUPING:
     grouping(canAssign);
@@ -98,14 +99,43 @@ void Compiler::dispatchFunctionId(FunctionId id, bool canAssign) {
   }
 }
 
-// this function is going to tell us how to proceed in the parsing
+int Compiler::emitJump(const OP_CODE instruction) const
+{
+	// first we emit our normal jump
+	emitByte(instruction);
+	// then we write 16bit for the offset as placeholder
+	emitByte(0xff);
+	emitByte(0xff);
+	// finally we return where in the code the jump is, aka
+	// the current size minus two, the two place holder instructions
+	return m_chunk->m_code.size() - 2;
+}
+
+void Compiler::patchJump(const int offset)
+{
+	// the offset value is where in the stack the original jump was at
+	// so subtracting the current size gives out the delta between
+	// jump and current position, the only thing to do is to offset by
+	// two bytes, which is the offset itself, since the offset will be
+	// eaten by the instruction
+	int jump = static_cast<int>(m_chunk->m_code.size() - offset - 2);
+
+	if (jump > UINT16_MAX)
+	{
+		parser.error("Too much code to jump over in jump instruction");
+	}
+	// finally we write th\ne high part of the jump into the first byte
+	m_chunk->m_code[offset] = (jump >> 8) & 0xff;
+	// and the lower part in the second one
+	m_chunk->m_code[offset + 1] = jump & 0xff;
+} // this function is going to tell us how to proceed in the parsing
 // if we should give precedence or not
-void Compiler::parsePrecedence(Precedence precedence) {
-  // here we parse the next token and we look up the correspoinding
+void Compiler::parsePrecedence(const PRECEDENCE precedence) {
+  // here we parse the next token and we look up the corresponding
   // rule, the one we are interested in is in the previous token
   parser.advance();
-  FunctionId prefixRule = getRule(parser.previous.type)->prefix;
-  if (prefixRule == FunctionId::NULLID) {
+  FUNCTION_ID prefixRule = getRule(parser.previous.type)->prefix;
+  if (prefixRule == FUNCTION_ID::NULLID) {
     parser.error("Expect expression.");
     return;
   }
@@ -120,7 +150,7 @@ void Compiler::parsePrecedence(Precedence precedence) {
     // get next token
     parser.advance();
     // if there is a higher precedence we process as infix
-    FunctionId infixRule = getRule(parser.previous.type)->infix;
+    FUNCTION_ID infixRule = getRule(parser.previous.type)->infix;
     dispatchFunctionId(infixRule, canAssign);
   }
 
@@ -131,15 +161,15 @@ void Compiler::parsePrecedence(Precedence precedence) {
 }
 
 void Compiler::number(bool) {
-  double value = strtod(parser.previous.start, NULL);
+  double value = strtod(parser.previous.start, nullptr);
   emitConstant(makeNumber(value));
 }
 
-void Compiler::emitConstant(Value value) {
+void Compiler::emitConstant(const Value value) {
   emitBytes(OP_CODE::OP_CONSTANT, makeConstant(value));
 }
 
-uint8_t Compiler::makeConstant(Value value) {
+uint8_t Compiler::makeConstant(const Value value) {
   int constant = m_chunk->addConstant(value);
   if (constant > UINT8_MAX) {
     parser.error("Too many constants in one chunk.");
@@ -177,10 +207,10 @@ void Compiler::binary(bool) {
   TOKEN_TYPE operatorType = parser.previous.type;
 
   // compile right operand
-  ParseRule *rule = getRule(operatorType);
-  parsePrecedence((Precedence)(rule->precedence + 1));
+  const ParseRule *rule = getRule(operatorType);
+  parsePrecedence(static_cast<PRECEDENCE>(rule->precedence + 1));
 
-  // emit the operator insturction
+  // emit the operator instruction
   switch (operatorType) {
   case TOKEN_TYPE::BANG_EQUAL:
     // a != b is the same as !(a == b)
@@ -195,7 +225,7 @@ void Compiler::binary(bool) {
     break;
   case TOKEN_TYPE::GREATER_EQUAL:
     // a >= b is the same as !(a<b)
-    // TODO as != we might wanty to optimize with dedicated instructions
+    // TODO as != we might want to optimize with dedicated instructions
     emitBytes(OP_CODE::OP_LESS, OP_CODE::OP_NOT);
     break;
   case TOKEN_TYPE::LESS:
@@ -222,7 +252,7 @@ void Compiler::binary(bool) {
 }
 
 // to parse an expression is quite simple, we just parse anything that
-// has higher precedence than assigment
+// has higher precedence than assignment
 void Compiler::expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
 void Compiler::declaration() {
@@ -241,7 +271,7 @@ void Compiler::varDeclaration() {
   } else {
     emitByte(OP_CODE::OP_NIL);
   }
-  consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after variabled declaration.");
+  consume(TOKEN_TYPE::SEMICOLON, "Expected ';' after variable declaration.");
   defineVariable(global);
 }
 
@@ -259,7 +289,7 @@ void Compiler::addLocal(const Token &token) {
 }
 
 void Compiler::declareVariable() {
-  // here we declare the existance of local variables,
+  // here we declare the existence of local variables,
   // this only happens outside global scope, so we
   // get out if we are in global scope
   if (m_localPool.scopeDepth == 0)
@@ -277,7 +307,7 @@ void Compiler::declareVariable() {
     }
 
     if (identifierEqual(name, local.name)) {
-      parser.error("Variable with this name aready declared in this scope.");
+      parser.error("Variable with this name already declared in this scope.");
     }
   }
 
@@ -341,7 +371,7 @@ void Compiler::endScope() {
   // we need to clean up the scope
   // we already reduced the scope depth, so everything that
   // has higher scope needs to be popped
-  while ((m_localPool.localCount > 0) &
+  while ((m_localPool.localCount > 0) &&
          (m_localPool.locals[m_localPool.localCount - 1].depth >
           m_localPool.scopeDepth)) {
     // TODO optimization here, we can have a POPN to pop all variables in
@@ -383,7 +413,7 @@ void Compiler::ifStatement() {
   int thenJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
   // need to remove the condition value from the stack
   emitByte(OP_CODE::OP_POP);
-  // process the statment
+  // process the statement
   statement();
 
   // after evaluating the statement we need an unconditional jump to skip the
@@ -447,7 +477,7 @@ void Compiler::forStatement() {
   // trying to match variable declaration
   if (match(TOKEN_TYPE::SEMICOLON)) { // we have no initializer
   } else if (match(TOKEN_TYPE::VAR)) {
-    // we have a variable declariation of the sort var i = 0
+    // we have a variable declaration of the sort var i = 0
     varDeclaration();
   } else {
     // we can also have a free expression
@@ -511,7 +541,8 @@ void Compiler::forStatement() {
   endScope();
 }
 
-void Compiler::literal(bool) {
+void Compiler::literal(bool) const
+{
   // since parse precedence already consumed the token, we just need to look
   // into previous and emit the instruction
   switch (parser.previous.type) {
@@ -541,7 +572,7 @@ void Compiler::string(bool) {
   emitConstant(value);
 }
 
-void Compiler::variable(bool canAssign) {
+void Compiler::variable(const bool canAssign) {
   namedVariable(parser.previous, canAssign);
 }
 void Compiler::parseAnd(bool) {
@@ -554,7 +585,7 @@ void Compiler::parseAnd(bool) {
   // the result value will be the right hand side which will be on top of the
   // stack
   emitByte(OP_CODE::OP_POP);
-  // parse ther rest of the right hand side
+  // parse the rest of the right hand side
   parsePrecedence(PREC_AND);
 
   // finally we patch the jump
@@ -581,7 +612,7 @@ void Compiler::parseOr(bool) {
 
   // if false we evaluate the right operand
   int elseJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
-  // ifwe fall through we skip and leave the op on the stack being our resoult
+  // if we fall through we skip and leave the op on the stack being our resoult
   int endJump = emitJump(OP_CODE::OP_JUMP);
 
   patchJump(elseJump);
@@ -593,12 +624,12 @@ void Compiler::parseOr(bool) {
   patchJump(endJump);
 }
 
-void Compiler::namedVariable(const Token &token, bool canAssign) {
+void Compiler::namedVariable(const Token &token, const bool canAssign) {
   OP_CODE getOp;
   OP_CODE setOp;
 
   // we first try to resolve the variable locally
-  // if we dont find one we resolve it globally
+  // if we don't find one we resolve it globally
   int arg = resolveLocal(token);
   if (arg != -1) {
     getOp = OP_CODE::OP_GET_LOCAL;
@@ -670,7 +701,7 @@ void Scanner::skipWhiteSpace() {
 }
 
 Token Scanner::string() {
-  // keep eaint until we get a closing quote
+  // keep eating until we get a closing quote
   while (peek() != '"' && !isAtEnd()) {
     if (peek() == '\n') {
       line++;
@@ -703,8 +734,9 @@ Token Scanner::number() {
   return makeToken(TOKEN_TYPE::NUMBER);
 }
 
-TOKEN_TYPE Scanner::checkKeyword(int startIdx, int length, const char *rest,
-                                 TOKEN_TYPE type) {
+TOKEN_TYPE Scanner::checkKeyword(const int startIdx, const int length, const char *rest,
+                                 const TOKEN_TYPE type) const
+{
   // first we check if the length is the same second we check if the memory is
   // the same
   if ((current - start) == (startIdx + length) &&
@@ -714,7 +746,8 @@ TOKEN_TYPE Scanner::checkKeyword(int startIdx, int length, const char *rest,
   return TOKEN_TYPE::IDENTIFIER;
 }
 
-TOKEN_TYPE Scanner::identifierType() {
+TOKEN_TYPE Scanner::identifierType() const
+{
   switch (start[0]) {
   case 'a':
     return checkKeyword(1, 2, "nd", TOKEN_TYPE::AND);
@@ -841,7 +874,7 @@ bool Compiler::compile(const char *source, log::Log *logger) {
   m_chunk = new Chunk;
 
   scanner.init(source);
-  // setupping the pump
+  // setup the pump
   parser.init(&scanner, logger);
   parser.advance();
 
@@ -881,7 +914,5 @@ void Parser::errorAt(Token *token, const char *message) {
   LOG(m_logger, ": %s\n", message);
   hadError = true;
 }
-
-#undef LOG
 
 } // namespace binder::vm

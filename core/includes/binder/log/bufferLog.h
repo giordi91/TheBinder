@@ -19,10 +19,10 @@ public:
   // interface
   void print(const char *toLog) override {
     int size = m_buffer.size();
-    int inputLen = strlen(toLog);
+    size_t inputLen = strlen(toLog);
     if (size == 0) {
       //+1 so we get the null terminator
-      m_buffer.resize(inputLen + 1);
+      m_buffer.resize(static_cast<uint32_t>(inputLen) + 1);
       memcpy(m_buffer.data(), toLog, inputLen + 1);
     } else {
 
@@ -32,7 +32,7 @@ public:
 
       //we don't add 1 becase the nullterminator is in the buffer already, 
       //just needs to be moved around
-      m_buffer.resize(size + inputLen);
+      m_buffer.resize(static_cast<uint32_t>(size + inputLen));
 
       //offsetting for the null terminator in the buffer
       memcpy(m_buffer.data() + size-1, toLog, inputLen + 1);

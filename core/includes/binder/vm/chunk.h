@@ -1,4 +1,5 @@
 #pragma once
+
 #include "binder/memory/resizableVector.h"
 #include "binder/vm/common.h"
 #include "binder/vm/value.h"
@@ -41,17 +42,17 @@ struct Chunk {
   memory::ResizableVector<uint16_t> m_lines;
   memory::ResizableVector<Value> m_constants;
 
-  void write(OP_CODE op, uint16_t line) {
+  void write(const OP_CODE op, const uint16_t line) {
     m_code.pushBack(static_cast<uint8_t>(op));
     m_lines.pushBack(line);
   };
-  void write(uint8_t byte, uint16_t line) {
+  void write(const uint8_t byte, const uint16_t line) {
     m_code.pushBack(static_cast<uint8_t>(byte));
     m_lines.pushBack(line);
   };
-  int addConstant(Value value) {
+  int addConstant(const Value value) {
     m_constants.pushBack(value);
-    return m_constants.size() - 1;
+    return static_cast<int>(m_constants.size()) - 1;
   };
 };
 

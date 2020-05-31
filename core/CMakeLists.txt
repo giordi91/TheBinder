@@ -23,6 +23,22 @@ project(TheBinderCore)
 	"includes/binder/memory/stringHashMap.h"
 	"includes/binder/enviroment.h"
 
+	"includes/binder/vm/chunk.h"
+	"includes/binder/vm/common.h"
+	"includes/binder/vm/compiler.h"
+	"includes/binder/vm/debug.h"
+	"includes/binder/vm/memory.h"
+	"includes/binder/vm/object.h"
+	"includes/binder/vm/value.h"
+	"includes/binder/vm/vm.h"
+
+	"src/vm/compiler.cpp"
+	"src/vm/debug.cpp"
+	"src/vm/object.cpp"
+	"src/vm/value.cpp"
+	"src/vm/vm.cpp"
+
+
 	"src/interpreter.cpp"
 	"src/scanner.cpp"
 	"src/memory/stringPool.cpp"

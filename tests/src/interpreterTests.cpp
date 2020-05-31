@@ -32,7 +32,7 @@ public:
   }
 
   const char *getOutput() {
-    return ((binder::log::BufferedLog *)context.getLogger())->getBuffer();
+    return static_cast<binder::log::BufferedLog*>(context.getLogger())->getBuffer();
   };
 
 protected:
@@ -42,13 +42,13 @@ protected:
   binder::ASTInterpreter interpreter;
 };
 
-inline uint32_t VoidtoIndex(void *ptr) {
+inline uint32_t voidtoIndex(void *ptr) {
 
   uint32_t result;
   memcpy(&result, &ptr, sizeof(uint32_t));
   return result;
 }
-double randfrom(double min, double max) {
+double randfrom(const double min, const double max) {
   double range = (max - min);
   double div = RAND_MAX / range;
   return min + (rand() / div);

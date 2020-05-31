@@ -26,7 +26,7 @@ struct sObjString {
   char *chars;
 };
 
-extern sObj* allocations;
+extern sObj* ALLOCATIONS;
 
 void freeAllocations();
 sObjString *takeString(char* chars, int length);

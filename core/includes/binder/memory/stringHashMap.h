@@ -67,7 +67,7 @@ public:
   [[nodiscard]] bool containsKey(const char *key) const {
 
     uint32_t bin = 0;
-    uint32_t keyLen = strlen(key);
+    const auto keyLen = static_cast<const uint32_t>(strlen(key));
     const bool isKeyFound = getBin(key,keyLen, bin);
     const uint32_t meta = getMetadata(bin);
     return isKeyFound &
@@ -83,12 +83,12 @@ public:
 
   inline bool get(const char *key, VALUE &value) const {
     uint32_t bin = 0;
-    uint32_t keyLen = strlen(key);
+    const uint32_t keyLen = static_cast<uint32_t>(strlen(key));
     const bool result = getBin(key,keyLen, bin);
     value = m_values[bin];
     return result;
   }
-  inline bool get(const char *key,uint32_t keyLen, VALUE &value) const {
+  inline bool get(const char *key, const uint32_t keyLen, VALUE &value) const {
     uint32_t bin = 0;
     const bool result = getBin(key, keyLen, bin);
     value = m_values[bin];

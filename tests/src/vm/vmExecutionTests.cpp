@@ -35,7 +35,6 @@ protected:
   binder::log::BufferedLog m_debugLog;
   binder::vm::VirtualMachine m_vm;
 
-  bool result;
 };
 
 TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm add ", "[vm-parser]") {

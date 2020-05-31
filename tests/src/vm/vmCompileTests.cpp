@@ -13,25 +13,28 @@ public:
   const binder::vm::Chunk *compile(const char *source, bool debug = false) {
     result = compiler.compile(source, &m_log);
 
-    chunk = compiler.getCompiledChunk();
-    if (debug && chunk != nullptr) {
-      binder::vm::disassambleChunk(chunk, "debug", &m_debugLog);
+    m_chunk = compiler.getCompiledChunk();
+    if (debug && m_chunk != nullptr) {
+      binder::vm::disassambleChunk(m_chunk, "debug", &m_debugLog);
     }
 
-    return chunk;
+    return m_chunk;
   }
 
   void compareInstruction(int offset, binder::vm::OP_CODE expected) {
     compareInstruction(offset, static_cast<uint8_t>(expected));
   }
+  void compareInstruction(uint32_t offset, int expected) {
+      compareInstruction(offset,static_cast<uint8_t>(expected));
+  }
 
   void compareInstruction(uint32_t offset, uint8_t expected) {
-    REQUIRE(offset <= chunk->m_code.size());
-    REQUIRE(chunk->m_code[offset] == expected);
+    REQUIRE(offset <= m_chunk->m_code.size());
+    REQUIRE(m_chunk->m_code[offset] == expected);
   }
   void compareConstantValue(uint32_t offset, int idx, double value) {
-    REQUIRE(chunk->m_code[offset] == idx);
-    REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
+    REQUIRE(m_chunk->m_code[offset] == idx);
+    REQUIRE(m_chunk->m_constants[idx].as.number == Approx(value));
   }
   void compareConstant(uint32_t offset, int idx, double value) {
     compareInstruction(offset, binder::vm::OP_CODE::OP_CONSTANT);
@@ -60,23 +63,23 @@ public:
   }
 
 
-
   void compareConstantValue(uint32_t offset, int idx, bool value) {
-    REQUIRE(chunk->m_code[offset] == idx);
-    REQUIRE(chunk->m_constants[idx].as.boolean == value);
+    REQUIRE(m_chunk->m_code[offset] == idx);
+    REQUIRE(m_chunk->m_constants[idx].as.boolean == value);
   }
 
+
   void compareConstantValue(uint32_t offset, int idx, const char *toCompare) {
-    REQUIRE(chunk->m_code[offset] == idx);
+    REQUIRE(m_chunk->m_code[offset] == idx);
     // REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
-    binder::vm::Value value = chunk->m_constants[idx];
+    binder::vm::Value value = m_chunk->m_constants[idx];
     REQUIRE(binder::vm::isValueObj(value));
     REQUIRE(binder::vm::isObjType(value, binder::vm::OBJ_TYPE::OBJ_STRING));
     REQUIRE(strcmp(binder::vm::valueAsCString(value), toCompare) == 0);
   }
   void compareJumpOffset(uint32_t offset, uint16_t expectedJump) {
-    auto jump = static_cast<uint16_t>(chunk->m_code[offset] << 8);
-    jump |= chunk->m_code[offset + 1];
+    auto jump = static_cast<uint16_t>(m_chunk->m_code[offset] << 8);
+    jump |= m_chunk->m_code[offset + 1];
     REQUIRE(jump == expectedJump);
   }
   void compareJumpFalse(uint32_t offset, uint16_t expectedJump,
@@ -110,7 +113,7 @@ protected:
   binder::memory::StringIntern intern;
 
   binder::vm::Compiler compiler;
-  const binder::vm::Chunk *chunk;
+  const binder::vm::Chunk *m_chunk;
   bool result;
 };
 

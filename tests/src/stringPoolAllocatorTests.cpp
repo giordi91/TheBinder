@@ -438,7 +438,7 @@ TEST_CASE("String pool substring", "[memory]") {
   const char* testString = "hello world! it is time!";
   const char* sub = alloc.subString(testString,6,11);
   REQUIRE(strcmp(sub, "world!") == 0);
-  const char* sub2 = alloc.subString(testString,13,strlen(testString));
+  const char* sub2 = alloc.subString(testString,13,static_cast<uint32_t>(strlen(testString)));
   //testing previous allocation to make sure we did not overriden anything
   REQUIRE(strcmp(sub, "world!") == 0);
   REQUIRE(strcmp(sub2, "it is time!") == 0);

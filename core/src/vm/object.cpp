@@ -5,19 +5,19 @@
 
 namespace binder ::vm {
 
-sObj *allocations = nullptr;
+sObj *ALLOCATIONS = nullptr;
 
 #define ALLOCATE_OBJ(type, objectType)                                         \
   (type *)allocateObject(sizeof(type), objectType);
 
-sObj *allocateObject(size_t size, OBJ_TYPE type) {
-  sObj *object = (sObj *)reallocate(nullptr, 0, size);
-  if (allocations == nullptr) {
-    allocations = object;
+sObj *allocateObject(const size_t size, const OBJ_TYPE type) {
+  sObj *object = static_cast<sObj*>(reallocate(nullptr, 0, size));
+  if (ALLOCATIONS == nullptr) {
+    ALLOCATIONS = object;
     object->next = nullptr;
   } else {
-    object->next = allocations;
-    allocations = object;
+    object->next = ALLOCATIONS;
+    ALLOCATIONS = object;
   }
 
   object->type = type;
@@ -35,17 +35,17 @@ void freeObject(sObj *object) {
 }
 
 void freeAllocations() {
-  if (allocations == nullptr) {
+  if (ALLOCATIONS == nullptr) {
 
     return;
   }
-  sObj *obj = allocations;
+  sObj *obj = ALLOCATIONS;
   while (obj != nullptr) {
     sObj *next = obj->next;
     freeObject(obj);
     obj = next;
   }
-  allocations = nullptr;
+  ALLOCATIONS = nullptr;
 }
 
 sObjString *allocateString(const char *chars, int length) {
@@ -53,11 +53,11 @@ sObjString *allocateString(const char *chars, int length) {
   string->length = length;
   //TODO here we move the cast away mostly because we use the re-alloc workflow,
   //need to clean this up
-  string->chars = (char*)chars;
+  string->chars = const_cast<char*>(chars);
   return string;
 }
 
-sObjString *takeString(char *chars, int length) {
+sObjString *takeString(char *chars, const int length) {
   // here we take ownership of the chars, they have been already copied to
   // memory we can own
   return allocateString(chars, length);

@@ -30,15 +30,15 @@ struct RuntimeValue {
   RuntimeValueType type = RuntimeValueType::INVALID;
   RuntimeValueStorage storage = RuntimeValueStorage::INVALID;
 
-  const char *debugToString(BinderContext *context);
-  const char *toString(BinderContext *context, bool trailingNewLine = false);
+  const char *debugToString(BinderContext *context) const;
+  const char *toString(BinderContext *context, bool trailingNewLine = false) const;
 };
 
-class ASTInterpreterVisitor;
+class AstInterpreterVisitor;
 
 class Callable {
 public:
-  virtual void *call(ASTInterpreterVisitor *interpreter,
+  virtual void *call(AstInterpreterVisitor *interpreter,
                      memory::ResizableVector<void *> &arguments) = 0;
   virtual int arity()=0;
 };
@@ -47,7 +47,7 @@ class BinderFunction : public Callable {
 
 public:
   BinderFunction(autogen::Function *declaration) : m_declaration(declaration){};
-  void *call(ASTInterpreterVisitor *interpreter,
+  void *call(AstInterpreterVisitor *interpreter,
              memory::ResizableVector<void *> &arguments) override;
   int arity()override;
 
