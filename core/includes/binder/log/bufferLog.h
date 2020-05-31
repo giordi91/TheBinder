@@ -7,7 +7,7 @@ namespace binder::log {
 
 class BufferedLog : public Log {
 public:
-  BufferedLog() : m_buffer(256){};
+  BufferedLog() : m_buffer(256){m_buffer[0]='\n';};
   virtual ~BufferedLog() = default;
 
   // making sure you can't copy etc around

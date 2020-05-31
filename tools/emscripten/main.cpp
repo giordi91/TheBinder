@@ -10,6 +10,7 @@
 #include "binder/log/bufferLog.h"
 #include "binder/log/consoleLog.h"
 #include "binder/vm/compiler.h"
+#include "binder/vm/debug.h"
 #include "binder/vm/vm.h"
 
 extern "C" {
