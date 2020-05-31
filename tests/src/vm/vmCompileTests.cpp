@@ -29,17 +29,34 @@ public:
     REQUIRE(offset <= chunk->m_code.size());
     REQUIRE(chunk->m_code[offset] == expected);
   }
-  void compareConstant(uint32_t offset, int idx, double value) {
+  void compareConstantValue(uint32_t offset, int idx, double value) {
     REQUIRE(chunk->m_code[offset] == idx);
     REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
   }
+  void compareConstant(uint32_t offset, int idx, double value) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_CONSTANT);
+    compareConstantValue(offset + 1, idx, value);
+  }
 
-  void compareConstant(uint32_t offset, int idx, bool value) {
+  void compareDefineGlobal(uint32_t offset, int idx, const char *value) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
+    compareConstantValue(offset + 1, idx, value);
+  }
+  void compareGetGlobal(uint32_t offset, int idx, const char *value) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_GET_GLOBAL);
+    compareConstantValue(offset + 1, idx, value);
+  }
+  void compareSetGlobal(uint32_t offset, int idx, const char *value) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_SET_GLOBAL);
+    compareConstantValue(offset + 1, idx, value);
+  }
+
+  void compareConstantValue(uint32_t offset, int idx, bool value) {
     REQUIRE(chunk->m_code[offset] == idx);
     REQUIRE(chunk->m_constants[idx].as.boolean == value);
   }
 
-  void compareConstant(uint32_t offset, int idx, const char *toCompare) {
+  void compareConstantValue(uint32_t offset, int idx, const char *toCompare) {
     REQUIRE(chunk->m_code[offset] == idx);
     // REQUIRE(chunk->m_constants[idx].as.number == Approx(value));
     binder::vm::Value value = chunk->m_constants[idx];
@@ -51,6 +68,28 @@ public:
     auto jump = static_cast<uint16_t>(chunk->m_code[offset] << 8);
     jump |= chunk->m_code[offset + 1];
     REQUIRE(jump == expectedJump);
+  }
+  void compareJumpFalse(uint32_t offset, uint16_t expectedJump,
+                        bool expectPop) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
+    compareJumpOffset(offset + 1, expectedJump);
+    if (expectPop) {
+      compareInstruction(offset + 3, binder::vm::OP_CODE::OP_POP);
+    }
+  }
+  void compareJump(uint32_t offset, uint16_t expectedJump, bool expectPop) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_JUMP);
+    compareJumpOffset(offset + 1, expectedJump);
+    if (expectPop) {
+      compareInstruction(offset + 3, binder::vm::OP_CODE::OP_POP);
+    }
+  }
+  void compareLoop(uint32_t offset, uint16_t expectedJump, bool expectPop) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_LOOP);
+    compareJumpOffset(offset + 1, expectedJump);
+    if (expectPop) {
+      compareInstruction(offset + 3, binder::vm::OP_CODE::OP_POP);
+    }
   }
 
   void printOutput() { printf("%s\n", m_log.getBuffer()); }
@@ -81,7 +120,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic number parse",
   REQUIRE(chunk->m_code.size() == 4);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
   // should be the first constant in there
-  compareConstant(1, 0, 12345.5);
+  compareConstantValue(1, 0, 12345.5);
   compareInstruction(2, binder::vm::OP_CODE::OP_POP);
   compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
   delete chunk;
@@ -95,10 +134,10 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic multiply", "[vm-parser]") {
   REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 7);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, 77.0);
+  compareConstantValue(1, 0, 77.0);
 
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 1, 323.2);
+  compareConstantValue(3, 1, 323.2);
 
   compareInstruction(4, binder::vm::OP_CODE::OP_MULTIPLY);
   compareInstruction(5, binder::vm::OP_CODE::OP_POP);
@@ -114,10 +153,10 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm unary precedence",
   REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 8);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, 1.0);
+  compareConstantValue(1, 0, 1.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(3, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(4, 1, 5.0);
+  compareConstantValue(4, 1, 5.0);
   compareInstruction(5, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(6, binder::vm::OP_CODE::OP_POP);
   compareInstruction(7, binder::vm::OP_CODE::OP_RETURN);
@@ -129,12 +168,12 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1", "[vm-parser]") {
   REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 10);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, 144.4);
+  compareConstantValue(1, 0, 144.4);
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 1, 3.14);
+  compareConstantValue(3, 1, 3.14);
   compareInstruction(4, binder::vm::OP_CODE::OP_MULTIPLY);
   compareInstruction(5, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(6, 2, 12.0);
+  compareConstantValue(6, 2, 12.0);
   compareInstruction(7, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(8, binder::vm::OP_CODE::OP_POP);
   compareInstruction(9, binder::vm::OP_CODE::OP_RETURN);
@@ -147,12 +186,12 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 1 no grouping",
   REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 10);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, 144.4);
+  compareConstantValue(1, 0, 144.4);
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 1, 3.14);
+  compareConstantValue(3, 1, 3.14);
   compareInstruction(4, binder::vm::OP_CODE::OP_MULTIPLY);
   compareInstruction(5, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(6, 2, 12.0);
+  compareConstantValue(6, 2, 12.0);
   compareInstruction(7, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(8, binder::vm::OP_CODE::OP_POP);
   compareInstruction(9, binder::vm::OP_CODE::OP_RETURN);
@@ -164,13 +203,13 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm MAD 2", "[vm-parser]") {
   REQUIRE(chunk != nullptr);
   REQUIRE(chunk->m_code.size() == 13);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, 1.0);
+  compareConstantValue(1, 0, 1.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(3, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(4, 1, 3.14);
+  compareConstantValue(4, 1, 3.14);
   compareInstruction(5, binder::vm::OP_CODE::OP_MULTIPLY);
   compareInstruction(6, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(7, 2, 13.0);
+  compareConstantValue(7, 2, 13.0);
   compareInstruction(8, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(9, binder::vm::OP_CODE::OP_NEGATE);
   compareInstruction(10, binder::vm::OP_CODE::OP_ADD);
@@ -204,7 +243,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm basic string", "[vm-parser]") {
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 4);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, "hello world");
+  compareConstantValue(1, 0, "hello world");
   compareInstruction(2, binder::vm::OP_CODE::OP_POP);
   compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
 
@@ -223,9 +262,9 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp", "[vm-parser]") {
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 7);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, "hello world");
+  compareConstantValue(1, 0, "hello world");
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 1, "hello world");
+  compareConstantValue(3, 1, "hello world");
   compareInstruction(4, binder::vm::OP_CODE::OP_EQUAL);
   compareInstruction(5, binder::vm::OP_CODE::OP_POP);
   compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
@@ -247,9 +286,9 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str cmp  false", "[vm-parser]") {
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 8);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, "hello world");
+  compareConstantValue(1, 0, "hello world");
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 1, "hello world");
+  compareConstantValue(3, 1, "hello world");
   compareInstruction(4, binder::vm::OP_CODE::OP_EQUAL);
   compareInstruction(5, binder::vm::OP_CODE::OP_NOT);
   compareInstruction(6, binder::vm::OP_CODE::OP_POP);
@@ -265,9 +304,9 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm str concatenation",
   REQUIRE(result == true);
   REQUIRE(chunk->m_code.size() == 7);
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 0, "hello ");
+  compareConstantValue(1, 0, "hello ");
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 1, "world");
+  compareConstantValue(3, 1, "world");
   compareInstruction(4, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(5, binder::vm::OP_CODE::OP_POP);
   compareInstruction(6, binder::vm::OP_CODE::OP_RETURN);
@@ -286,7 +325,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global empty",
   // then we have a global definition, which behaves as a constant,
   // first the opcode then the uin8_t pointing to where it is stored
   compareInstruction(1, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(2, 0, "test");
+  compareConstantValue(2, 0, "test");
   compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
 
   /*
@@ -310,11 +349,11 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global string",
   // to not that the during the paring the variable name is set first on the
   // stack hence the 1 index of "my first var"
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, "my first var");
+  compareConstantValue(1, 1, "my first var");
   // then we have a global definition, which behaves as a constant,
   // first the opcode then the uin8_t pointing to where it is stored
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(3, 0, "myVar");
+  compareConstantValue(3, 0, "myVar");
   compareInstruction(4, binder::vm::OP_CODE::OP_RETURN);
 
   /*
@@ -335,9 +374,9 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global int",
   REQUIRE(chunk->m_code.size() == 5);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 10.0);
+  compareConstantValue(1, 1, 10.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(3, 0, "myVar");
+  compareConstantValue(3, 0, "myVar");
   compareInstruction(4, binder::vm::OP_CODE::OP_RETURN);
 }
 
@@ -352,7 +391,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global bool",
 
   compareInstruction(0, binder::vm::OP_CODE::OP_FALSE);
   compareInstruction(1, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(2, 0, "myVar");
+  compareConstantValue(2, 0, "myVar");
   compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
 }
 
@@ -367,7 +406,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global bool 2",
 
   compareInstruction(0, binder::vm::OP_CODE::OP_TRUE);
   compareInstruction(1, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(2, 0, "myVar");
+  compareConstantValue(2, 0, "myVar");
   compareInstruction(3, binder::vm::OP_CODE::OP_RETURN);
 }
 
@@ -381,12 +420,12 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm define global expr 1",
   REQUIRE(chunk->m_code.size() == 8);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 1.0);
+  compareConstantValue(1, 1, 1.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 2, 2.0);
+  compareConstantValue(3, 2, 2.0);
   compareInstruction(4, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(5, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(6, 0, "init1");
+  compareConstantValue(6, 0, "init1");
   compareInstruction(7, binder::vm::OP_CODE::OP_RETURN);
 
   /*
@@ -408,11 +447,11 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm get global", "[vm-parser]") {
   REQUIRE(chunk->m_code.size() == 8);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 10.0);
+  compareConstantValue(1, 1, 10.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(3, 0, "myVar");
+  compareConstantValue(3, 0, "myVar");
   compareInstruction(4, binder::vm::OP_CODE::OP_GET_GLOBAL);
-  compareConstant(5, 2, "myVar");
+  compareConstantValue(5, 2, "myVar");
   compareInstruction(6, binder::vm::OP_CODE::OP_PRINT);
   compareInstruction(7, binder::vm::OP_CODE::OP_RETURN);
 
@@ -439,29 +478,29 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile assigment edge case",
 
   // defining the first global variable
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, "beignets");
+  compareConstantValue(1, 1, "beignets");
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(3, 0, "breakfast");
+  compareConstantValue(3, 0, "breakfast");
 
   // defining the second global variable
   compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(5, 3, "cafe au lait");
+  compareConstantValue(5, 3, "cafe au lait");
   compareInstruction(6, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(7, 2, "beverage");
+  compareConstantValue(7, 2, "beverage");
 
   // now that wehave the twovariables we need to perform the assigment
   // which is between first a constant
   compareInstruction(8, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(9, 5, "beignets with ");
+  compareConstantValue(9, 5, "beignets with ");
 
   // then the global variable  which we pop on the stack now
   compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
-  compareConstant(11, 6, "beverage");
+  compareConstantValue(11, 6, "beverage");
 
   // doing the addition
   compareInstruction(12, binder::vm::OP_CODE::OP_ADD);
   compareInstruction(13, binder::vm::OP_CODE::OP_SET_GLOBAL);
-  compareConstant(14, 4, "breakfast");
+  compareConstantValue(14, 4, "breakfast");
   compareInstruction(15, binder::vm::OP_CODE::OP_POP);
   compareInstruction(16, binder::vm::OP_CODE::OP_RETURN);
 }
@@ -477,11 +516,11 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile basic scope",
   REQUIRE(chunk->m_code.size() == 14);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 12.0);
+  compareConstantValue(1, 1, 12.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(3, 0, "a");
+  compareConstantValue(3, 0, "a");
   compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(5, 2, 20.0);
+  compareConstantValue(5, 2, 20.0);
   compareInstruction(6, binder::vm::OP_CODE::OP_GET_LOCAL);
   // comparing the get local slot
   compareInstruction(7, 0);
@@ -491,7 +530,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile basic scope",
 
   // then the global variable
   compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
-  compareConstant(11, 3, "a");
+  compareConstantValue(11, 3, "a");
   compareInstruction(12, binder::vm::OP_CODE::OP_PRINT);
   compareInstruction(13, binder::vm::OP_CODE::OP_RETURN);
 
@@ -521,11 +560,11 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile shadowing scope",
   REQUIRE(chunk->m_code.size() == 14);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 12.0);
+  compareConstantValue(1, 1, 12.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(3, 0, "a");
+  compareConstantValue(3, 0, "a");
   compareInstruction(4, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(5, 2, 20.0);
+  compareConstantValue(5, 2, 20.0);
   compareInstruction(6, binder::vm::OP_CODE::OP_GET_LOCAL);
   // comparing the get local slot
   compareInstruction(7, 0);
@@ -535,7 +574,7 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile shadowing scope",
 
   // then the global variable
   compareInstruction(10, binder::vm::OP_CODE::OP_GET_GLOBAL);
-  compareConstant(11, 3, "a");
+  compareConstantValue(11, 3, "a");
   compareInstruction(12, binder::vm::OP_CODE::OP_PRINT);
   compareInstruction(13, binder::vm::OP_CODE::OP_RETURN);
 
@@ -562,19 +601,19 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if",
   REQUIRE(chunk->m_code.size() == 21);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 5.0);
+  compareConstantValue(1, 1, 5.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(3, 0, "a");
+  compareConstantValue(3, 0, "a");
   compareInstruction(4, binder::vm::OP_CODE::OP_GET_GLOBAL);
-  compareConstant(5, 2, "a");
+  compareConstantValue(5, 2, "a");
   compareInstruction(6, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(7, 3, 3.0);
+  compareConstantValue(7, 3, 3.0);
   compareInstruction(8, binder::vm::OP_CODE::OP_GREATER);
   compareInstruction(9, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
   compareJumpOffset(10, 7);
   compareInstruction(12, binder::vm::OP_CODE::OP_POP);
   compareInstruction(13, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(14, 4, 10.0);
+  compareConstantValue(14, 4, 10.0);
   compareInstruction(15, binder::vm::OP_CODE::OP_PRINT);
   compareInstruction(16, binder::vm::OP_CODE::OP_JUMP);
   compareJumpOffset(17, 1);
@@ -607,24 +646,24 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple if else",
   REQUIRE(chunk->m_code.size() == 24);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 5.0);
+  compareConstantValue(1, 1, 5.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(3, 0, "a");
+  compareConstantValue(3, 0, "a");
   compareInstruction(4, binder::vm::OP_CODE::OP_GET_GLOBAL);
-  compareConstant(5, 2, "a");
+  compareConstantValue(5, 2, "a");
   compareInstruction(6, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(7, 3, 3.0);
+  compareConstantValue(7, 3, 3.0);
   compareInstruction(8, binder::vm::OP_CODE::OP_GREATER);
   compareInstruction(9, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
   compareJumpOffset(10, 7);
   compareInstruction(12, binder::vm::OP_CODE::OP_POP);
   compareInstruction(13, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(14, 4, 10.0);
+  compareConstantValue(14, 4, 10.0);
   compareInstruction(15, binder::vm::OP_CODE::OP_PRINT);
   compareInstruction(16, binder::vm::OP_CODE::OP_JUMP);
   compareJumpOffset(17, 4);
   compareInstruction(20, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(21, 5, 20.0);
+  compareConstantValue(21, 5, 20.0);
   compareInstruction(22, binder::vm::OP_CODE::OP_PRINT);
   compareInstruction(23, binder::vm::OP_CODE::OP_RETURN);
   /*
@@ -657,20 +696,20 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple and",
   REQUIRE(chunk->m_code.size() == 17);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 3.0);
+  compareConstantValue(1, 1, 3.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 2, 1.0);
+  compareConstantValue(3, 2, 1.0);
   compareInstruction(4, binder::vm::OP_CODE::OP_GREATER);
   compareInstruction(5, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
   compareJumpOffset(6, 6);
   compareInstruction(8, binder::vm::OP_CODE::OP_POP);
   compareInstruction(9, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(10, 3, 5.0);
+  compareConstantValue(10, 3, 5.0);
   compareInstruction(11, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(12, 4, 3.0);
+  compareConstantValue(12, 4, 3.0);
   compareInstruction(13, binder::vm::OP_CODE::OP_GREATER);
   compareInstruction(14, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(15, 0, "a");
+  compareConstantValue(15, 0, "a");
   compareInstruction(16, binder::vm::OP_CODE::OP_RETURN);
 
   /*
@@ -688,8 +727,6 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple and",
   */
 }
 
-
-
 TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple or",
                  "[vm-parser]") {
 
@@ -701,9 +738,9 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple or",
   REQUIRE(chunk->m_code.size() == 20);
 
   compareInstruction(0, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(1, 1, 3.0);
+  compareConstantValue(1, 1, 3.0);
   compareInstruction(2, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(3, 2, 1.0);
+  compareConstantValue(3, 2, 1.0);
   compareInstruction(4, binder::vm::OP_CODE::OP_LESS);
   compareInstruction(5, binder::vm::OP_CODE::OP_JUMP_IF_FALSE);
   compareJumpOffset(6, 3);
@@ -711,12 +748,12 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple or",
   compareJumpOffset(9, 6);
   compareInstruction(11, binder::vm::OP_CODE::OP_POP);
   compareInstruction(12, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(13, 3, 5.0);
+  compareConstantValue(13, 3, 5.0);
   compareInstruction(14, binder::vm::OP_CODE::OP_CONSTANT);
-  compareConstant(15, 4, 3.0);
+  compareConstantValue(15, 4, 3.0);
   compareInstruction(16, binder::vm::OP_CODE::OP_GREATER);
   compareInstruction(17, binder::vm::OP_CODE::OP_DEFINE_GLOBAL);
-  compareConstant(18, 0, "a");
+  compareConstantValue(18, 0, "a");
   compareInstruction(19, binder::vm::OP_CODE::OP_RETURN);
 
   /*
@@ -732,5 +769,49 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple or",
     0016    | OP_GREATER
     0017    | OP_DEFINE_GLOBAL    0 'a
     0019    | OP_RETURN
+  */
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple while",
+                 "[vm-parser]") {
+  const char *source = "var a = 0; while(a < 5){ print a; a= a+1;}";
+  auto *chunk = compile(source, false);
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+
+  compareConstant(0, 1, 0.0);
+  compareDefineGlobal(2, 0, "a");
+  compareGetGlobal(4, 2, "a");
+  compareConstant(6, 3, 5.0);
+  compareInstruction(8, binder::vm::OP_CODE::OP_LESS);
+  compareJumpFalse(9, 15, true);
+  compareGetGlobal(13, 4, "a");
+  compareInstruction(15, binder::vm::OP_CODE::OP_PRINT);
+  compareGetGlobal(16, 6, "a");
+  compareConstant(18, 7, 1.0);
+  compareInstruction(20, binder::vm::OP_CODE::OP_ADD);
+  compareSetGlobal(21, 5, "a");
+  compareInstruction(23, binder::vm::OP_CODE::OP_POP);
+  compareLoop(24, 23, true);
+  compareInstruction(28, binder::vm::OP_CODE::OP_RETURN);
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         1 '0
+    0002    | OP_DEFINE_GLOBAL    0 'a
+    0004    | OP_GET_GLOBAL       2 'a
+    0006    | OP_CONSTANT         3 '5
+    0008    | OP_LESS
+    0009    | OP_JUMP_IF_FALSE    9 -> 27
+    0012    | OP_POP
+    0013    | OP_GET_GLOBAL       4 'a
+    0015    | OP_PRINT
+    0016    | OP_GET_GLOBAL       6 'a
+    0018    | OP_CONSTANT         7 '1
+    0020    | OP_ADD
+    0021    | OP_SET_GLOBAL       5 'a
+    0023    | OP_POP
+    0024    | OP_LOOP            24 -> 4
+    0027    | OP_POP
+    0028    | OP_RETURN
   */
 }

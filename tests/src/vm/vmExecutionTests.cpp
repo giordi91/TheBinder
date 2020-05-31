@@ -290,3 +290,12 @@ TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple or 4",
   REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
   REQUIRE(compareLog("false\n") == 0);
 }
+
+TEST_CASE_METHOD(SetupVmExecuteTestFixture, "vm exec simple while loop",
+                 "[vm-parser]") {
+  const char *source = "var a = 0; while(a < 5){ print a; a= a+1;}";
+  binder::vm::INTERPRET_RESULT result = interpret(source);
+  REQUIRE(result == binder::vm::INTERPRET_RESULT::INTERPRET_OK);
+  REQUIRE(compareLog("0\n1\n2\n3\n4\n") == 0);
+}
+

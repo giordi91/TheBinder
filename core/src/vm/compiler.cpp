@@ -413,7 +413,7 @@ void Compiler::whileStatement() {
   // value on the stack
   consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after 'while' .");
   expression();
-  consume(TOKEN_TYPE::LEFT_PAREN, "Expected ')' after 'while condition' .");
+  consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after 'while condition' .");
 
   // we jump out if the condition is false
   int exitJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
