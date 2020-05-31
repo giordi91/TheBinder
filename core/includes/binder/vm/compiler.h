@@ -277,6 +277,7 @@ private:
   void expressionStatement();
   void ifStatement();
   void whileStatement();
+  void forStatement();
 
 
   //block

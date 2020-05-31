@@ -319,6 +319,8 @@ void Compiler::defineVariable(uint8_t globalId) {
 void Compiler::statement() {
   if (match(TOKEN_TYPE::PRINT)) {
     printStatement();
+  } else if (match(TOKEN_TYPE::FOR)) {
+    forStatement();
   } else if (match(TOKEN_TYPE::IF)) {
     ifStatement();
   } else if (match(TOKEN_TYPE::WHILE)) {
@@ -430,6 +432,83 @@ void Compiler::whileStatement() {
   // finally we exit and cleanup the stack
   patchJump(exitJump);
   emitByte(OP_CODE::OP_POP);
+}
+
+//TODO a multi pass compiler should be able to simplify this a lot
+//especially the increment case
+void Compiler::forStatement() {
+
+  //the loop might declare variables, for example, it might declare a var i=0
+  //in the loop condition, to prevent leaking we ensure a scope around the loop
+  //such that variable is only valid in that scope
+  beginScope();
+
+  consume(TOKEN_TYPE::LEFT_PAREN, "Expected '(' after 'for'.");
+  // trying to match variable declaration
+  if (match(TOKEN_TYPE::SEMICOLON)) { // we have no initializer
+  } else if (match(TOKEN_TYPE::VAR)) {
+    // we have a variable declariation of the sort var i = 0
+    varDeclaration();
+  } else {
+    // we can also have a free expression
+    expressionStatement();
+  }
+
+  int loopStart = m_chunk->m_code.size();
+
+  //conditional clause
+  int exitJump = -1;
+  if(!match(TOKEN_TYPE::SEMICOLON)){
+      expression();
+      consume(TOKEN_TYPE::SEMICOLON, "Expected ';' in loop condition.");
+
+      //we need to jump in case the condition says so
+      exitJump = emitJump(OP_CODE::OP_JUMP_IF_FALSE);
+      emitByte(OP_CODE::OP_POP);//popping the condition
+  }
+
+  //finally the increment clause, this is particularly tricky, that is mostly
+  //due to the fact that increment clause is evaluated after the loop,
+  //but once we get there we already emitted the code forthe increment condition
+  //this is a problem for a single pass compiler. The way we solve it is by
+  //skipping the condition, run the body jump back to the condition evaluate 
+  //and go normally to the rest of the loop
+  if(!match(TOKEN_TYPE::RIGHT_PAREN)){
+      int bodyJump = emitJump(OP_CODE::OP_JUMP);
+
+      int incrementStart = m_chunk->m_code.size();
+      expression();
+      emitByte(OP_CODE::OP_POP);
+      consume(TOKEN_TYPE::RIGHT_PAREN, "Expected ')' after 'for' clauses.");
+
+
+      //after we evaluated the increment we jump to the start of the loop
+      //since increment happens at the end of the loop
+      emitLoop(loopStart);
+      //next we patch the loop start, so at the end of the body, when we parse it
+      //we are going to jump here, at the increement start before boing to the top of the
+      //loop. Bit mind bending but extremely smart
+      loopStart = incrementStart;
+      //patching the jump over the increment clause
+      patchJump(bodyJump);
+  }
+
+
+
+  statement();
+
+  emitLoop(loopStart);
+
+  //if we had a condition, the offset is differnt than -1, so we can
+  //jump here, after the loop jump
+  if(exitJump != -1)
+  {
+      patchJump(exitJump);
+      emitByte(OP_CODE::OP_POP);
+  }
+
+  //closeing the scope
+  endScope();
 }
 
 void Compiler::literal(bool) {

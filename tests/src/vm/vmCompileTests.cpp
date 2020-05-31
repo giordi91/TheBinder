@@ -50,6 +50,16 @@ public:
     compareInstruction(offset, binder::vm::OP_CODE::OP_SET_GLOBAL);
     compareConstantValue(offset + 1, idx, value);
   }
+  void compareGetLocal(uint32_t offset, int idx) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_GET_LOCAL);
+    compareInstruction(offset+ 1, idx);
+  }
+  void compareSetLocal(uint32_t offset, int idx) {
+    compareInstruction(offset, binder::vm::OP_CODE::OP_SET_LOCAL);
+    compareInstruction(offset+ 1, idx);
+  }
+
+
 
   void compareConstantValue(uint32_t offset, int idx, bool value) {
     REQUIRE(chunk->m_code[offset] == idx);
@@ -813,5 +823,79 @@ TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple while",
     0024    | OP_LOOP            24 -> 4
     0027    | OP_POP
     0028    | OP_RETURN
+  */
+}
+
+TEST_CASE_METHOD(SetupVmParserTestFixture, "vm compile simple for",
+                 "[vm-parser]") {
+  const char *source = "for(var a = 0; a < 5;a= a+1){print a;}";
+  auto *chunk = compile(source, false);
+  REQUIRE(chunk != nullptr);
+  REQUIRE(result == true);
+  REQUIRE(chunk->m_code.size() == 34);
+
+  //altough similar to a while loop the code generated is different
+  //here we define the constant of the a =0;
+  compareConstant(0, 0, 0.0);
+  //next we get the local variabe, here is where we start to differ,
+  //the result of the condition is on a local, right on top of the stack
+  //with offset zero
+  //TODO investigate if load local 0 can be omitted to save performances
+  compareGetLocal(2,0);
+  //next we have the other constant which we put on the stack and we do the 
+  //condition evaluation
+  compareConstant(4, 1, 5);
+  compareInstruction(6, binder::vm::OP_CODE::OP_LESS);
+
+  //next we break based on the condtion
+  compareJumpFalse(7, 21, true);
+
+  //next we jump over the increment clause with an uncoditional jump
+  compareJump(11,11,false);
+
+  //next we have the increment, the +1 and add
+  compareGetLocal(14, 0);
+  compareConstant(16, 2, 1.0);
+  compareInstruction(18, binder::vm::OP_CODE::OP_ADD);
+  //next we set the result on the local variable, since the result
+  //is on top of the stack
+  compareSetLocal(19,0);
+  //we get rid of the value left on top of the stack from the operation and loop
+  compareInstruction(21, binder::vm::OP_CODE::OP_POP);
+  compareLoop(22,23,false);
+
+  //now we actually evaluate the body , this is were we would jump to
+  //getting the value on the stack
+  compareGetLocal(25,0);
+  compareInstruction(27, binder::vm::OP_CODE::OP_PRINT);
+  //next we jump to the increment evaluation
+  compareLoop(28,17,true);
+  //we also need to remove the last value we left on the stack due to the 
+  //evaluation
+  compareInstruction(32, binder::vm::OP_CODE::OP_POP);
+  compareInstruction(33, binder::vm::OP_CODE::OP_RETURN);
+
+
+  /*
+    == debug ==
+    0000    0 OP_CONSTANT         0 '0
+    0002    | OP_GET_LOCAL        0
+    0004    | OP_CONSTANT         1 '5
+    0006    | OP_LESS
+    0007    | OP_JUMP_IF_FALSE    7 -> 31
+    0010    | OP_POP
+    0011    | OP_JUMP            11 -> 25
+    0014    | OP_GET_LOCAL        0
+    0016    | OP_CONSTANT         2 '1
+    0018    | OP_ADD
+    0019    | OP_SET_LOCAL        0
+    0021    | OP_POP
+    0022    | OP_LOOP            22 -> 2
+    0025    | OP_GET_LOCAL        0
+    0027    | OP_PRINT
+    0028    | OP_LOOP            28 -> 14
+    0031    | OP_POP
+    0032    | OP_POP
+    0033    | OP_RETURN
   */
 }
