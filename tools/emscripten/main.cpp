@@ -1,12 +1,22 @@
+/* ast old includes
 #include "binder/context.h"
 #include "binder/interpreter.h"
 #include "binder/parser.h"
 #include "binder/printer/jsonASTPrinter.h"
 #include "binder/scanner.h"
 #include <iostream>
+*/
+
+#include "binder/log/bufferLog.h"
+#include "binder/log/consoleLog.h"
+#include "binder/vm/compiler.h"
+#include "binder/vm/vm.h"
 
 extern "C" {
 const char *bindExecute(const char *source) {
+
+  /*
+  //OLD AST BASED
   binder::ContextConfig config{};
   // TODO
   // Cannot enlarge memory arrays to size 38825984 bytes (OOM). Either (1)
@@ -50,6 +60,41 @@ const char *bindExecute(const char *source) {
   int len = strlen(ast);
   const char *toReturn = new char[len + 1];
   memcpy((char *)toReturn, ast, len + 1);
+  return toReturn;
+  */
+
+  // vm based
+  binder::log::BufferedLog log;
+  binder::log::BufferedLog debugLog;
+  binder::vm::VirtualMachine vm(&log, &debugLog);
+  binder::vm::INTERPRET_RESULT compileResult = vm.compile(source);
+  if (compileResult != binder::vm::INTERPRET_RESULT::INTERPRET_OK) {
+    printf("%s\n", log.getBuffer());
+    return "";
+  }
+
+  const binder::vm::Chunk *chunk = vm.getCompiledChunk();
+
+  binder::vm::INTERPRET_RESULT result = vm.interpret(source);
+  if (result != binder::vm::INTERPRET_RESULT::INTERPRET_OK) {
+    printf("%s\n", log.getBuffer());
+    return "";
+  }
+
+  printf("%s\n", log.getBuffer());
+  // finally we return the disassembly
+  debugLog.flush();
+  binder::vm::disassambleChunk(chunk, "code", &debugLog);
+  const char* bytecode = debugLog.getBuffer();
+
+  //we have the code we can return it
+  int len = strlen(bytecode);
+  const char *toReturn = new char[len + 1];
+  memcpy((char *)toReturn, bytecode, len + 1);
+
+  //freeing the chunk
+  delete chunk;
+
   return toReturn;
 }
 }

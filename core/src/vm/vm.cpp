@@ -62,15 +62,32 @@ bool isFalsey(Value value) {
   return isValueNIL(value) | isValueBool(value) && (!valueAsBool(value));
 }
 
-INTERPRET_RESULT VirtualMachine::interpret(const char *source) {
-
+INTERPRET_RESULT VirtualMachine::compile(const char *source) {
   Compiler compiler(&m_intern);
 
   if (!compiler.compile(source, m_logger)) {
     return INTERPRET_RESULT::INTERPRET_COMPILE_ERROR;
   }
-
   m_chunk = compiler.getCompiledChunk();
+  return INTERPRET_RESULT::INTERPRET_OK;
+}
+
+INTERPRET_RESULT VirtualMachine::interpret(const char *source) {
+
+  if (compile(source) != INTERPRET_RESULT::INTERPRET_OK) {
+    return INTERPRET_RESULT::INTERPRET_COMPILE_ERROR;
+  }
+
+  m_ip = m_chunk->m_code.data();
+  resetStack();
+  return run();
+}
+
+INTERPRET_RESULT VirtualMachine::interpret(const Chunk *chunk) {
+
+  assert(chunk != nullptr);
+  m_chunk = chunk;
+
   m_ip = m_chunk->m_code.data();
   resetStack();
   return run();
@@ -120,9 +137,9 @@ INTERPRET_RESULT VirtualMachine::run() {
       break;
     }
     case OP_CODE::OP_LOOP: {
-        uint16_t offset = readShort();
-        m_ip -= offset;
-        break;
+      uint16_t offset = readShort();
+      m_ip -= offset;
+      break;
     }
     case OP_CODE::OP_RETURN: {
       return INTERPRET_RESULT::INTERPRET_OK;
