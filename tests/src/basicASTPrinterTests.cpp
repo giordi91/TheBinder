@@ -1,5 +1,5 @@
 #include "catch.h"
-#include "binder/printer/basicASTPrinter.h"
+#include "binder/legacyAST/printer/basicASTPrinter.h"
 
 TEST_CASE("simple operation 1", "[astPrinter]") {
     binder::memory::StringPool pool(2048);

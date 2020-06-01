@@ -1,12 +1,12 @@
-#include "binder/interpreter.h"
+#include "binder/legacyAST/interpreter.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <exception>
 
-#include "binder/autogen/astgen.h"
-#include "binder/context.h"
+#include "binder/legacyAST/autogen/astgen.h"
+#include "binder/legacyAST/context.h"
 #include "binder/memory/stringPool.h"
 
 namespace binder {

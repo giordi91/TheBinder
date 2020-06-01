@@ -1,6 +1,6 @@
 #pragma once
 
-#include "binder/autogen/astgen.h"
+#include "binder/legacyAST/autogen/astgen.h"
 #include "binder/memory/stringPool.h"
 #include "binder/tokens.h"
 

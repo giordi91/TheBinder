@@ -12,16 +12,16 @@ project(TheBinderCore)
 	ENDMACRO(SET_AS_HEADERS)
 
 	SET(SUPPORTING_FILES 
-	"includes/binder/constants.h"
-	"includes/binder/interpreter.h"
-	"includes/binder/scanner.h"
 	"includes/binder/tokens.h"
+	"includes/binder/constants.h"
+	"includes/binder/legacyAST/interpreter.h"
+	"includes/binder/legacyAST/scanner.h"
+	"includes/binder/legacyAST/enviroment.h"
 	"includes/binder/memory/stackAllocator.h"
 	"includes/binder/memory/threeSizesPool.h"
 	"includes/binder/memory/stringPool.h"
 	"includes/binder/memory/resizableVector.h"
 	"includes/binder/memory/stringHashMap.h"
-	"includes/binder/enviroment.h"
 
 	"includes/binder/vm/chunk.h"
 	"includes/binder/vm/common.h"
@@ -39,8 +39,8 @@ project(TheBinderCore)
 	"src/vm/vm.cpp"
 
 
-	"src/interpreter.cpp"
-	"src/scanner.cpp"
+	"src/legacyAST/interpreter.cpp"
+	"src/legacyAST/scanner.cpp"
 	"src/memory/stringPool.cpp"
 	)
 	SET_AS_HEADERS("${SUPPORTING_FILES}")

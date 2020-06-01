@@ -1,5 +1,5 @@
 #pragma once
-#include "binder/enviroment.h"
+#include "binder/legacyAST/enviroment.h"
 #include "binder/memory/resizableVector.h"
 #include "binder/memory/sparseMemoryPool.h"
 

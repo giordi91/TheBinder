@@ -1,7 +1,7 @@
-#include "binder/context.h"
-#include "binder/parser.h"
-#include "binder/printer/jsonASTPrinter.h"
-#include "binder/scanner.h"
+#include "binder/legacyAST/context.h"
+#include "binder/legacyAST/parser.h"
+#include "binder/legacyAST/printer/jsonASTPrinter.h"
+#include "binder/legacyAST/scanner.h"
 
 #include "catch.h"
 

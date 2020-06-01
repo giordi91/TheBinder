@@ -1,5 +1,5 @@
-#include "binder/context.h"
-#include "binder/scanner.h"
+#include "binder/legacyAST/context.h"
+#include "binder/legacyAST/scanner.h"
 #include "catch.h"
 
 class SetupScannerTestFixture {

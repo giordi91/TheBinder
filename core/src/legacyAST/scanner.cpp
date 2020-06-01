@@ -1,6 +1,6 @@
-#include "binder/scanner.h"
+#include "binder/legacyAST/scanner.h"
 
-#include "binder/context.h"
+#include "binder/legacyAST/context.h"
 #include "binder/memory/stringHashMap.h"
 
 namespace binder {

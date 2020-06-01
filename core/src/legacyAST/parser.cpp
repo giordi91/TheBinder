@@ -1,5 +1,5 @@
-#include "binder/context.h"
-#include "binder/parser.h"
+#include "binder/legacyAST/context.h"
+#include "binder/legacyAST/parser.h"
 #include <stdio.h>
 
 namespace binder {
