@@ -5,7 +5,7 @@ Develop: ![build-windows](https://github.com/giordi91/TheBinder/workflows/build-
 
 This is a scripting language written mostly as a learning project following https://craftinginterpreters.com/ book. Hopefully at one point I would like to use it in my game engine to **bind** the gameplay and backend.
 
-![alt text](docs/binder.png "binder screenshot")
+![alt text](docs/binderVM.png "binder screenshot")
 
 ## Goals
 This projects comes with few goals I set for myself. Other than having a language I can mess around with, I had few goals in mind:
